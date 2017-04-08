@@ -21,10 +21,16 @@ type Database struct {
 	Name string
 }
 
+type Auth struct {
+	CookieName string
+	MaxAge int
+}
+
 type Profile struct {
 	Name string
 	Ldap	Ldap
 	Database Database
+	Auth Auth
 }
 
 type Configuration struct {

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"ru/sbt/estima/model"
 	"strings"
+	"ru/sbt/estima/conf"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -91,14 +92,15 @@ var GetTokenHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Reque
 	tokenString, _ := token.SignedString(mySigningKey)
 
 	w.Header().Add("Authorization", "Bearer " + tokenString)
+	var config = conf.LoadConfig()
 	http.SetCookie(w, &http.Cookie {
-		"Authorization",
+		config.Auth.CookieName,
 		"Bearer " + tokenString,
 		"/",
 		"",
 		time.Now().AddDate(1, 0, 0),
 		"",
-		1000000,
+		config.Auth.MaxAge,
 		false,
 		false,
 		"",
@@ -113,7 +115,8 @@ var GetTokenHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Reque
 // Using cookies to authenticate user
 //
 func FromAuthCookie(r *http.Request) (string, error) {
-	authHeader, err := r.Cookie("Authorization")
+	var config = conf.LoadConfig()
+	authHeader, err := r.Cookie(config.Auth.CookieName)
 	if authHeader != nil {
 		if authHeader.Value == "" {
 			return "", nil // No error, just no token
