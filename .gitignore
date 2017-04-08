@@ -1,0 +1,8 @@
+github.com/*
+golang.org/*
+gopkg.in
+.idea
+bin
+pkg
+*.iml
+gotest
