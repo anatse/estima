@@ -1,20 +1,20 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
-	"github.com/gorilla/mux"
-	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/handlers"
 	"os"
-	"github.com/gorilla/context"
 	"ru/sbt/estima/model"
 	"ru/sbt/estima/services"
-	"encoding/json"
-	"log"
-	"fmt"
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/context"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 )
 
-var NotImplemented = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
+var NotImplemented = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	user := context.Get(r, "user")
 	fmt.Println("products....")
 
