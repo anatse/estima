@@ -12,13 +12,13 @@ import (
 )
 
 type EstimaUser struct {
-	ara.Document
-	Name     string
-	Email    string
-	Password string
-	DisplayName  string
-	Uid string
-	Roles	[]string
+	ara.Document `json:-`
+	Name     string `json:",omitempty"`
+	Email    string `json:",omitempty"`
+	Password string  `json:"-"`
+	DisplayName  string `json:",omitempty"`
+	Uid string `json:",omitempty"`
+	Roles	[]string `json:",omitempty"`
 }
 
 func NewUser (name string, email string, password string, displayName string, uid string) *EstimaUser {
@@ -69,7 +69,6 @@ func (user EstimaUser) FromJson (jsUser []byte) (error) {
 	return err
 }
 
-
 /**
  Function used to check user name and password through the LDAP.
  Additional documentation about LDAP library located here https://godoc.org/gopkg.in/ldap.v2
@@ -118,21 +117,21 @@ func FindUser (username string, password string) (retUser *EstimaUser, retErr er
 		log.Print(err)
 	}
 
-	for i:=0;i<len(sr.Entries);i++ {
-		entry := sr.Entries[i]
-		for a:=0;a<len(entry.Attributes);a++ {
-			attr := entry.Attributes[a]
-			fmt.Println(attr.Name + " = " + attr.Values[0])
-		}
-		fmt.Println("----------------------------------------")
-	}
+	//for i:=0;i<len(sr.Entries);i++ {
+	//	entry := sr.Entries[i]
+	//	for a:=0;a<len(entry.Attributes);a++ {
+	//		attr := entry.Attributes[a]
+	//		fmt.Println(attr.Name + " = " + attr.Values[0])
+	//	}
+	//	fmt.Println("----------------------------------------")
+	//}
 
 	entry := sr.Entries[0]
 	retUser = NewUser(
 		username,
 		entry.GetAttributeValue("mail"),
 		password,
-		entry.GetAttributeValue("displayName"),
+		entry.GetAttributeValue("sn"),
 		entry.GetAttributeValue("uid"))
 
 	return retUser, retErr

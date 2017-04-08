@@ -42,9 +42,9 @@
             fetch(url, {
                 method: "get",
                 headers: {
-                    'Accept': 'application/json',
-                    'Authorization': getCookie('Authorization')
-                }
+                    'Accept': 'application/json'
+                },
+                credentials: "same-origin"
             }).then(function(response) {
                 response.text().then (function (text) {
                     console.log (text)

@@ -31,7 +31,7 @@
       "Database": {
         "url": "http://localhost:8529",
         "user": "root",
-        "password": "root",
+        "password": "123456",
         "log": false,
         "name": "estima"
       },

@@ -7,7 +7,6 @@ package services
 import (
 	ara "github.com/diegogub/aranGO"
 	"ru/sbt/estima/model"
-	"ru/sbt/estima/conf"
 )
 
 type Dao interface {
@@ -37,33 +36,4 @@ func (dao baseDao) Coll(colName string) {
 		newColl := ara.NewCollectionOptions(colName, true)
 		dao.database.CreateCollection(newColl)
 	}
-}
-
-type userDao struct {
-	baseDao
-}
-
-func NewDAO () Dao {
-	config := conf.LoadConfig()
-
-	var bd = userDao{}
-	s, err := ara.Connect(config.Database.Url, config.Database.User, config.Database.Password, config.Database.Log)
-	if err != nil{
-		panic(err)
-	}
-
-	bd.session = s
-	bd.database = s.DB(config.Database.Name)
-	return &bd
-}
-
-func (dao userDao) Save (user model.Entity) (newUser model.Entity, err error) {
-
-
-	return user, nil
-}
-
-func (dao userDao) Find (user model.Entity) (found []model.Entity, err error) {
-
-	return nil, nil
 }
