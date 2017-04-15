@@ -6,8 +6,9 @@ import (
 
 type Entity interface {
 	AraDoc() (ara.Document)
-	ToJson() ([]byte, error)
-	FromJson(json []byte)(error)
-	Copy (Entity)
+	Entity() interface{}
+
+	FromJson(json []byte)(Entity, error)
+	Copy (Entity)Entity
 }
 

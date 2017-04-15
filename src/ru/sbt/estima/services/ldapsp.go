@@ -6,7 +6,6 @@ import (
 	"time"
 	"github.com/auth0/go-jwt-middleware"
 	"math/rand"
-	"encoding/json"
 	"fmt"
 	"ru/sbt/estima/model"
 	"strings"
@@ -20,8 +19,14 @@ const (
 	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
 )
 
-var src = rand.NewSource(time.Now().UnixNano())
+// Function calulates random secret key for crypting auth coockie or header
 func randStringBytesMaskImprSrc(n int) string {
+	secret := conf.LoadConfig().Secret
+	if secret != "" {
+		return secret
+	}
+
+	var src = rand.NewSource(time.Now().UnixNano())
 	b := make([]byte, n)
 	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
 	for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {
@@ -39,42 +44,10 @@ func randStringBytesMaskImprSrc(n int) string {
 	return string(b)
 }
 
+// Secret key, can be defined in confi.json file otherwize calculate using randomStringBuyesMaskImprSrc function
 var mySigningKey = []byte(randStringBytesMaskImprSrc(64))
-var GetTokenHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
-	defer (func() {
-		if r := recover(); r != nil {
-			fmt.Println("Recovered in GetTokenHandler:", r)
-			var err model.ErrorObj = model.ErrorObj{
-				"get-token",
-				fmt.Sprint(r),
-				"001",
-			}
-			js, _ := json.Marshal(err)
-			w.Header().Set("Content-Type", "application/json;utf-8")
-			w.Write([]byte(js))
-		}
-	})()
 
-	username := r.URL.Query().Get("uname")
-	password := r.URL.Query().Get("upass")
-	if username == "" || password == "" {
-		panic("Username or/and password doesn't provided")
-	}
-
-	// Get user from LDAP
-	user, err := model.FindUser(username, password)
-	if err != nil {
-		panic(err)
-	}
-
-	// Update user information in database
-	userEntity, err := NewUserDao ().Save(*user)
-	if err != nil {
-		panic(err)
-	}
-
-	*user = userEntity.(model.EstimaUser)
-
+func createCookie (user model.EstimaUser, w http.ResponseWriter) {
 	/* Create the token */
 	token := jwt.New(jwt.SigningMethodHS256)
 
@@ -87,6 +60,7 @@ var GetTokenHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Reque
 	claims["mail"] = user.Email
 	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
 	claims["uid"] = user.Uid
+	claims["roles"] = user.Roles
 
 	/* Sign the token with our secret */
 	tokenString, _ := token.SignedString(mySigningKey)
@@ -105,11 +79,52 @@ var GetTokenHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Reque
 		false,
 		"",
 		nil})
+}
+
+// Function generate new auth token (JWT) and store it in cookie. Also this function store user information in database
+// if this user not exists yet
+var GetTokenHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
+	defer (func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in GetTokenHandler:", r)
+			model.WriteResponse (false, fmt.Sprint(r), nil, w)
+		}
+	})()
+
+	username := r.URL.Query().Get("uname")
+	password := r.URL.Query().Get("upass")
+	if username == "" || password == "" {
+		panic("Username or/and password doesn't provided")
+	}
+
+	// Get user from LDAP
+	user, err := model.FindUser(username, password)
+	if err != nil {
+		panic(err)
+	}
+
+	// Try to find information from database
+	dao := NewUserDao ()
+	userEntity, err := dao.FindOne(*user)
+	if err != nil {
+		panic(err)
+	}
+
+	// If user not found
+	if userEntity.AraDoc().Id == "" {
+		// Update user information in database
+		userEntity, err = NewUserDao().Save(*user)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	createCookie(userEntity.(model.EstimaUser), w)
 
 	/* Finally, write the token to the browser window */
-	w.Header().Set("Content-Type", "application/json;utf-8")
-	w.Write([]byte("{success: true}"))
+	model.WriteResponse (true, nil, userEntity, w)
 })
+
 
 //
 // Using cookies to authenticate user
@@ -122,7 +137,6 @@ func FromAuthCookie(r *http.Request) (string, error) {
 			return "", nil // No error, just no token
 		}
 
-		// TODO: Make this a bit more robust, parsing-wise
 		authHeaderParts := strings.Split(authHeader.Value, " ")
 		if len(authHeaderParts) != 2 || strings.ToLower(authHeaderParts[0]) != "bearer" {
 			return "", fmt.Errorf("Authorization cookie format must be Bearer {token}")

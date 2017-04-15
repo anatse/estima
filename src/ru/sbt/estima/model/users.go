@@ -9,19 +9,24 @@ import (
 	"encoding/base64"
 	"gopkg.in/ldap.v2"
 	"ru/sbt/estima/conf"
+	"net/http"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/context"
 )
+
 
 type EstimaUser struct {
 	ara.Document `json:-`
-	Name     string `json:",omitempty"`
-	Email    string `json:",omitempty"`
+
+	Name     string `json:"name,omitempty", unique:"users"`
+	Email    string `json:"email,omitempty, unique:"users""`
 	Password string  `json:"-"`
-	DisplayName  string `json:",omitempty"`
-	Uid string `json:",omitempty"`
-	Roles	[]string `json:",omitempty"`
+	DisplayName  string `json:"displayName,omitempty"`
+	Uid string `json:"uid,omitempty", unique:"users"`
+	Roles	[]string `json:"roles,omitempty"`
 }
 
-func NewUser (name string, email string, password string, displayName string, uid string) *EstimaUser {
+func NewUser (name string, email string, password string, displayName string, uid string, roles []string) *EstimaUser {
 	var pwd string
 
 	if password != "" {
@@ -34,22 +39,37 @@ func NewUser (name string, email string, password string, displayName string, ui
 	user.DisplayName = displayName
 	user.Password = pwd
 	user.Uid = uid
-
-	var entity Entity = user
-	println(entity)
+	user.Roles = roles
 
 	return &user
+}
+
+type omit *struct{}
+func (user EstimaUser) Entity() interface{} {
+	return struct{
+		*EstimaUser
+
+		OmitId  omit `json:"_id,omitempty"`
+		OmitRev omit `json:"_rev,omitempty"`
+		OmitKey omit `json:"_key,omitempty"`
+
+		OmitError   omit   `json:"error,omitempty"`
+		OmitMessage omit `json:"errorMessage,omitempty"`
+	} {
+		&user,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+	}
 }
 
 func (user EstimaUser) AraDoc() (ara.Document) {
 	return user.Document
 }
 
-func (user EstimaUser) ToJson () ([]byte, error) {
-	return json.Marshal(user)
-}
-
-func (user EstimaUser) Copy (entity Entity) {
+func (user EstimaUser) Copy (entity Entity) Entity {
 	var from EstimaUser = entity.(EstimaUser)
 	user.Name = from.Name
 	user.Email = from.Email
@@ -57,21 +77,48 @@ func (user EstimaUser) Copy (entity Entity) {
 	user.Password = from.Password
 	user.Document = from.Document
 	user.Uid = from.Uid
+	user.Roles = from.Roles
+	return user
 }
 
-func (user EstimaUser) FromJson (jsUser []byte) (error) {
+func (user EstimaUser) FromJson (jsUser []byte) (Entity, error) {
 	var retUser EstimaUser
 	err := json.Unmarshal(jsUser, &retUser)
-	if err == nil {
-		user.Copy(retUser)
+	if err != nil {
+		panic(err)
 	}
 
-	return err
+	return retUser, err
+}
+
+func (user EstimaUser)GetKey() string {
+	return user.Name
+}
+
+func (user EstimaUser) GetCollection() string {
+	return "users"
+}
+
+func (user EstimaUser) GetError()(string, bool){
+	// default error bool and messages. Could be any kind of error
+	return user.Message, user.Error
+}
+
+func printLdapAttrs (sr *ldap.SearchResult) {
+	for i:=0;i<len(sr.Entries);i++ {
+		entry := sr.Entries[i]
+		for a:=0;a<len(entry.Attributes);a++ {
+			attr := entry.Attributes[a]
+			fmt.Println(attr.Name + " = " + attr.Values[0])
+		}
+		fmt.Println("----------------------------------------")
+	}
 }
 
 /**
  Function used to check user name and password through the LDAP.
  Additional documentation about LDAP library located here https://godoc.org/gopkg.in/ldap.v2
+ This configuration only for ActiveDirectory installation
  */
 func FindUser (username string, password string) (retUser *EstimaUser, retErr error) {
 	defer func() {
@@ -89,11 +136,9 @@ func FindUser (username string, password string) (retUser *EstimaUser, retErr er
 	}
 	defer l.Close()
 
-	cn := fmt.Sprintf("cn=%s,%s", username, config.Ldap.Dn)
-	println ("cn: " + cn)
-	println ("user: " + username)
+	// cn := fmt.Sprintf("cn=%s,%s", username, config.Ldap.Dn)
 	// Authenticate using given username and password
-	err = l.Bind(cn, password)
+	err = l.Bind(username, password)
 	if err != nil {
 		log.Panic(err)
 		println ("error occurred")
@@ -104,7 +149,7 @@ func FindUser (username string, password string) (retUser *EstimaUser, retErr er
 	searchRequest := ldap.NewSearchRequest (
 		config.Ldap.Dn,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases,
-		20,
+		10,
 		0,
 		false,
 		fmt.Sprintf("(&(objectClass=person)(cn=%s))", username),
@@ -117,22 +162,37 @@ func FindUser (username string, password string) (retUser *EstimaUser, retErr er
 		log.Print(err)
 	}
 
-	//for i:=0;i<len(sr.Entries);i++ {
-	//	entry := sr.Entries[i]
-	//	for a:=0;a<len(entry.Attributes);a++ {
-	//		attr := entry.Attributes[a]
-	//		fmt.Println(attr.Name + " = " + attr.Values[0])
-	//	}
-	//	fmt.Println("----------------------------------------")
-	//}
-
 	entry := sr.Entries[0]
 	retUser = NewUser(
 		username,
 		entry.GetAttributeValue("mail"),
 		password,
 		entry.GetAttributeValue("sn"),
-		entry.GetAttributeValue("uid"))
+		entry.GetAttributeValue("uid"),
+		nil)
 
 	return retUser, retErr
+}
+
+func GetUserFromRequest (w http.ResponseWriter, r *http.Request) (*EstimaUser) {
+	user := context.Get(r, "user")
+	claims := user.(*jwt.Token).Claims.(jwt.MapClaims)
+	var roles []string
+	rolesClaim := claims["roles"]
+	if rolesClaim != nil {
+		rolesInterface := rolesClaim.([]interface{})
+		roles = make([]string, len(rolesInterface))
+		for i := range rolesInterface {
+			roles[i] = rolesInterface[i].(string)
+		}
+	}
+
+	return NewUser(
+		claims["name"].(string),
+		claims["mail"].(string),
+		"",
+		claims["displayName"].(string),
+		claims["uid"].(string),
+		roles,
+	)
 }

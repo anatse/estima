@@ -28,6 +28,7 @@ type Auth struct {
 
 type Profile struct {
 	Name string
+	Secret string
 	Ldap	Ldap
 	Database Database
 	Auth Auth
