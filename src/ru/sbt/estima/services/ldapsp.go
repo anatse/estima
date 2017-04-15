@@ -46,6 +46,7 @@ func randStringBytesMaskImprSrc(n int) string {
 
 // Secret key, can be defined in confi.json file otherwize calculate using randomStringBuyesMaskImprSrc function
 var mySigningKey = []byte(randStringBytesMaskImprSrc(64))
+var config = conf.LoadConfig()
 
 func createCookie (user model.EstimaUser, w http.ResponseWriter) {
 	/* Create the token */
@@ -64,9 +65,7 @@ func createCookie (user model.EstimaUser, w http.ResponseWriter) {
 
 	/* Sign the token with our secret */
 	tokenString, _ := token.SignedString(mySigningKey)
-
 	w.Header().Add("Authorization", "Bearer " + tokenString)
-	var config = conf.LoadConfig()
 	http.SetCookie(w, &http.Cookie {
 		config.Auth.CookieName,
 		"Bearer " + tokenString,
@@ -98,9 +97,15 @@ var GetTokenHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Get user from LDAP
-	user, err := model.FindUser(username, password)
-	if err != nil {
-		panic(err)
+	var user *model.EstimaUser
+	var err error
+	if config.Ldap.Protocol == "fake" {
+		user = model.NewUser(username, username + "@fake.com", password, username, "", nil)
+	} else {
+		user, err = model.FindUser(username, password)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	// Try to find information from database

@@ -201,7 +201,7 @@ func (ps *ProjectService)getDao() projectDao {
 
 func (ps ProjectService) userProjects (w http.ResponseWriter, r *http.Request) {
 	user := model.GetUserFromRequest (w, r)
-
+	fmt.Println(user)
 }
 
 func (ps *ProjectService) ConfigRoutes (router *mux.Router, handler HandlerOfHandlerFunc) {

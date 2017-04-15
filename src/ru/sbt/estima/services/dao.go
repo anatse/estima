@@ -100,7 +100,7 @@ func (dao baseDao) buildQuery (daoFilter DaoFilter)(string, map[string]interface
 
 			filter.WriteString(" rec.")
 			filter.WriteString(key)
-			filter.WriteString(value.CmpOperand)
+			filter.WriteString(" " + value.CmpOperand)
 			filter.WriteString(" @")
 			filter.WriteString(key)
 			filterMap[key] = value.Value

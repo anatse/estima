@@ -6,8 +6,6 @@ import (
 	"ru/sbt/estima/conf"
 	"github.com/gorilla/mux"
 	"net/http"
-	"io"
-	"io/ioutil"
 )
 
 type userDao struct {
@@ -122,7 +120,7 @@ func (us *UserService) list (w http.ResponseWriter, r *http.Request) {
 
 	// Check user role in RTE or ARCHITECTOR
 	if !us.checkRoles(*user, func(role string) bool {
-		return role == "RTE" || role == "ARCHITECTOR"
+		return role == ROLE_RTE || role == ROLE_ARCHITECTOR
 	}) {
 		panic ("Insufficient privilegies")
 	}
@@ -135,40 +133,43 @@ func (us *UserService) list (w http.ResponseWriter, r *http.Request) {
 	model.WriteArrayResponse (true, nil, users, w)
 }
 
-func (us *UserService) create (w http.ResponseWriter, r *http.Request) {
-	bodySize := r.ContentLength
-	body, err := ioutil.ReadAll(io.LimitReader(r.Body, bodySize))
-	if err != nil {
-		panic (err)
+func (us *UserService) search (w http.ResponseWriter, r *http.Request) {
+	user := model.GetUserFromRequest (w, r)
+
+	// Check user role in RTE or ARCHITECTOR
+	if !us.checkRoles(*user, func(role string) bool {
+		return role == ROLE_RTE || role == ROLE_ARCHITECTOR
+	}) {
+		panic ("Insufficient privilegies")
 	}
 
-	var user model.EstimaUser
-	entity, err := user.FromJson(body)
+	nameToFind := r.URL.Query().Get("name")
+	if nameToFind == "" {
+		panic("Paramter name not provided")
+	}
+
+	nameToFind = "%" + nameToFind + "%"
+	users, err := us.getDao().FindAll (NewFilter().Filter("name", "like", nameToFind).Sort("name", true), 0, 0)
 	if err != nil {
 		panic(err)
 	}
 
-	entity, err = us.getDao().Save(entity)
+	model.WriteArrayResponse (true, nil, users, w)
+}
+
+func (us *UserService) create (w http.ResponseWriter, r *http.Request) {
+	var user model.EstimaUser
+	entity := ReadJsonBody (w, r, user)
+	entity, err := us.getDao().Save(entity)
+	if err != nil {
+		panic(err)
+	}
 	model.WriteResponse(true, nil, entity, w)
 }
 
 func (us *UserService) ConfigRoutes (router *mux.Router, handler HandlerOfHandlerFunc) {
 	router.Handle ("/users/current", handler(http.HandlerFunc(us.currentUser))).Methods("POST", "GET")
-	router.Handle ("/users/list", handler(http.HandlerFunc(us.list))).Methods("POST")
-	router.Handle ("/users", handler(http.HandlerFunc(us.create))).Methods("POST")
+	router.Handle ("/users/list", handler(http.HandlerFunc(us.list))).Methods("POST", "GET")
+	router.Handle ("/users/search", handler(http.HandlerFunc(us.search))).Methods("POST", "GET")
+	router.Handle ("/users/create", handler(http.HandlerFunc(us.create))).Methods("POST")
 }
-
-
-// Find users using dynamic filters and sorts
-//u, err := dao.FindOne(*eUser)
-//if err != nil {
-//	panic(err)
-//}
-
-//filter := services.NewFilter().
-//	Filter("Name", "==", "wps8admin").
-//	Filter("Email", "==", "wps8admin@sberbank.ru").
-//	Sort("Name", true)
-//userDao.FindAll(filter, 1, 1)
-
-//*eUser = (u.(model.EstimaUser))

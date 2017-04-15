@@ -5,7 +5,7 @@
       "name": "develop",
       "secret": "secret",
       "Ldap": {
-        "protocol": "tcp",
+        "protocol": "fake",
         "host": "10.21.25.74",
         "dn": "DC=testportal,DC=sbrf,DC=ru",
         "port": 389

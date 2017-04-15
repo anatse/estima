@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"ru/sbt/estima/model"
 	"fmt"
-	"github.com/go-errors/errors"
+	//"github.com/go-errors/errors"
 )
 
 //var NotImplemented = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -23,7 +23,7 @@ func JwtHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer (func() {
 			if r := recover(); r != nil {
-				log.Println(r.(*errors.Error).ErrorStack())
+				//log.Println(r.(*errors.Error).ErrorStack())
 				//fmt.Println("Recovered in Handler:", r)
 				model.WriteResponse(false, fmt.Sprint(r), nil, w)
 			}
