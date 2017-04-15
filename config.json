@@ -1,12 +1,13 @@
 {
-  "active": "test",
+  "active": "develop",
 
   "profiles": [{
       "name": "develop",
+      "secret": "secret",
       "Ldap": {
         "protocol": "tcp",
-        "host": "",
-        "dn": "",
+        "host": "10.21.25.74",
+        "dn": "DC=testportal,DC=sbrf,DC=ru",
         "port": 389
       },
       "Database": {
@@ -22,6 +23,7 @@
       }
     }, {
       "name": "test",
+      "secret": "secret",
       "Ldap": {
         "protocol": "tcp",
         "host": "ldap.forumsys.com",

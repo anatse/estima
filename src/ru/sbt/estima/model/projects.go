@@ -38,9 +38,6 @@ func (prj Project) Entity() interface{} {
 }
 
 func (prj Project) AraDoc() (ara.Document) {
-	var p Project
-	p.Status = "10"
-
 	return prj.Document
 }
 

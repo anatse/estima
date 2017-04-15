@@ -5,6 +5,8 @@ import (
 	"ru/sbt/estima/conf"
 	"ru/sbt/estima/model"
 	"fmt"
+	"github.com/gorilla/mux"
+	"net/http"
 )
 
 type projectDao struct {
@@ -77,6 +79,18 @@ func (dao projectDao) FindOne (prjEntity model.Entity) (model.Entity, error) {
 }
 
 func (dao projectDao) FindAll(daoFilter DaoFilter, offset int, pageSize int)([]model.Entity, error) {
+	cursor, err := dao.baseDao.findAll(daoFilter, PRJ_COLL, offset, pageSize)
+	var prj *model.Project = new(model.Project)
+	var projects []model.Entity
+	for cursor.FetchOne(prj) {
+		projects = append (projects, *prj)
+		prj = new(model.Project)
+	}
+
+	return projects, err
+}
+
+func (dao projectDao) FindByUser (daoFilter DaoFilter, offset int, pageSize int)([]model.Entity, error) {
 	cursor, err := dao.baseDao.findAll(daoFilter, PRJ_COLL, offset, pageSize)
 	var prj *model.Project = new(model.Project)
 	var projects []model.Entity
@@ -170,4 +184,28 @@ func (dao projectDao) Stages (prj model.Project) ([]model.Stage, error) {
 	}
 
 	return stages, err
+}
+
+// Function for REST services
+type ProjectService struct {
+	dao *projectDao
+}
+
+func (ps *ProjectService)getDao() projectDao {
+	if ps.dao == nil {
+		ps.dao = NewProjectDao()
+	}
+
+	return *ps.dao
+}
+
+func (ps ProjectService) userProjects (w http.ResponseWriter, r *http.Request) {
+	user := model.GetUserFromRequest (w, r)
+
+}
+
+func (ps *ProjectService) ConfigRoutes (router *mux.Router, handler HandlerOfHandlerFunc) {
+	//router.Handle ("/prj/current", handler(http.HandlerFunc(us.currentUser))).Methods("POST", "GET")
+	//router.Handle ("/prj/list", handler(http.HandlerFunc(us.list))).Methods("POST")
+	//router.Handle ("/prj", handler(http.HandlerFunc(us.create))).Methods("POST")
 }
