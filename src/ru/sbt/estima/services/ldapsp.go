@@ -130,7 +130,6 @@ var GetTokenHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Reque
 	model.WriteResponse (true, nil, userEntity, w)
 })
 
-
 //
 // Using cookies to authenticate user
 //

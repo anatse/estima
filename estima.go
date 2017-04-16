@@ -10,6 +10,7 @@ import (
 	"ru/sbt/estima/model"
 	"fmt"
 	//"github.com/go-errors/errors"
+	"reflect"
 )
 
 //var NotImplemented = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -42,6 +43,15 @@ func JwtHandler(h http.Handler) http.Handler {
 	})
 }
 
+func typeSwitch(tst interface{}) {
+	switch v := tst.(type) {
+		case *mux.Route:
+			fmt.Println("Routes:", v)
+		default:
+			fmt.Println("Unknown", v)
+	}
+}
+
 func main() {
 	r := mux.NewRouter()
 	r.Handle("/get-token", services.GetTokenHandler).Methods("GET")
@@ -50,7 +60,21 @@ func main() {
 	var us services.UserService
 	us.ConfigRoutes(r, JwtHandler)
 
+	// Add project routers
+	var ps services.ProjectService
+	ps.ConfigRoutes(r, JwtHandler)
+
+	// add static router
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./views")))
+
+	//val := reflect.Indirect(reflect.ValueOf(r))
+	v := reflect.ValueOf(r)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	routes := v.FieldByName("routes")
+	typeSwitch (routes)
 
 	//err := http.ListenAndServeTLS(":9443", "server.crt", "server.key", handlers.LoggingHandler(os.Stdout, r))
 	err := http.ListenAndServe(":9080", handlers.LoggingHandler(os.Stdout, r))

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"strconv"
 )
 
 type projectDao struct {
@@ -15,6 +16,7 @@ type projectDao struct {
 
 const (
 	PRJ_COLL = "projects"
+	PRJ_STG_COLL = "prjstage"
 	PRJ_EDGES = "prjedges"
 
 	PRJ_USERS_GRAPH = "prjusers"
@@ -90,10 +92,20 @@ func (dao projectDao) FindAll(daoFilter DaoFilter, offset int, pageSize int)([]m
 	return projects, err
 }
 
-func (dao projectDao) FindByUser (daoFilter DaoFilter, offset int, pageSize int)([]model.Entity, error) {
-	cursor, err := dao.baseDao.findAll(daoFilter, PRJ_COLL, offset, pageSize)
+func (dao projectDao) FindByUser (user model.EstimaUser, offset int, pageSize int)([]model.Entity, error) {
+	sql := fmt.Sprintf(`FOR v, e, p IN 1..1 INBOUND @startId GRAPH '%s'
+	       RETURN v`, PRJ_USERS_GRAPH)
+
+	filterMap := make(map[string]interface{})
+	filterMap["startId"] = user.Id
+
+	var query ara.Query
+	query.Aql = sql
+	query.BindVars = filterMap
+
 	var prj *model.Project = new(model.Project)
 	var projects []model.Entity
+	cursor, err := dao.Database().Execute(&query)
 	for cursor.FetchOne(prj) {
 		projects = append (projects, *prj)
 		prj = new(model.Project)
@@ -106,9 +118,7 @@ func (dao projectDao) Users (prj model.Project, roles []string) ([]model.EstimaU
 	// https://docs.arangodb.com/3.1/AQL/Graphs/Traversals.html
 	sql := fmt.Sprintf(`FOR v, e, p IN 1..1 OUTBOUND @startId GRAPH '%s'
 	       FILTER p.edges[0].role in @roles
-	       RETURN p`, PRJ_USERS_GRAPH)
-
-	println(sql)
+	       RETURN v`, PRJ_USERS_GRAPH)
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = prj.Id
@@ -148,9 +158,12 @@ func (dao projectDao) RemoveUser (prj model.Project, user model.EstimaUser) erro
 }
 
 func (dao projectDao) AddStage (prj model.Project, stage model.Stage) error {
-	if stage.Id == "" || prj.Id == "" {
+	if prj.Id == "" {
 		panic("Some identifiers are not set")
 	}
+
+	// save stage if it's does not saved yet
+	stage = dao.CreateStage(prj, stage)
 
 	var puEdge model.Project2UserEdge
 	puEdge.SetKey(prj.Key + "2" + stage.Key)
@@ -162,11 +175,18 @@ func (dao projectDao) RemoveStage (prj model.Project, stage model.Stage) error {
 		panic("Some identifiers are not set")
 	}
 
+	// remove stage
+	err := dao.database.Col(PRJ_STG_COLL).Delete(stage.Key)
+	if err != nil {
+		panic(err)
+	}
+
+	// remove edge between project and stage
 	return dao.database.Col(PRJ_EDGES).Delete(prj.Key + "2" + stage.Key)
 }
 
 func (dao projectDao) Stages (prj model.Project) ([]model.Stage, error) {
-	sql := fmt.Sprintf(`FOR v, e, p IN 1..1 OUTBOUND @startId GRAPH '%s' RETURN p`, PRJ_STAGeS_GRAPH)
+	sql := fmt.Sprintf(`FOR v, e, p IN 1..1 OUTBOUND @startId GRAPH '%s' RETURN v`, PRJ_STAGeS_GRAPH)
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = prj.Id
@@ -186,6 +206,22 @@ func (dao projectDao) Stages (prj model.Project) ([]model.Stage, error) {
 	return stages, err
 }
 
+func (dao projectDao) CreateStage (prj model.Project, stage model.Stage) model.Stage {
+	var stageKey string = prj.Key + "_" + stage.Key
+	err := dao.database.Col(PRJ_STG_COLL).Get(stageKey, &stage)
+	if err != nil {
+		panic(err)
+	}
+
+	if stage.Id != "" {
+		stage.SetKey(stageKey)
+		dao.database.Col(PRJ_STG_COLL).Save(&stage)
+	}
+
+	return stage
+}
+
+
 // Function for REST services
 type ProjectService struct {
 	dao *projectDao
@@ -200,12 +236,38 @@ func (ps *ProjectService)getDao() projectDao {
 }
 
 func (ps ProjectService) userProjects (w http.ResponseWriter, r *http.Request) {
+	prjKey := mux.Vars(r)["prjId"]
+	roles := r.URL.Query()["roles"]
+
+	var prj model.Project
+	prj.Key = prjKey
+	prjEntity, err := ps.dao.FindOne(prj)
+	if err != nil {
+		panic(err)
+	}
+
+	ps.dao.Users(prjEntity.(model.Project), roles)
+
+	// Write response
+	model.WriteResponse(true, nil, prjEntity, w)
+}
+
+func (ps ProjectService) findOne (w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (ps ProjectService) findByUser (w http.ResponseWriter, r *http.Request) {
 	user := model.GetUserFromRequest (w, r)
-	fmt.Println(user)
+	offset, _ := strconv.Atoi (r.URL.Query().Get("offset"))
+	pageSize, _ := strconv.Atoi (r.URL.Query().Get("pageSize"))
+
+	projects, _ := ps.dao.FindByUser(*user, offset, pageSize)
+
+	// Write array response
+	model.WriteArrayResponse(true, nil, projects, w)
 }
 
 func (ps *ProjectService) ConfigRoutes (router *mux.Router, handler HandlerOfHandlerFunc) {
-	//router.Handle ("/prj/current", handler(http.HandlerFunc(us.currentUser))).Methods("POST", "GET")
-	//router.Handle ("/prj/list", handler(http.HandlerFunc(us.list))).Methods("POST")
-	//router.Handle ("/prj", handler(http.HandlerFunc(us.create))).Methods("POST")
+	router.Handle ("/project/{id}/user/list", handler(http.HandlerFunc(ps.userProjects))).Methods("POST", "GET")
+	router.Handle ("/user/projects", handler(http.HandlerFunc(ps.userProjects))).Methods("POST", "GET")
 }
