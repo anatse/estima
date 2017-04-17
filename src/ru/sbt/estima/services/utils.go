@@ -5,6 +5,8 @@ import (
 	"io"
 	"ru/sbt/estima/model"
 	"io/ioutil"
+	"net/url"
+	"strconv"
 )
 
 func ReadJsonBody (w http.ResponseWriter, r *http.Request, entity model.Entity)(model.Entity) {
@@ -20,4 +22,14 @@ func ReadJsonBody (w http.ResponseWriter, r *http.Request, entity model.Entity)(
 	}
 
 	return ret
+}
+
+func GetInt (values url.Values, name string,  def int) int {
+	val := values.Get(name)
+	if val != "" {
+		iVal, _ := strconv.Atoi(val)
+		return iVal
+	}
+
+	return def
 }

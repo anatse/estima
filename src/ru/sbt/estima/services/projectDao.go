@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
-	"strconv"
 )
 
 type projectDao struct {
@@ -241,7 +240,7 @@ func (ps ProjectService) userProjects (w http.ResponseWriter, r *http.Request) {
 
 	var prj model.Project
 	prj.Key = prjKey
-	prjEntity, err := ps.dao.FindOne(prj)
+	prjEntity, err := ps.getDao().FindOne(prj)
 	if err != nil {
 		panic(err)
 	}
@@ -258,10 +257,11 @@ func (ps ProjectService) findOne (w http.ResponseWriter, r *http.Request) {
 
 func (ps ProjectService) findByUser (w http.ResponseWriter, r *http.Request) {
 	user := model.GetUserFromRequest (w, r)
-	offset, _ := strconv.Atoi (r.URL.Query().Get("offset"))
-	pageSize, _ := strconv.Atoi (r.URL.Query().Get("pageSize"))
 
-	projects, _ := ps.dao.FindByUser(*user, offset, pageSize)
+	offset := GetInt (r.URL.Query(), "offset", 0)
+	pageSize := GetInt (r.URL.Query(), "pageSize", 0)
+
+	projects, _ := ps.getDao().FindByUser(*user, offset, pageSize)
 
 	// Write array response
 	model.WriteArrayResponse(true, nil, projects, w)
@@ -269,5 +269,5 @@ func (ps ProjectService) findByUser (w http.ResponseWriter, r *http.Request) {
 
 func (ps *ProjectService) ConfigRoutes (router *mux.Router, handler HandlerOfHandlerFunc) {
 	router.Handle ("/project/{id}/user/list", handler(http.HandlerFunc(ps.userProjects))).Methods("POST", "GET")
-	router.Handle ("/user/projects", handler(http.HandlerFunc(ps.userProjects))).Methods("POST", "GET")
+	router.Handle ("/user/projects", handler(http.HandlerFunc(ps.findByUser))).Methods("POST", "GET")
 }
