@@ -8,13 +8,15 @@ import (
 type Project struct {
 	ara.Document `json:-`
 	Name     string `json:"name,omitempty", unique:"projects"`
-	Description string `json:"descriptio,omitempty"`
+	Description string `json:"description,omitempty"`
 	Status string `json:"status"`
 }
 
-type Project2UserEdge struct {
-	ara.Document
-	role string
+func NewPrj (name string) Project {
+	var prj Project
+	prj.Name = name
+	prj.SetKey(name)
+	return prj
 }
 
 func (prj Project) Entity() interface{} {
@@ -76,6 +78,13 @@ type Stage struct {
 	Name     string `json:"name,omitempty", unique:"projects"`
 	Description string `json:"descriptio,omitempty"`
 	Status string `json:"status"`
+}
+
+func NewStage (name string) Stage {
+	var prj Stage
+	prj.Name = name
+	prj.SetKey(name)
+	return prj
 }
 
 func (stage Stage) Entity() interface{} {

@@ -80,18 +80,7 @@ func createCookie (user model.EstimaUser, w http.ResponseWriter) {
 		nil})
 }
 
-// Function generate new auth token (JWT) and store it in cookie. Also this function store user information in database
-// if this user not exists yet
-var GetTokenHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
-	defer (func() {
-		if r := recover(); r != nil {
-			fmt.Println("Recovered in GetTokenHandler:", r)
-			model.WriteResponse (false, fmt.Sprint(r), nil, w)
-		}
-	})()
-
-	username := r.URL.Query().Get("uname")
-	password := r.URL.Query().Get("upass")
+func login (w http.ResponseWriter, username string, password string) {
 	if username == "" || password == "" {
 		panic("Username or/and password doesn't provided")
 	}
@@ -128,6 +117,45 @@ var GetTokenHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Reque
 
 	/* Finally, write the token to the browser window */
 	model.WriteResponse (true, nil, userEntity, w)
+}
+
+var Login = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
+	defer (func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in Login:", r)
+			model.WriteResponse (false, fmt.Sprint(r), nil, w)
+		}
+	})()
+
+	var li struct {
+		Uname string `json:"uname"`
+		Upass string `json:"upass"`
+	}
+
+	err := ReadJsonBodyAny(r, &li)
+	if err != nil {
+		panic(err)
+	}
+
+	username := li.Uname
+	password := li.Upass
+	login(w, username, password)
+
+})
+
+// Function generate new auth token (JWT) and store it in cookie. Also this function store user information in database
+// if this user not exists yet
+var GetTokenHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
+	defer (func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in GetTokenHandler:", r)
+			model.WriteResponse (false, fmt.Sprint(r), nil, w)
+		}
+	})()
+
+	username := r.URL.Query().Get("uname")
+	password := r.URL.Query().Get("upass")
+	login(w, username, password)
 })
 
 //

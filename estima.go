@@ -60,6 +60,7 @@ func getRoutes (router *mux.Router) []routeInfo {
 		rp := (*mux.Route)(unsafe.Pointer (route.Pointer()))
 
 		path, _ := rp.GetPathTemplate()
+		rp.GetName()
 		ris[i] = routeInfo{
 			rp.GetName(),
 			path,
@@ -70,21 +71,23 @@ func getRoutes (router *mux.Router) []routeInfo {
 }
 
 func main() {
-	r := mux.NewRouter()
-	r.Handle("/get-token", services.GetTokenHandler).Methods("GET").Name("Login router")
-
-	// Add user routers
 	var us services.UserService
-	us.ConfigRoutes(r, JwtHandler)
-
-	// Add project routers
 	var ps services.ProjectService
+
+	services.RegisterService("user", us)
+	services.RegisterService("project", ps)
+
+	r := mux.NewRouter()
+	r.Handle("/get-token", services.GetTokenHandler).Methods("GET").Name("Login router (GET). Query parameters uname & upass")
+	r.Handle("/login", services.Login).Methods("POST").Name("Login router (POST). Body: uname & upass")
+
+	us.ConfigRoutes(r, JwtHandler)
 	ps.ConfigRoutes(r, JwtHandler)
 
 	// Function build router for get router information
 	var routesInformation = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		js, _ := json.Marshal(getRoutes(r))
-		w.Header().Set("Content-Type", "application/json;utf-8")
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.Write([]byte(js))
 	})
 

@@ -145,7 +145,7 @@ func (us *UserService) search (w http.ResponseWriter, r *http.Request) {
 
 	nameToFind := r.URL.Query().Get("name")
 	if nameToFind == "" {
-		panic("Paramter name not provided")
+		panic("Parameter name not provided")
 	}
 
 	nameToFind = "%" + nameToFind + "%"
@@ -159,7 +159,7 @@ func (us *UserService) search (w http.ResponseWriter, r *http.Request) {
 
 func (us *UserService) create (w http.ResponseWriter, r *http.Request) {
 	var user model.EstimaUser
-	entity := ReadJsonBody (w, r, user)
+	entity := ReadJsonBody (r, user)
 	entity, err := us.getDao().Save(entity)
 	if err != nil {
 		panic(err)
@@ -168,8 +168,8 @@ func (us *UserService) create (w http.ResponseWriter, r *http.Request) {
 }
 
 func (us *UserService) ConfigRoutes (router *mux.Router, handler HandlerOfHandlerFunc) {
-	router.Handle ("/users/current", handler(http.HandlerFunc(us.currentUser))).Methods("POST", "GET")
-	router.Handle ("/users/list", handler(http.HandlerFunc(us.list))).Methods("POST", "GET")
-	router.Handle ("/users/search", handler(http.HandlerFunc(us.search))).Methods("POST", "GET")
-	router.Handle ("/users/create", handler(http.HandlerFunc(us.create))).Methods("POST")
+	router.Handle ("/users/current", handler(http.HandlerFunc(us.currentUser))).Methods("POST", "GET").Name("Current user")
+	router.Handle ("/users/list", handler(http.HandlerFunc(us.list))).Methods("POST", "GET").Name("List of all users")
+	router.Handle ("/users/search", handler(http.HandlerFunc(us.search))).Methods("POST", "GET").Name("Search users")
+	router.Handle ("/users/create", handler(http.HandlerFunc(us.create))).Methods("POST").Name(("Create or update user"))
 }

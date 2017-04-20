@@ -33,6 +33,11 @@ func NewFilter () DaoFilter {
 }
 
 func (flt DaoFilter) Filter (field string, compare string, value interface{}) DaoFilter {
+	// Skip if empty
+	if value == "" {
+		return flt
+	}
+
 	fltVal := FilterValue{compare, value}
 	if flt.Params == nil {
 		flt.Params = make(map[string]FilterValue)

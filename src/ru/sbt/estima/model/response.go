@@ -11,6 +11,11 @@ type ResponseObj struct {
 	Body  interface{} `json:"body,omitempty"`
 }
 
+func writeJson (w http.ResponseWriter, js []byte) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Write(js)
+}
+
 // Function write response object attributes as JSON to http response
 func WriteResponse (success bool, errorMsg interface{}, body Entity, w http.ResponseWriter) {
 	var entity interface{}
@@ -25,8 +30,7 @@ func WriteResponse (success bool, errorMsg interface{}, body Entity, w http.Resp
 	}
 
 	js, _ := json.Marshal(resp)
-	w.Header().Set("Content-Type", "application/json;utf-8")
-	w.Write([]byte(js))
+	writeJson(w, js)
 }
 
 // Function write reponse object for array of entities
@@ -34,7 +38,7 @@ func WriteArrayResponse (success bool, errorMsg interface{}, body []Entity, w ht
 	var entities []interface{} = make([]interface{}, len(body))
 
 	for index, entity := range body {
-		entities[index] = entity.Entity()
+		entities[index] = entity.(Entity).Entity()
 	}
 
 	var resp ResponseObj = ResponseObj{
@@ -44,6 +48,5 @@ func WriteArrayResponse (success bool, errorMsg interface{}, body []Entity, w ht
 	}
 
 	js, _ := json.Marshal(resp)
-	w.Header().Set("Content-Type", "application/json;utf-8")
-	w.Write([]byte(js))
+	writeJson(w, js)
 }
