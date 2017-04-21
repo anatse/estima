@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"crypto/sha1"
-	"encoding/json"
 	"encoding/base64"
 	"gopkg.in/ldap.v2"
 	"ru/sbt/estima/conf"
@@ -67,28 +66,6 @@ func (user EstimaUser) Entity() interface{} {
 
 func (user EstimaUser) AraDoc() (ara.Document) {
 	return user.Document
-}
-
-func (user EstimaUser) Copy (entity Entity) Entity {
-	var from EstimaUser = entity.(EstimaUser)
-	user.Name = from.Name
-	user.Email = from.Email
-	user.DisplayName = from.DisplayName
-	user.Password = from.Password
-	user.Document = from.Document
-	user.Uid = from.Uid
-	user.Roles = from.Roles
-	return user
-}
-
-func (user EstimaUser) FromJson (jsUser []byte) (Entity, error) {
-	var retUser EstimaUser
-	err := json.Unmarshal(jsUser, &retUser)
-	if err != nil {
-		panic(err)
-	}
-
-	return retUser, err
 }
 
 func (user EstimaUser)GetKey() string {

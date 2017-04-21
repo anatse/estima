@@ -4,7 +4,7 @@ import (
 	ara "github.com/diegogub/aranGO"
 )
 
-type Feature struct {
+type Comment struct {
 	ara.Document `json:-`
 	Name string `json:"name,omitempty" required`
 	Text string `json:"text,omitempty"`
@@ -12,9 +12,9 @@ type Feature struct {
 	Version int `json:"version" required`
 }
 
-func (fea *Feature) Entity() interface{} {
+func (com Comment) Entity() interface{} {
 	return struct{
-		*Feature
+		*Comment
 
 		OmitId  omit `json:"_id,omitempty"`
 		OmitRev omit `json:"_rev,omitempty"`
@@ -23,7 +23,7 @@ func (fea *Feature) Entity() interface{} {
 		OmitError   omit   `json:"error,omitempty"`
 		OmitMessage omit `json:"errorMessage,omitempty"`
 	} {
-		fea,
+		&com,
 		nil,
 		nil,
 		nil,
@@ -32,19 +32,19 @@ func (fea *Feature) Entity() interface{} {
 	}
 }
 
-func (fea *Feature) AraDoc() (ara.Document) {
-	return fea.Document
+func (com Comment) AraDoc() (ara.Document) {
+	return com.Document
 }
 
-func (fea Feature)GetKey() string {
-	return fea.Name
+func (com Comment)GetKey() string {
+	return com.Name
 }
 
-func (fea Feature) GetCollection() string {
-	return "features"
+func (com Comment) GetCollection() string {
+	return "comments"
 }
 
-func (fea Feature) GetError()(string, bool) {
+func (com Comment) GetError()(string, bool) {
 	// default error bool and messages. Could be any kind of error
-	return fea.Message, fea.Error
+	return com.Message, com.Error
 }

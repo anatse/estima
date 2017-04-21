@@ -15,27 +15,6 @@ type projectDao struct {
 	baseDao
 }
 
-const (
-	PRJ_COLL = "projects"
-	PRJ_STG_COLL = "prjstage"
-	PRJ_EDGES = "prjedges"
-
-	PRJ_GRAPH = "prjusers"
-
-	// Roles
-	ROLE_PO = "PO" 			// Product Owner
-	ROLE_RTE = "RTE" 		// Release Train Engineer
-	ROLE_ARCHITECTOR = "ARCHITECT" 	// Architector
-	ROLE_BA = "BA"			// Business Analitic
-	ROLE_SA = "SA"			// System Analitic
-	ROLE_SM = "SM"			// Scram Master
-	ROLE_DEV = "DEV"		// Developer
-	ROLE_BP = "BP"			// Business Partner
-	ROLE_TPM = "TPM"		// Technical Project Manager
-	ROLE_PM = "PM"			// Project Manager
-	ROLE_VSE = "VSE"		// Something else
-)
-
 func NewProjectDao () *projectDao {
 	config := conf.LoadConfig()
 
@@ -52,7 +31,7 @@ func NewProjectDao () *projectDao {
 
 func (dao projectDao) Save (prjEntity model.Entity) (model.Entity, error) {
 	prj := prjEntity.(model.Project)
-	coll := dao.database.Col(PRJ_COLL)
+	coll := dao.database.Col(prj.GetCollection())
 
 	var foundProject model.Project
 	err := coll.Get(prj.Name, &foundProject)
@@ -73,31 +52,24 @@ func (dao projectDao) Save (prjEntity model.Entity) (model.Entity, error) {
 	return prj, nil
 }
 
-func (dao projectDao) FindOne (prjEntity model.Entity) (model.Entity, error) {
-	coll := dao.Database().Col(PRJ_COLL)
-	prj := prjEntity.(model.Project)
-	err := coll.Get(prj.Name, &prj)
-	if err != nil || prj.Id == "" {
-		panic ("document not found")
-	}
-
-	return prj, err
-}
-
 func (dao projectDao) SetStatus (prjEntity model.Entity, status string) (model.Entity, error) {
-	prjEntity, err := dao.FindOne(prjEntity)
-	if err != nil {
-		panic(err)
+	// If Id o fthe entity is not set tring to find entity in database
+	if prjEntity.AraDoc().Id == "" {
+		err := dao.FindOne(prjEntity)
+		if err != nil {
+			panic(err)
+		}
 	}
 
+	// Entity found
 	prj := prjEntity.(model.Project)
 	prj.Status = status
 	return dao.Save(prj)
 }
 
 func (dao projectDao) FindAll(daoFilter DaoFilter, offset int, pageSize int)([]model.Entity, error) {
-	cursor, err := dao.baseDao.findAll(daoFilter, PRJ_COLL, offset, pageSize)
 	var prj *model.Project = new(model.Project)
+	cursor, err := dao.baseDao.findAll(daoFilter, prj.GetCollection(), offset, pageSize)
 	var projects []model.Entity
 	for cursor.FetchOne(prj) {
 		projects = append (projects, *prj)
@@ -187,13 +159,13 @@ func (dao projectDao) RemoveStage (prj model.Project, stage model.Stage) error {
 	}
 
 	// remove stage
-	err := dao.database.Col(PRJ_STG_COLL).Delete(stage.Key)
+	err := dao.database.Col(stage.GetCollection()).Delete(stage.GetKey())
 	if err != nil {
 		panic(err)
 	}
 
 	// remove edge between project and stage
-	return dao.database.Col(PRJ_EDGES).Delete(prj.Key + "2" + stage.Key)
+	return dao.database.Col(PRJ_EDGES).Delete(prj.GetKey() + "2" + stage.GetKey())
 }
 
 func (dao projectDao) Stages (prj model.Project) ([]model.Entity, error) {
@@ -219,14 +191,14 @@ func (dao projectDao) Stages (prj model.Project) ([]model.Entity, error) {
 
 func (dao projectDao) createStage (prj model.Project, stage model.Stage) model.Stage {
 	var stageKey string = prj.Key + "_" + stage.Key
-	err := dao.database.Col(PRJ_STG_COLL).Get(stageKey, &stage)
+	err := dao.database.Col(stage.GetCollection()).Get(stageKey, &stage)
 	if err != nil {
 		panic(err)
 	}
 
 	if stage.Id != "" {
 		stage.SetKey(stageKey)
-		dao.database.Col(PRJ_STG_COLL).Save(&stage)
+		dao.database.Col(stage.GetCollection()).Save(&stage)
 	}
 
 	return stage
@@ -249,12 +221,12 @@ func (ps ProjectService) findOne (w http.ResponseWriter, r *http.Request) {
 	var p model.Project
 	p.Name = mux.Vars(r)["id"] // Name field used as identifier
 
-	prj, err := ps.getDao().FindOne(p)
+	err := ps.getDao().FindOne(&p)
 	if err != nil {
 		panic(err)
 	}
 
-	model.WriteResponse(true, nil, prj, w)
+	model.WriteResponse(true, nil, p, w)
 }
 
 func (ps ProjectService) findAll (w http.ResponseWriter, r *http.Request) {
@@ -283,8 +255,8 @@ func (ps ProjectService) findAll (w http.ResponseWriter, r *http.Request) {
 
 func (ps ProjectService) create (w http.ResponseWriter, r *http.Request) {
 	var prj model.Project
-	entity := ReadJsonBody(r, prj)
-	entity, err := ps.getDao().Save(entity)
+	ReadJsonBody(r, prj)
+	entity, err := ps.getDao().Save(prj)
 	if err != nil {
 		panic(err)
 	}
@@ -296,12 +268,12 @@ func (ps ProjectService) create (w http.ResponseWriter, r *http.Request) {
 func (ps ProjectService) getPrjFromURL (r *http.Request) model.Entity {
 	prjKey := mux.Vars(r)["id"]
 	prj := model.NewPrj(prjKey)
-	prjEntity, err := ps.getDao().FindOne(prj)
+	err := ps.getDao().FindOne(&prj)
 	if err != nil {
 		panic(err)
 	}
 
-	return prjEntity
+	return prj
 }
 
 func (ps ProjectService) getUsers (w http.ResponseWriter, r *http.Request) {
@@ -336,15 +308,12 @@ func (ps ProjectService) addUser (w http.ResponseWriter, r *http.Request) {
 	var user model.EstimaUser
 	user.Name = userInfo.Name
 	userService := FindService("user").(UserService)
-	userEntity, err := userService.getDao().FindOne(user)
+	err = userService.getDao().FindOne(&user)
 	if err != nil {
 		panic (err)
 	}
 
-	log.Println(prjEntity)
-	log.Println(userEntity)
-
-	err = ps.getDao().AddUser(prjEntity.(model.Project), userEntity.(model.EstimaUser), userInfo.Role)
+	err = ps.getDao().AddUser(prjEntity.(model.Project), user, userInfo.Role)
 	if err != nil {
 		panic (err)
 	}
@@ -357,12 +326,13 @@ func (ps ProjectService) removeUser (w http.ResponseWriter, r *http.Request) {
 
 	var user model.EstimaUser
 	userService := FindService("user").(UserService)
-	userEntity, err := userService.getDao().FindOne(ReadJsonBody(r, user))
+	ReadJsonBody(r, &user)
+	err := userService.getDao().FindOne(&user)
 	if err != nil {
 		panic (err)
 	}
 
-	err = ps.getDao().RemoveUser(prjEntity.(model.Project), userEntity.(model.EstimaUser))
+	err = ps.getDao().RemoveUser(prjEntity.(model.Project), user)
 	if err != nil {
 		panic(err)
 	}
@@ -384,8 +354,8 @@ func (ps ProjectService) getStages (w http.ResponseWriter, r *http.Request) {
 func (ps ProjectService) addStage (w http.ResponseWriter, r *http.Request) {
 	prjEntity := ps.getPrjFromURL(r)
 	var stage model.Stage
-	stageEntity := ReadJsonBody(r, stage)
-	err := ps.getDao().AddStage(prjEntity.(model.Project), stageEntity.(model.Stage))
+	ReadJsonBody(r, &stage)
+	err := ps.getDao().AddStage(prjEntity.(model.Project), stage)
 	if err != nil {
 		panic (err)
 	}
@@ -396,8 +366,8 @@ func (ps ProjectService) addStage (w http.ResponseWriter, r *http.Request) {
 func (ps ProjectService) removeStage (w http.ResponseWriter, r *http.Request) {
 	prjEntity := ps.getPrjFromURL(r)
 	var stage model.Stage
-	stageEntity := ReadJsonBody(r, stage)
-	ps.getDao().RemoveStage(prjEntity.(model.Project), stageEntity.(model.Stage))
+	ReadJsonBody(r, &stage)
+	ps.getDao().RemoveStage(prjEntity.(model.Project), stage)
 	model.WriteResponse(true, nil, stage, w)
 }
 
@@ -421,7 +391,9 @@ func (ps ProjectService) setStatus (w http.ResponseWriter, r *http.Request) {
 
 	ReadJsonBodyAny(r, &status)
 
-	prjEntity, err := ps.getDao().SetStatus(prjEntity, status.Status)
+	prj := prjEntity.(model.Project)
+	prj.Status = status.Status
+	prjEntity, err := ps.getDao().SetStatus(prj, status.Status)
 	if err != nil {
 		panic (err)
 	}
@@ -439,6 +411,6 @@ func (ps *ProjectService) ConfigRoutes (router *mux.Router, handler HandlerOfHan
 	router.Handle ("/project/{id}/stage/list", handler(http.HandlerFunc(ps.getStages))).Methods("POST", "GET").Name("List stages for project")
 	router.Handle ("/project/{id}/stage/add", handler(http.HandlerFunc(ps.addStage))).Methods("POST").Name("Add stage to project")
 	router.Handle ("/project/{id}/stage/remove", handler(http.HandlerFunc(ps.removeStage))).Methods("POST", "DELETE").Name("Remove stage from project")
-	router.Handle ("/project/{id}/status", handler(http.HandlerFunc(ps.findOne))).Methods("POST").Name("Set project status")
+	router.Handle ("/project/{id}/status", handler(http.HandlerFunc(ps.setStatus))).Methods("POST").Name("Set project status")
 	router.Handle ("/project/{id}", handler(http.HandlerFunc(ps.findOne))).Methods("GET").Name("Get project by id. Id = Name")
 }

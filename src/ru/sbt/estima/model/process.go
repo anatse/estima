@@ -2,7 +2,6 @@ package model
 
 import (
 	ara "github.com/diegogub/aranGO"
-	"encoding/json"
 )
 
 type Process struct {
@@ -12,7 +11,7 @@ type Process struct {
 	Status string
 }
 
-func (prc Process) Entity() interface{} {
+func (prc *Process) Entity() interface{} {
 	return struct{
 		*Process
 
@@ -23,7 +22,7 @@ func (prc Process) Entity() interface{} {
 		OmitError   omit   `json:"error,omitempty"`
 		OmitMessage omit `json:"errorMessage,omitempty"`
 	} {
-		&prc,
+		prc,
 		nil,
 		nil,
 		nil,
@@ -32,33 +31,16 @@ func (prc Process) Entity() interface{} {
 	}
 }
 
-func (prc Process) AraDoc() (ara.Document) {
+func (prc *Process) AraDoc() (ara.Document) {
 	return prc.Document
 }
 
-func (prc Process) Copy (entity Entity) Entity {
-	var from Process = entity.(Process)
-	prc.Name = from.Name
-	prc.Description = from.Description
-	return prc
-}
-
-func (prc Process) FromJson (jsUser []byte) (Entity, error) {
-	var retprc Process
-	err := json.Unmarshal(jsUser, &retprc)
-	if err != nil {
-		panic(err)
-	}
-
-	return retprc, err
-}
-
-func (prc Process)GetKey() string {
+func (prc *Process)GetKey() string {
 	return prc.Name
 }
 
 func (prc Process) GetCollection() string {
-	return "Processs"
+	return "processes"
 }
 
 func (prc Process) GetError()(string, bool) {

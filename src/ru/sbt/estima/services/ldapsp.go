@@ -99,32 +99,32 @@ func login (w http.ResponseWriter, username string, password string) {
 
 	// Try to find information from database
 	dao := NewUserDao ()
-	userEntity, err := dao.FindOne(*user)
+	err = dao.FindOne(user)
 	if err != nil {
 		panic(err)
 	}
 
 	// If user not found
-	if userEntity.AraDoc().Id == "" {
+	if user.AraDoc().Id == "" {
 		// Update user information in database
-		userEntity, err = NewUserDao().Save(*user)
+		_, err = NewUserDao().Save(user)
 		if err != nil {
 			panic(err)
 		}
 	}
 
-	createCookie(userEntity.(model.EstimaUser), w)
+	createCookie(*user, w)
 
 	/* Finally, write the token to the browser window */
-	model.WriteResponse (true, nil, userEntity, w)
+	model.WriteResponse (true, nil, *user, w)
 }
 
 var Login = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
 	defer (func() {
-		if r := recover(); r != nil {
-			fmt.Println("Recovered in Login:", r)
-			model.WriteResponse (false, fmt.Sprint(r), nil, w)
-		}
+		//if r := recover(); r != nil {
+		//	fmt.Println("Recovered in Login:", r)
+		//	model.WriteResponse (false, fmt.Sprint(r), nil, w)
+		//}
 	})()
 
 	var li struct {

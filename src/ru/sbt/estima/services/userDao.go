@@ -12,10 +12,6 @@ type userDao struct {
 	baseDao
 }
 
-const (
-	USER_COLL = "users"
-)
-
 func NewUserDao () *userDao {
 	config := conf.LoadConfig()
 
@@ -31,9 +27,9 @@ func NewUserDao () *userDao {
 }
 
 func (dao userDao) Save (userEntity model.Entity) (model.Entity, error) {
-	user := userEntity.(model.EstimaUser)
+	user := userEntity.(*model.EstimaUser)
 	var foundUser model.EstimaUser
-	coll := dao.Database().Col(USER_COLL)
+	coll := dao.Database().Col(user.GetCollection())
 	err := coll.Get(user.Name, &foundUser)
 	if err != nil {
 		panic (err)
@@ -41,7 +37,7 @@ func (dao userDao) Save (userEntity model.Entity) (model.Entity, error) {
 
 	exists := foundUser.Id != ""
 	if exists {
-		err := coll.Replace(user.Name, &user)
+		err := coll.Replace(user.Name, user)
 		if err != nil {
 			panic(err)
 		}
@@ -54,7 +50,7 @@ func (dao userDao) Save (userEntity model.Entity) (model.Entity, error) {
 		panic (err)
 	}
 
-	err = coll.Save(&user)
+	err = coll.Save(user)
 	if err != nil {
 		panic (err)
 	}
@@ -62,16 +58,9 @@ func (dao userDao) Save (userEntity model.Entity) (model.Entity, error) {
 	return user, nil
 }
 
-func (dao userDao) FindOne (userEntity model.Entity) (model.Entity, error) {
-	coll := dao.Database().Col(USER_COLL)
-	user := userEntity.(model.EstimaUser)
-	err := coll.Get(user.Name, &user)
-	return user, err
-}
-
 func (dao userDao) FindAll(daoFilter DaoFilter, offset int, pageSize int)([]model.Entity, error) {
-	cursor, err := dao.baseDao.findAll(daoFilter, USER_COLL, offset, pageSize)
 	var user *model.EstimaUser = new(model.EstimaUser)
+	cursor, err := dao.baseDao.findAll(daoFilter, user.GetCollection(), offset, pageSize)
 	var users []model.Entity
 	for cursor.FetchOne(user) {
 		users = append (users, user)
@@ -159,8 +148,8 @@ func (us *UserService) search (w http.ResponseWriter, r *http.Request) {
 
 func (us *UserService) create (w http.ResponseWriter, r *http.Request) {
 	var user model.EstimaUser
-	entity := ReadJsonBody (r, user)
-	entity, err := us.getDao().Save(entity)
+	ReadJsonBody (r, &user)
+	entity, err := us.getDao().Save(user)
 	if err != nil {
 		panic(err)
 	}

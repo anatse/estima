@@ -2,7 +2,6 @@ package model
 
 import (
 	ara "github.com/diegogub/aranGO"
-	"encoding/json"
 )
 
 type Project struct {
@@ -41,23 +40,6 @@ func (prj Project) Entity() interface{} {
 
 func (prj Project) AraDoc() (ara.Document) {
 	return prj.Document
-}
-
-func (prj Project) Copy (entity Entity) Entity {
-	var from Project = entity.(Project)
-	prj.Name = from.Name
-	prj.Description = from.Description
-	return prj
-}
-
-func (prj Project) FromJson (jsUser []byte) (Entity, error) {
-	var retPrj Project
-	err := json.Unmarshal(jsUser, &retPrj)
-	if err != nil {
-		panic(err)
-	}
-
-	return retPrj, err
 }
 
 func (prj Project)GetKey() string {
@@ -112,23 +94,6 @@ func (stage Stage) AraDoc() (ara.Document) {
 	p.Status = "10"
 
 	return stage.Document
-}
-
-func (stage Stage) Copy (entity Entity) Entity {
-	var from Project = entity.(Project)
-	stage.Name = from.Name
-	stage.Description = from.Description
-	return stage
-}
-
-func (stage Stage) FromJson (jsUser []byte) (Entity, error) {
-	var retPrj Stage
-	err := json.Unmarshal(jsUser, &retPrj)
-	if err != nil {
-		panic(err)
-	}
-
-	return retPrj, err
 }
 
 func (stage Stage)GetKey() string {

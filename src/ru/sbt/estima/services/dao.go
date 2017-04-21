@@ -59,7 +59,7 @@ type Dao interface {
 	Session() *ara.Session
 	Database() *ara.Database
 	Save(model.Entity) (model.Entity, error)
-	FindOne(model.Entity) (model.Entity, error)
+	FindOne (entity model.Entity) error
 	FindAll(filter DaoFilter, offset int, pageSize int)([]model.Entity, error)
 	Coll(string)
 	RemoveColl(string)
@@ -145,4 +145,9 @@ func (dao baseDao) findAll(daoFilter DaoFilter, colName string, offset int, page
 	query.BindVars = filterMap
 
 	return dao.Database().Execute(&query)
+}
+
+func (dao baseDao) FindOne (entity model.Entity) (error) {
+	coll := dao.Database().Col(entity.GetCollection())
+	return coll.Get(entity.GetKey(), &entity)
 }

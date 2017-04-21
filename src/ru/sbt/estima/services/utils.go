@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 	"encoding/json"
+	"reflect"
 )
 
 var serviceMap map[string]interface{}
@@ -27,7 +28,15 @@ func FindService (name string) interface{} {
 	}
 }
 
+func checkIsPointer (entity interface{}) {
+	val := reflect.ValueOf(entity)
+	if val.Kind() != reflect.Ptr {
+		panic ("Entity should be passed by reference")
+	}
+}
+
 func ReadJsonBodyAny (r *http.Request, entity interface{})(error) {
+	checkIsPointer (entity)
 	bodySize := r.ContentLength
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, bodySize))
 	if err != nil {
@@ -37,19 +46,18 @@ func ReadJsonBodyAny (r *http.Request, entity interface{})(error) {
 	return json.Unmarshal(body, entity)
 }
 
-func ReadJsonBody (r *http.Request, entity model.Entity)(model.Entity) {
+func ReadJsonBody (r *http.Request, entity model.Entity) {
+	checkIsPointer (entity)
 	bodySize := r.ContentLength
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, bodySize))
 	if err != nil {
 		panic (err)
 	}
 
-	ret, err := entity.FromJson(body)
+	err = json.Unmarshal(body, entity)
 	if err != nil {
 		panic(err)
 	}
-
-	return ret
 }
 
 func GetInt (values url.Values, name string,  def int) int {
