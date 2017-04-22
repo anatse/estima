@@ -4,11 +4,7 @@ import (
 	ara "github.com/diegogub/aranGO"
 	"ru/sbt/estima/conf"
 	"ru/sbt/estima/model"
-	"fmt"
-	"github.com/gorilla/mux"
-	"net/http"
-	"log"
-	"time"
+	"bytes"
 )
 
 type projectDao struct {
@@ -20,9 +16,7 @@ func NewProjectDao () *projectDao {
 
 	var dao = projectDao{}
 	s, err := ara.Connect(config.Database.Url, config.Database.User, config.Database.Password, config.Database.Log)
-	if err != nil{
-		panic(err)
-	}
+	model.CheckErr (err)
 
 	dao.session = s
 	dao.database = s.DB(config.Database.Name)
@@ -34,19 +28,15 @@ func (dao projectDao) Save (prjEntity model.Entity) (model.Entity, error) {
 	coll := dao.database.Col(prj.GetCollection())
 
 	var foundProject model.Project
-	err := coll.Get(prj.Name, &foundProject)
-	if err != nil {
-		panic(err)
-	}
+	err := coll.Get(prj.Number, &foundProject)
+	model.CheckErr (err)
 
 	if foundProject.Id != "" {
-		coll.Replace(prj.Name, &prj)
+		coll.Replace(prj.Number, &prj)
 	} else {
-		prj.Document.SetKey(prj.Name)
+		prj.Document.SetKey(prj.Number)
 		err = coll.Save(&prj)
-		if err != nil {
-			panic(err)
-		}
+		model.CheckErr (err)
 	}
 
 	return prj, nil
@@ -56,9 +46,7 @@ func (dao projectDao) SetStatus (prjEntity model.Entity, status string) (model.E
 	// If Id o fthe entity is not set tring to find entity in database
 	if prjEntity.AraDoc().Id == "" {
 		err := dao.FindOne(prjEntity)
-		if err != nil {
-			panic(err)
-		}
+		model.CheckErr (err)
 	}
 
 	// Entity found
@@ -80,11 +68,11 @@ func (dao projectDao) FindAll(daoFilter DaoFilter, offset int, pageSize int)([]m
 }
 
 func (dao projectDao) FindByUser (user model.EstimaUser, offset int, pageSize int)([]model.Entity, error) {
-	sql := fmt.Sprintf(`FOR v, e, p IN 1..1 INBOUND @startId GRAPH '%s'
-	       RETURN v`, PRJ_GRAPH)
+	sql := `FOR v, e, p IN 1..1 INBOUND @startId @@edgeCollection RETURN v`
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = user.Id
+	filterMap["@edgeCollection"] = PRJ_EDGES
 
 	var query ara.Query
 	query.Aql = sql
@@ -102,25 +90,35 @@ func (dao projectDao) FindByUser (user model.EstimaUser, offset int, pageSize in
 }
 
 func (dao projectDao) Users (prj model.Project, roles []string) ([]model.Entity, error) {
-	// https://docs.arangodb.com/3.1/AQL/Graphs/Traversals.html
-	sql := fmt.Sprintf(`FOR v, e, p IN 1..1 OUTBOUND @startId GRAPH '%s'
-	       FILTER p.edges[0].role in @roles
-	       RETURN v`, PRJ_GRAPH)
-
+	var filter bytes.Buffer
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = prj.Id
-	filterMap["roles"] = roles
+	filterMap["@edgeCollection"] = PRJ_EDGES
+
+	filter.WriteString(`FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection`)
+	if roles != nil {
+		filterMap["roles"] = roles
+		filter.WriteString(` FILTER p.edges[0].role in @roles`)
+	}
+
+	filter.WriteString(` RETURN {vertex: v, role: e.role}`)
 
 	var query ara.Query
-	query.Aql = sql
+	query.Aql = filter.String()
 	query.BindVars = filterMap
 
+	type usrInfo struct {
+		Vertex model.EstimaUser `json:"vertex"`
+		Role string `json:"role"`
+	}
+
 	var users []model.Entity
-	var user *model.EstimaUser = new(model.EstimaUser)
+	var user *usrInfo = new(usrInfo)
 	cursor, err := dao.Database().Execute(&query)
 	for cursor.FetchOne(user) {
-		users = append (users, *user)
-		user = new(model.EstimaUser)
+		user.Vertex.Roles = []string{user.Role}
+		users = append (users, user.Vertex)
+		user = new(usrInfo)
 	}
 
 	return users, err
@@ -160,19 +158,18 @@ func (dao projectDao) RemoveStage (prj model.Project, stage model.Stage) error {
 
 	// remove stage
 	err := dao.database.Col(stage.GetCollection()).Delete(stage.GetKey())
-	if err != nil {
-		panic(err)
-	}
+	model.CheckErr (err)
 
 	// remove edge between project and stage
 	return dao.database.Col(PRJ_EDGES).Delete(prj.GetKey() + "2" + stage.GetKey())
 }
 
 func (dao projectDao) Stages (prj model.Project) ([]model.Entity, error) {
-	sql := fmt.Sprintf(`FOR v, e, p IN 1..1 OUTBOUND @startId GRAPH '%s' RETURN v`, PRJ_GRAPH)
+	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection RETURN v`
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = prj.Id
+	filterMap["@edgeCollection"] = PRJ_EDGES
 
 	var query ara.Query
 	query.Aql = sql
@@ -192,9 +189,7 @@ func (dao projectDao) Stages (prj model.Project) ([]model.Entity, error) {
 func (dao projectDao) createStage (prj model.Project, stage model.Stage) model.Stage {
 	var stageKey string = prj.Key + "_" + stage.Key
 	err := dao.database.Col(stage.GetCollection()).Get(stageKey, &stage)
-	if err != nil {
-		panic(err)
-	}
+	model.CheckErr (err)
 
 	if stage.Id != "" {
 		stage.SetKey(stageKey)
@@ -202,215 +197,4 @@ func (dao projectDao) createStage (prj model.Project, stage model.Stage) model.S
 	}
 
 	return stage
-}
-
-// Function for REST services
-type ProjectService struct {
-	dao *projectDao
-}
-
-func (ps *ProjectService)getDao() projectDao {
-	if ps.dao == nil {
-		ps.dao = NewProjectDao()
-	}
-
-	return *ps.dao
-}
-
-func (ps ProjectService) findOne (w http.ResponseWriter, r *http.Request) {
-	var p model.Project
-	p.Name = mux.Vars(r)["id"] // Name field used as identifier
-
-	err := ps.getDao().FindOne(&p)
-	if err != nil {
-		panic(err)
-	}
-
-	model.WriteResponse(true, nil, p, w)
-}
-
-func (ps ProjectService) findAll (w http.ResponseWriter, r *http.Request) {
-	values := r.URL.Query()
-	offset := GetInt(values, "offset", 0)
-	pgSize := GetInt(values, "pageSize", 0)
-	name := values.Get("name")
-	description := values.Get("description")
-	status := values.Get("status")
-
-	prjs, err := ps.getDao().FindAll(
-		NewFilter().
-			Filter("name", "like", name).
-			Filter("description", "like", description).
-			Filter("status", "==", status).
-			Sort("name", true),
-		offset,
-		pgSize)
-
-	if err != nil {
-		panic(err)
-	}
-
-	model.WriteArrayResponse(true, nil, prjs, w)
-}
-
-func (ps ProjectService) create (w http.ResponseWriter, r *http.Request) {
-	var prj model.Project
-	ReadJsonBody(r, prj)
-	entity, err := ps.getDao().Save(prj)
-	if err != nil {
-		panic(err)
-	}
-
-	prj = entity.(model.Project)
-	model.WriteResponse(true, nil, prj, w)
-}
-
-func (ps ProjectService) getPrjFromURL (r *http.Request) model.Entity {
-	prjKey := mux.Vars(r)["id"]
-	prj := model.NewPrj(prjKey)
-	err := ps.getDao().FindOne(&prj)
-	if err != nil {
-		panic(err)
-	}
-
-	return prj
-}
-
-func (ps ProjectService) getUsers (w http.ResponseWriter, r *http.Request) {
-	start := time.Now().Nanosecond()
-
-	prjEntity := ps.getPrjFromURL(r)
-	roles := r.URL.Query()["roles"]
-	users, err := ps.getDao().Users(prjEntity.(model.Project), roles)
-	if err != nil {
-		panic(err)
-	}
-
-	log.Printf ("Get Users: spent time (ms): %d", (time.Now().Nanosecond() - start) / 1000000)
-
-	// Write response
-	model.WriteArrayResponse(true, nil, users, w)
-}
-
-func (ps ProjectService) addUser (w http.ResponseWriter, r *http.Request) {
-	prjEntity := ps.getPrjFromURL(r)
-
-	var userInfo struct {
-		Name string `json:"name"`
-		Role string `json:"role"`
-	}
-
-	err := ReadJsonBodyAny(r, &userInfo)
-	if err != nil {
-		panic(err)
-	}
-
-	var user model.EstimaUser
-	user.Name = userInfo.Name
-	userService := FindService("user").(UserService)
-	err = userService.getDao().FindOne(&user)
-	if err != nil {
-		panic (err)
-	}
-
-	err = ps.getDao().AddUser(prjEntity.(model.Project), user, userInfo.Role)
-	if err != nil {
-		panic (err)
-	}
-
-	model.WriteResponse(true, nil, nil, w)
-}
-
-func (ps ProjectService) removeUser (w http.ResponseWriter, r *http.Request) {
-	prjEntity := ps.getPrjFromURL(r)
-
-	var user model.EstimaUser
-	userService := FindService("user").(UserService)
-	ReadJsonBody(r, &user)
-	err := userService.getDao().FindOne(&user)
-	if err != nil {
-		panic (err)
-	}
-
-	err = ps.getDao().RemoveUser(prjEntity.(model.Project), user)
-	if err != nil {
-		panic(err)
-	}
-
-	model.WriteResponse(true, nil, nil, w)
-}
-
-func (ps ProjectService) getStages (w http.ResponseWriter, r *http.Request) {
-	prjEntity := ps.getPrjFromURL(r)
-	stages, err := ps.dao.Stages(prjEntity.(model.Project))
-	if err != nil {
-		panic(err)
-	}
-
-	// Write response
-	model.WriteArrayResponse(true, nil, stages, w)
-}
-
-func (ps ProjectService) addStage (w http.ResponseWriter, r *http.Request) {
-	prjEntity := ps.getPrjFromURL(r)
-	var stage model.Stage
-	ReadJsonBody(r, &stage)
-	err := ps.getDao().AddStage(prjEntity.(model.Project), stage)
-	if err != nil {
-		panic (err)
-	}
-
-	model.WriteResponse(true, nil, stage, w)
-}
-
-func (ps ProjectService) removeStage (w http.ResponseWriter, r *http.Request) {
-	prjEntity := ps.getPrjFromURL(r)
-	var stage model.Stage
-	ReadJsonBody(r, &stage)
-	ps.getDao().RemoveStage(prjEntity.(model.Project), stage)
-	model.WriteResponse(true, nil, stage, w)
-}
-
-func (ps ProjectService) findByUser (w http.ResponseWriter, r *http.Request) {
-	user := model.GetUserFromRequest (w, r)
-
-	offset := GetInt (r.URL.Query(), "offset", 0)
-	pageSize := GetInt (r.URL.Query(), "pageSize", 0)
-
-	projects, _ := ps.getDao().FindByUser(*user, offset, pageSize)
-
-	// Write array response
-	model.WriteArrayResponse(true, nil, projects, w)
-}
-
-func (ps ProjectService) setStatus (w http.ResponseWriter, r *http.Request) {
-	prjEntity := ps.getPrjFromURL(r)
-	var status struct {
-		Status string
-	}
-
-	ReadJsonBodyAny(r, &status)
-
-	prj := prjEntity.(model.Project)
-	prj.Status = status.Status
-	prjEntity, err := ps.getDao().SetStatus(prj, status.Status)
-	if err != nil {
-		panic (err)
-	}
-
-	model.WriteResponse(true, nil, prjEntity, w)
-}
-
-func (ps *ProjectService) ConfigRoutes (router *mux.Router, handler HandlerOfHandlerFunc) {
-	router.Handle ("/user/projects", handler(http.HandlerFunc(ps.findByUser))).Methods("POST", "GET").Name("Project list for current user")
-	router.Handle ("/project/create", handler(http.HandlerFunc(ps.create))).Methods("POST").Name("Create project")
-	router.Handle ("/project/list", handler(http.HandlerFunc(ps.findAll))).Methods("POST", "GET").Name("List all projects, filter: [name, description, status], offset, pageSize")
-	router.Handle ("/project/{id}/user/list", handler(http.HandlerFunc(ps.getUsers))).Methods("POST", "GET").Name("List users for project")
-	router.Handle ("/project/{id}/user/add", handler(http.HandlerFunc(ps.addUser))).Methods("POST").Name("Add user to project")
-	router.Handle ("/project/{id}/user/remove", handler(http.HandlerFunc(ps.removeUser))).Methods("POST", "DELETE").Name("Remove user from project")
-	router.Handle ("/project/{id}/stage/list", handler(http.HandlerFunc(ps.getStages))).Methods("POST", "GET").Name("List stages for project")
-	router.Handle ("/project/{id}/stage/add", handler(http.HandlerFunc(ps.addStage))).Methods("POST").Name("Add stage to project")
-	router.Handle ("/project/{id}/stage/remove", handler(http.HandlerFunc(ps.removeStage))).Methods("POST", "DELETE").Name("Remove stage from project")
-	router.Handle ("/project/{id}/status", handler(http.HandlerFunc(ps.setStatus))).Methods("POST").Name("Set project status")
-	router.Handle ("/project/{id}", handler(http.HandlerFunc(ps.findOne))).Methods("GET").Name("Get project by id. Id = Name")
 }

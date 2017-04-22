@@ -62,6 +62,7 @@ func createCookie (user model.EstimaUser, w http.ResponseWriter) {
 	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
 	claims["uid"] = user.Uid
 	claims["roles"] = user.Roles
+	claims["id"] = user.Id
 
 	/* Sign the token with our secret */
 	tokenString, _ := token.SignedString(mySigningKey)
@@ -89,28 +90,22 @@ func login (w http.ResponseWriter, username string, password string) {
 	var user *model.EstimaUser
 	var err error
 	if config.Ldap.Protocol == "fake" {
-		user = model.NewUser(username, username + "@fake.com", password, username, "", nil)
+		user = model.NewUser(username, username + "@fake.com", password, username, "", nil, "")
 	} else {
 		user, err = model.FindUser(username, password)
-		if err != nil {
-			panic(err)
-		}
+		model.CheckErr (err)
 	}
 
 	// Try to find information from database
 	dao := NewUserDao ()
 	err = dao.FindOne(user)
-	if err != nil {
-		panic(err)
-	}
+	model.CheckErr (err)
 
 	// If user not found
 	if user.AraDoc().Id == "" {
 		// Update user information in database
 		_, err = NewUserDao().Save(user)
-		if err != nil {
-			panic(err)
-		}
+		model.CheckErr (err)
 	}
 
 	createCookie(*user, w)
@@ -121,10 +116,10 @@ func login (w http.ResponseWriter, username string, password string) {
 
 var Login = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
 	defer (func() {
-		//if r := recover(); r != nil {
-		//	fmt.Println("Recovered in Login:", r)
-		//	model.WriteResponse (false, fmt.Sprint(r), nil, w)
-		//}
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in Login:", r)
+			model.WriteResponse (false, fmt.Sprint(r), nil, w)
+		}
 	})()
 
 	var li struct {
@@ -132,10 +127,8 @@ var Login = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
 		Upass string `json:"upass"`
 	}
 
-	err := ReadJsonBodyAny(r, &li)
-	if err != nil {
-		panic(err)
-	}
+	err := model.ReadJsonBodyAny(r, &li)
+	model.CheckErr (err)
 
 	username := li.Uname
 	password := li.Upass

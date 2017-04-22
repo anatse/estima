@@ -6,14 +6,14 @@ import (
 
 type Project struct {
 	ara.Document `json:-`
-	Name     string `json:"name,omitempty", unique:"projects"`
+	Number      string `json:"number,omitempty", unique:"projects"`
 	Description string `json:"description,omitempty"`
-	Status string `json:"status"`
+	Status      string `json:"status"`
 }
 
 func NewPrj (name string) Project {
 	var prj Project
-	prj.Name = name
+	prj.Number = name
 	prj.SetKey(name)
 	return prj
 }
@@ -43,7 +43,7 @@ func (prj Project) AraDoc() (ara.Document) {
 }
 
 func (prj Project)GetKey() string {
-	return prj.Name
+	return prj.Number
 }
 
 func (prj Project) GetCollection() string {

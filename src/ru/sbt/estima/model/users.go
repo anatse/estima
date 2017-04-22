@@ -3,7 +3,6 @@ package model
 import (
 	ara "github.com/diegogub/aranGO"
 	"fmt"
-	"log"
 	"crypto/sha1"
 	"encoding/base64"
 	"gopkg.in/ldap.v2"
@@ -25,7 +24,7 @@ type EstimaUser struct {
 	Roles	[]string `json:"roles,omitempty"`
 }
 
-func NewUser (name string, email string, password string, displayName string, uid string, roles []string) *EstimaUser {
+func NewUser (name string, email string, password string, displayName string, uid string, roles []string, id string) *EstimaUser {
 	var pwd string
 
 	if password != "" {
@@ -39,6 +38,7 @@ func NewUser (name string, email string, password string, displayName string, ui
 	user.Password = pwd
 	user.Uid = uid
 	user.Roles = roles
+	user.Id = id
 
 	return &user
 }
@@ -107,20 +107,13 @@ func FindUser (username string, password string) (retUser *EstimaUser, retErr er
 
 	config := conf.LoadConfig()
 	l, err := ldap.Dial(config.Ldap.Protocol, fmt.Sprintf("%s:%d", config.Ldap.Host, config.Ldap.Port))
-	if err != nil {
-		log.Panic(err)
-		return nil, err
-	}
+	CheckErr (err)
 	defer l.Close()
 
 	// cn := fmt.Sprintf("cn=%s,%s", username, config.Ldap.Dn)
 	// Authenticate using given username and password
 	err = l.Bind(username, password)
-	if err != nil {
-		log.Panic(err)
-		println ("error occurred")
-		return nil, err
-	}
+	CheckErr (err)
 
 	// Search for the uswr details
 	searchRequest := ldap.NewSearchRequest (
@@ -135,9 +128,7 @@ func FindUser (username string, password string) (retUser *EstimaUser, retErr er
 	)
 
 	sr, err := l.Search(searchRequest)
-	if err != nil {
-		log.Print(err)
-	}
+	CheckErr (err)
 
 	entry := sr.Entries[0]
 	retUser = NewUser(
@@ -146,7 +137,8 @@ func FindUser (username string, password string) (retUser *EstimaUser, retErr er
 		password,
 		entry.GetAttributeValue("sn"),
 		entry.GetAttributeValue("uid"),
-		nil)
+		nil,
+		"")
 
 	return retUser, retErr
 }
@@ -171,5 +163,6 @@ func GetUserFromRequest (w http.ResponseWriter, r *http.Request) (*EstimaUser) {
 		claims["displayName"].(string),
 		claims["uid"].(string),
 		roles,
+		claims["id"].(string),
 	)
 }

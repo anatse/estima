@@ -50,3 +50,14 @@ func WriteArrayResponse (success bool, errorMsg interface{}, body []Entity, w ht
 	js, _ := json.Marshal(resp)
 	writeJson(w, js)
 }
+
+func WriteAnyResponse (success bool, errorMsg interface{}, body interface{}, w http.ResponseWriter) {
+	var resp ResponseObj = ResponseObj{
+		success,
+		errorMsg,
+		body,
+	}
+
+	js, _ := json.Marshal(resp)
+	writeJson(w, js)
+}

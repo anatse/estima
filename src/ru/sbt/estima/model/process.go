@@ -11,7 +11,7 @@ type Process struct {
 	Status string
 }
 
-func (prc *Process) Entity() interface{} {
+func (prc Process) Entity() interface{} {
 	return struct{
 		*Process
 
@@ -22,7 +22,7 @@ func (prc *Process) Entity() interface{} {
 		OmitError   omit   `json:"error,omitempty"`
 		OmitMessage omit `json:"errorMessage,omitempty"`
 	} {
-		prc,
+		&prc,
 		nil,
 		nil,
 		nil,
@@ -31,11 +31,11 @@ func (prc *Process) Entity() interface{} {
 	}
 }
 
-func (prc *Process) AraDoc() (ara.Document) {
+func (prc Process) AraDoc() (ara.Document) {
 	return prc.Document
 }
 
-func (prc *Process)GetKey() string {
+func (prc Process)GetKey() string {
 	return prc.Name
 }
 

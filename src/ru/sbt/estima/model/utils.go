@@ -1,9 +1,8 @@
-package services
+package model
 
 import (
 	"net/http"
 	"io"
-	"ru/sbt/estima/model"
 	"io/ioutil"
 	"net/url"
 	"strconv"
@@ -39,25 +38,19 @@ func ReadJsonBodyAny (r *http.Request, entity interface{})(error) {
 	checkIsPointer (entity)
 	bodySize := r.ContentLength
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, bodySize))
-	if err != nil {
-		panic (err)
-	}
+	CheckErr (err)
 
 	return json.Unmarshal(body, entity)
 }
 
-func ReadJsonBody (r *http.Request, entity model.Entity) {
+func ReadJsonBody (r *http.Request, entity Entity) {
 	checkIsPointer (entity)
 	bodySize := r.ContentLength
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, bodySize))
-	if err != nil {
-		panic (err)
-	}
+	CheckErr (err)
 
 	err = json.Unmarshal(body, entity)
-	if err != nil {
-		panic(err)
-	}
+	CheckErr (err)
 }
 
 func GetInt (values url.Values, name string,  def int) int {
@@ -71,5 +64,11 @@ func GetInt (values url.Values, name string,  def int) int {
 }
 
 func NotImplemented(w http.ResponseWriter, r *http.Request) {
-	model.WriteResponse(true, "Not implemented yet", nil, w)
+	WriteResponse(true, "Not implemented yet", nil, w)
+}
+
+func CheckErr (err error) {
+	if err != nil {
+		panic(err)
+	}
 }

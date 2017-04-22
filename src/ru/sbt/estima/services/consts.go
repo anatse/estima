@@ -12,8 +12,8 @@ const (
 	// Edge collections
 	PRJ_EDGES = "prjedges"
 
-	// Graphs
-	PRJ_GRAPH = "prjusers"
+	// Named graphs not used yet. Used anonymous graphs
+	//PRJ_GRAPH = "prjusers"
 
 	// Roles
 	ROLE_PO = "PO" 			// Product Owner

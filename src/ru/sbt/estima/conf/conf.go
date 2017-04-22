@@ -60,7 +60,7 @@ func LoadConfig() (Profile) {
 	decoder := json.NewDecoder(file)
 	err := decoder.Decode(&config)
 	if err != nil {
-		fmt.Println("error:", err)
+		panic(err)
 	}
 
 	fmt.Println(config.ActiveProfile())

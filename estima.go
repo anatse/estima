@@ -73,9 +73,11 @@ func getRoutes (router *mux.Router) []routeInfo {
 func main() {
 	var us services.UserService
 	var ps services.ProjectService
+	var pcs services.ProcessService
 
-	services.RegisterService("user", us)
-	services.RegisterService("project", ps)
+	model.RegisterService("user", us)
+	model.RegisterService("project", ps)
+	model.RegisterService("process", pcs)
 
 	r := mux.NewRouter()
 	r.Handle("/get-token", services.GetTokenHandler).Methods("GET").Name("Login router (GET). Query parameters uname & upass")
@@ -83,6 +85,7 @@ func main() {
 
 	us.ConfigRoutes(r, JwtHandler)
 	ps.ConfigRoutes(r, JwtHandler)
+	pcs.ConfigRoutes(r, JwtHandler)
 
 	// Function build router for get router information
 	var routesInformation = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
