@@ -6,7 +6,7 @@
 
 ## INSTALL
 
-* Сначала надо поставить [go](https://golang.org/)
+* Установить [go](https://golang.org/)
 * Отредактировать файл _import.sh_ для Linux, MacOS, либо _import.cmd_ для Windows
 ```Shell
 #!/usr/bin/env bash
@@ -34,7 +34,6 @@ rm -rf aranGO
 git init
 git clone https://github.com/victorspringer/aranGO.git
 ```
-  
 * Для сборки проекта используется команда go build, в результате появится исполняекмый файл **estima**
 * Перед запуском программы необходимо также установить [arangodb](https://www.arangodb.com). Установка состоит из нескольких этапов
   * Установить [docker](https://www.docker.com/)
@@ -44,7 +43,7 @@ git clone https://github.com/victorspringer/aranGO.git
     * Проброс порта - 8529
   * Запустить arangodb
   * Через браузер войти в web интерфейс http://localhost:8529, создать там новую базу данных estima
-* Проверить конфигурацию - файл config.json
+* Проверить конфигурацию - файл config.json (комментарии в JSON не поддердиваются, здесь приведены для понимания)
 ```javascript
 {
   // Текущаий профиль 
@@ -94,6 +93,7 @@ git clone https://github.com/victorspringer/aranGO.git
   }]
 }
 ```   
+* Запустить приложение go run
 ----
 Для запуска приложения в Intellij Idea необходимо установить плагин для работы с Go,
 прописать переменную GOPATH
