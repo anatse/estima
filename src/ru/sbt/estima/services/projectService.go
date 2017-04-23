@@ -55,7 +55,12 @@ func (ps ProjectService) findAll (w http.ResponseWriter, r *http.Request) {
 
 func (ps ProjectService) create (w http.ResponseWriter, r *http.Request) {
 	var prj model.Project
-	model.ReadJsonBody(r, prj)
+	model.ReadJsonBody(r, &prj)
+	var emptyTime = time.Time{}
+	if prj.StartDate == emptyTime {
+		prj.StartDate = time.Now()
+	}
+
 	entity, err := ps.getDao().Save(prj)
 	model.CheckErr (err)
 

@@ -2,6 +2,7 @@ package model
 
 import (
 	ara "github.com/diegogub/aranGO"
+	"time"
 )
 
 type Project struct {
@@ -9,12 +10,16 @@ type Project struct {
 	Number      string `json:"number,omitempty", unique:"projects"`
 	Description string `json:"description,omitempty"`
 	Status      string `json:"status"`
+	Flag string `json:"flag" enum:"G,Y,R,B"`
+	StartDate   time.Time `json:"startDate,omitempty"`
+	EndDate	time.Time `json:"endDate"`
 }
 
 func NewPrj (name string) Project {
 	var prj Project
 	prj.Number = name
 	prj.SetKey(name)
+	prj.StartDate = time.Now()
 	return prj
 }
 
@@ -60,12 +65,15 @@ type Stage struct {
 	Name     string `json:"name,omitempty", unique:"projects"`
 	Description string `json:"descriptio,omitempty"`
 	Status string `json:"status"`
+	StartDate time.Time `json:"startDate"`
+	EndDate time.Time `json:"endDate"`
 }
 
 func NewStage (name string) Stage {
 	var prj Stage
 	prj.Name = name
 	prj.SetKey(name)
+	prj.StartDate = time.Now()
 	return prj
 }
 

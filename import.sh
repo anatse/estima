@@ -9,7 +9,6 @@ go get -u -v "github.com/auth0/go-jwt-middleware"
 go get -u -v "github.com/glycerine/zygomys/repl"
 go get -u -v "gopkg.in/ldap.v2"
 go get -u -v "github.com/go-errors/errors"
-go get -u -v "github.com/diegogub/aranGO"
 
 #
 # AranGO should be clones from github because release too old therefore command go get "github.com/diegogub/aranGO" deprecated
