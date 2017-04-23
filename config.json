@@ -6,8 +6,8 @@
       "secret": "secret",
       "Ldap": {
         "protocol": "fake",
-        "host": "10.21.25.74",
-        "dn": "DC=testportal,DC=sbrf,DC=ru",
+        "host": "",
+        "dn": "",
         "port": 389
       },
       "Database": {
