@@ -45,7 +45,7 @@ git clone https://github.com/victorspringer/aranGO.git
   * Запустить arangodb
   * Через браузер войти в web интерфейс http://localhost:8529, создать там новую базу данных estima
 * Проверить конфигурацию - файл config.json
-```json
+```javascript
 {
   // Текущаий профиль 
   "active": "develop",
