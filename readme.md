@@ -2,12 +2,12 @@
 
 ## ABOUT
 
-Создание ПО для управление бэклогом
+Создание ПО для управление бэклогом.
 
 ## INSTALL
 
 * Установить [go](https://golang.org/)
-* Отредактировать файл _import.sh_ для Linux, MacOS, либо _import.cmd_ для Windows
+* Отредактировать файл _import.sh_ для Linux, MacOS, либо _import.cmd_ для Windows.
 ```Shell
 #!/usr/bin/env bash
 # Необходимо изменить переменную GOPATH - она должна указывать на корень нашего проекта
@@ -40,7 +40,7 @@ git clone https://github.com/diegogub/napping
   1. Через [docker](https://www.docker.com/)
         * Установить [docker](https://www.docker.com/)
         * Установить [arangodb](https://www.arangodb.com)
-        * Поправить переменные окружения через kitematic
+        * Поправить переменные окружения через kitematic.
           * Пользователь: **root**
           * Пароль пользователя: **root**
           * Проброс порта - **8529**
@@ -105,16 +105,17 @@ git clone https://github.com/diegogub/napping
     }
     ```
 
-* Запустить приложение go run
+* Запустить приложение **go run**
+* Теперт проект доступен по ссылке [localhost:9080](http://localhost:9080/)
 
 ----
 
-### Запуска приложения в Intellij Idea
+### Запуска приложения в Intellij Idea.
 
  * Необходимо установить плагин [Go Lang Plugin](https://plugins.jetbrains.com/plugin/5047) для работы с Go.
  * Указать настройки:
     * Go > Go Libraries > Указать в global путь до проекта.
     * Run > Edit Config:
-      * Создать Go Application
-      * В File указать путь до estima.go
+      * Создать Go Application.
+      * В File указать путь до **estima.go**
       * В Working Directory указать путь до дириктории проекта.
