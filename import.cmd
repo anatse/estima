@@ -14,3 +14,4 @@ cd ./src/github.com/diegogub/
 rd /s /q aranGO
 git init
 git clone https://github.com/victorspringer/aranGO.git
+git clone https://github.com/diegogub/napping
