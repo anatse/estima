@@ -39,8 +39,7 @@ git clone https://github.com/diegogub/napping
 * Перед запуском программы необходимо также установить [arangodb](https://www.arangodb.com). Есть два способа установки:
   1. Через [docker](https://www.docker.com/)
         * Установить [docker](https://www.docker.com/)
-        * [ArangoDb docker](https://hub.docker.com/_/arangodb/)
-        * Установить [arangodb](https://www.arangodb.com)
+        * Установить [arangodb](https://hub.docker.com/_/arangodb/)
         * Поправить переменные окружения через kitematic.
           * Пользователь: **root**
           * Пароль пользователя: **root**
