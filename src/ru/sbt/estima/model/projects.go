@@ -62,8 +62,8 @@ func (prj Project) GetError()(string, bool){
 
 type Stage struct {
 	ara.Document `json:-`
-	Name     string `json:"name,omitempty", unique:"projects"`
-	Description string `json:"descriptio,omitempty"`
+	Name     string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
 	Status string `json:"status"`
 	StartDate time.Time `json:"startDate"`
 	EndDate time.Time `json:"endDate"`
@@ -105,11 +105,11 @@ func (stage Stage) AraDoc() (ara.Document) {
 }
 
 func (stage Stage)GetKey() string {
-	return stage.Name
+	return stage.Key
 }
 
 func (stage Stage) GetCollection() string {
-	return "projects"
+	return "stages"
 }
 
 func (stage Stage) GetError()(string, bool){

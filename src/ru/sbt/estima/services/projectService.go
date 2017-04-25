@@ -131,7 +131,7 @@ func (ps ProjectService) removeUser (w http.ResponseWriter, r *http.Request) {
 
 func (ps ProjectService) getStages (w http.ResponseWriter, r *http.Request) {
 	prjEntity := ps.getPrjFromURL(r)
-	stages, err := ps.dao.Stages(prjEntity.(model.Project))
+	stages, err := ps.getDao().Stages(prjEntity.(model.Project))
 	model.CheckErr (err)
 
 	// Write response

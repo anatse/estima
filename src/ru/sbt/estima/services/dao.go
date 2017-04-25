@@ -11,6 +11,7 @@ import (
 	"bytes"
 	"strconv"
 	"fmt"
+	"log"
 )
 
 type FilterValue struct {
@@ -150,4 +151,104 @@ func (dao baseDao) findAll(daoFilter DaoFilter, colName string, offset int, page
 func (dao baseDao) FindOne (entity model.Entity) (error) {
 	coll := dao.Database().Col(entity.GetCollection())
 	return coll.Get(entity.GetKey(), &entity)
+}
+
+func (dao baseDao) createAndConnectObjTx (inEntity model.Entity, outEntity model.Entity, edgeColName string) string {
+	return dao.createAndConnectTx (
+		inEntity.GetCollection(), 	// from
+		outEntity.GetCollection(),	// to
+		edgeColName,
+		outEntity.GetKey(),		// from key
+		inEntity)
+}
+
+func (dao baseDao) createAndConnectTx (inColName string, outColName string, edgeColName string, outKey string, outObj model.Entity) string {
+	log.Printf("createAndConnectTx: %i, %i, %i, %, %i", inColName, outColName, edgeColName, outKey, outObj)
+	write := []string {inColName, edgeColName }
+
+	q := `function(params) {
+		var db = require('internal').db;
+		var prcCol = db. ` + inColName + `;
+		var stageCol = db. ` + outColName + `;
+	 	var process, stage;
+
+		try {
+			stage = stageCol.document(params.stageId);
+			try {
+				process = prcCol.document(params.doc.name);
+			} catch(error) {
+				params.doc._key = params.doc.name;
+				if (error.errorNum === 1202)
+					process = prcCol.save(params.doc);
+				else
+					throw (error);
+			}
+
+			var edgesCol = db.` + edgeColName + `;
+			var edge = {_from: stage._id, _to: process._id, _key: stage._key + "_" + process._key}
+			edge = edgesCol.save (edge);
+			return {success: true, entityId: process._id};
+		} catch (error) {
+			return {success: false, errorMsg: error.errorMessage, errorNum: error.errorNum};
+		}
+        }`
+
+	t := ara.NewTransaction(q, write, nil)
+	t.Params = map[string]interface{}{ "doc" : outObj, "stageId": outKey }
+
+	err := t.Execute(dao.Database())
+	model.CheckErr(err)
+
+	res := t.Result.(map[string]interface{})
+	if res["success"] != true {
+		model.CheckErr(fmt.Errorf(res["errorMsg"].(string)))
+	}
+
+	return res["entityId"].(string)
+}
+
+func (dao baseDao) removeConnectedObjTx (inEntity model.Entity, outEntity model.Entity, edgeColName string) string {
+	return dao.removeConnectedTx (
+		inEntity.GetCollection(), 	// from
+		outEntity.GetCollection(),	// to
+		edgeColName,
+		outEntity.GetKey(),		// from key
+		inEntity)
+}
+
+func (dao baseDao) removeConnectedTx (outColName string, inColName string, edgeColName string, inKey string, outObj model.Entity) string {
+	log.Printf("removeConnectedTx: %i, %i, %i, %, %i", outColName, inColName, edgeColName, inKey, outObj)
+	write := []string { outColName, edgeColName }
+
+	q := `function(params) {
+		var db = require('internal').db;
+		var prcCol = db. ` + outColName + `;
+		var stageCol = db. ` + inColName + `;
+	 	var process, stage;
+
+		try {
+			stage = stageCol.document(params.stageId);
+			process = prcCol.document(params.doc.name);
+			var edgesCol = db.` + edgeColName + `;
+			var key = stage._key + "_" + process._key}
+			edgesCol.remove (key);
+			prcCol.remove (process);
+			return {success: true, entityId: process._id};
+		} catch (error) {
+			return {success: false, errorMsg: error.errorMessage, errorNum: error.errorNum};
+		}
+        }`
+
+	t := ara.NewTransaction(q, write, nil)
+	t.Params = map[string]interface{}{ "doc" : outObj, "stageId": inKey }
+
+	err := t.Execute(dao.Database())
+	model.CheckErr(err)
+
+	res := t.Result.(map[string]interface{})
+	if res["success"] != true {
+		model.CheckErr(fmt.Errorf(res["errorMsg"].(string)))
+	}
+
+	return res["entityId"].(string)
 }

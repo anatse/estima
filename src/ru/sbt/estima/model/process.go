@@ -6,9 +6,9 @@ import (
 
 type Process struct {
 	ara.Document
-	Name string
-	Description string
-	Status string
+	Name string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 func (prc Process) Entity() interface{} {

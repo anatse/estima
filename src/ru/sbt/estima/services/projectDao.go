@@ -5,6 +5,7 @@ import (
 	"ru/sbt/estima/conf"
 	"ru/sbt/estima/model"
 	"bytes"
+	"log"
 )
 
 type projectDao struct {
@@ -145,12 +146,23 @@ func (dao projectDao) AddStage (prj model.Project, stage model.Stage) error {
 		panic("Some identifiers are not set")
 	}
 
+	log.Println(stage)
+
+	stage.Id = dao.createAndConnectObjTx(
+		stage,
+		prj,
+		PRJ_EDGES)
+
+	return nil
+
 	// save stage if it's does not saved yet
-	stage = dao.createStage(prj, stage)
-	return dao.database.Col(PRJ_EDGES).SaveEdge(map[string]interface{} {"role": "RTE"}, prj.Id, stage.Id)
+	//stage = dao.createStage(prj, stage)
+	//return dao.database.Col(PRJ_EDGES).SaveEdge(map[string]interface{} {"role": "RTE"}, prj.Id, stage.Id)
 
 }
 
+// TODO fix Edge also should be removed when remove stage. Use removeConnectedObjTx for this purpose
+// First of all need to find parent project, after delete edge and related child object
 func (dao projectDao) RemoveStage (prj model.Project, stage model.Stage) error {
 	if stage.Id == "" || prj.Id == "" {
 		panic("Some identifiers are not set")
@@ -187,13 +199,13 @@ func (dao projectDao) Stages (prj model.Project) ([]model.Entity, error) {
 }
 
 func (dao projectDao) createStage (prj model.Project, stage model.Stage) model.Stage {
-	var stageKey string = prj.Key + "_" + stage.Key
+	var stageKey string = prj.GetKey() + "_" + stage.GetKey()
 	err := dao.database.Col(stage.GetCollection()).Get(stageKey, &stage)
 	model.CheckErr (err)
-
-	if stage.Id != "" {
+	if stage.Id == "" {
 		stage.SetKey(stageKey)
-		dao.database.Col(stage.GetCollection()).Save(&stage)
+		err = dao.database.Col(stage.GetCollection()).Save(&stage)
+		model.CheckErr (err)
 	}
 
 	return stage
