@@ -8,6 +8,9 @@ import (
 	"strconv"
 	"encoding/json"
 	"reflect"
+	"regexp"
+	"fmt"
+	"log"
 )
 
 var serviceMap map[string]interface{}
@@ -71,4 +74,43 @@ func CheckErr (err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+type AraError struct {
+	Exception string `json:"exception"`
+	Stacktrace []string `json:"stacktrace"`
+	Error bool `json:"error"`
+	Code int `json:"code"`
+	ErrorNum int `json:"errorNum"`
+	ErrorMessage string `json:"errorMessage"`
+}
+
+func GetAraError (err interface{}) interface{} {
+	errFmt, _ := regexp.Compile(`(\{"exception":".*".+"error":.+"code":.+"errorNum":.+"errorMessage".+\})`)
+	errorString := fmt.Sprint(err)
+
+	errorStrings := errFmt.FindAllStringSubmatch(errorString, -1)
+	log.Println(errorStrings)
+
+	if len(errorStrings) > 0 && len(errorStrings[0]) > 0 {
+		errorString = errorStrings[0][0]
+		var ae AraError
+		json.Unmarshal([]byte(errorString), &ae)
+
+		log.Printf (`Parsed error:
+	exception: %s
+	code: %s
+	errorNum: %s
+	errorMessage: %s
+	stackTrace: %s		`,
+			ae.Exception,
+			ae.Code,
+			ae.ErrorNum,
+			ae.ErrorMessage,
+			ae.Stacktrace)
+
+		return ae
+	}
+
+	return nil
 }

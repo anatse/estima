@@ -153,27 +153,17 @@ func (dao projectDao) AddStage (prj model.Project, stage model.Stage) error {
 		prj,
 		PRJ_EDGES)
 
-	return nil
-
-	// save stage if it's does not saved yet
-	//stage = dao.createStage(prj, stage)
-	//return dao.database.Col(PRJ_EDGES).SaveEdge(map[string]interface{} {"role": "RTE"}, prj.Id, stage.Id)
-
+	return dao.FindOne(&stage)
 }
 
-// TODO fix Edge also should be removed when remove stage. Use removeConnectedObjTx for this purpose
-// First of all need to find parent project, after delete edge and related child object
 func (dao projectDao) RemoveStage (prj model.Project, stage model.Stage) error {
 	if stage.Id == "" || prj.Id == "" {
 		panic("Some identifiers are not set")
 	}
 
-	// remove stage
-	err := dao.database.Col(stage.GetCollection()).Delete(stage.GetKey())
-	model.CheckErr (err)
-
-	// remove edge between project and stage
-	return dao.database.Col(PRJ_EDGES).Delete(prj.GetKey() + "2" + stage.GetKey())
+	// remove edge between project and stage and remove stage
+	dao.removeConnectedTx (stage.GetCollection(), PRJ_EDGES, stage.GetKey())
+	return nil;
 }
 
 func (dao projectDao) Stages (prj model.Project) ([]model.Entity, error) {

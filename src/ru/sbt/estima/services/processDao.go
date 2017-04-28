@@ -4,6 +4,7 @@ import (
 	ara "github.com/diegogub/aranGO"
 	"ru/sbt/estima/model"
 	"ru/sbt/estima/conf"
+	"log"
 )
 
 type processDao struct {
@@ -25,33 +26,23 @@ func NewProcessDao () *processDao {
 func (dao processDao) Save (prjEntity model.Entity) (model.Entity, error) {
 	prj := prjEntity.(model.Process)
 	coll := dao.database.Col(prj.GetCollection())
-
-	var foundProcess model.Process
-	err := coll.Get(prj.GetKey(), &foundProcess)
-	model.CheckErr (err)
-
-	if foundProcess.Id != "" {
-		coll.Replace(prj.GetKey(), &prj)
-	} else {
-		prj.Document.SetKey(prj.GetKey())
-		err = coll.Save(&prj)
-		model.CheckErr (err)
-	}
-
+	coll.Replace(prj.GetKey(), &prj)
 	return prj, nil
 }
 
 func (dao processDao) SetStatus (prjEntity model.Entity, status string) (model.Entity, error) {
-	// If Id o fthe entity is not set tring to find entity in database
-	if prjEntity.AraDoc().Id == "" {
-		err := dao.FindOne(prjEntity)
-		model.CheckErr (err)
-	}
+	var prc *model.Process
+	prc = prjEntity.(*model.Process)
+	err := dao.FindOne(prc)
+	model.CheckErr (err)
+
+	prc.Status = status
 
 	// Entity found
-	prj := prjEntity.(model.Process)
-	prj.Status = status
-	return dao.Save(prj)
+	prjEntity, err = dao.Save(*prc)
+	*prc = prjEntity.(model.Process)
+	log.Println(prc)
+	return *prc, err
 }
 
 func (dao processDao) FindAll(daoFilter DaoFilter, offset int, pageSize int)([]model.Entity, error) {

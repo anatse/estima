@@ -12,7 +12,7 @@ type Feature struct {
 	Version int `json:"version" required`
 }
 
-func (fea *Feature) Entity() interface{} {
+func (fea Feature) Entity() interface{} {
 	return struct{
 		*Feature
 
@@ -23,7 +23,7 @@ func (fea *Feature) Entity() interface{} {
 		OmitError   omit   `json:"error,omitempty"`
 		OmitMessage omit `json:"errorMessage,omitempty"`
 	} {
-		fea,
+		&fea,
 		nil,
 		nil,
 		nil,
@@ -32,7 +32,7 @@ func (fea *Feature) Entity() interface{} {
 	}
 }
 
-func (fea *Feature) AraDoc() (ara.Document) {
+func (fea Feature) AraDoc() (ara.Document) {
 	return fea.Document
 }
 

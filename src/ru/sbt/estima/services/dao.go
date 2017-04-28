@@ -168,84 +168,78 @@ func (dao baseDao) createAndConnectTx (inColName string, outColName string, edge
 
 	q := `function(params) {
 		var db = require('internal').db;
-		var prcCol = db. ` + inColName + `;
-		var stageCol = db. ` + outColName + `;
-	 	var process, stage;
+		var toCol = db. ` + inColName + `;
+		var fromCol = db. ` + outColName + `;
+	 	var toDoc, fromDoc;
+
+		fromDoc = fromCol.document(params.fromId);
 
 		try {
-			stage = stageCol.document(params.stageId);
-			try {
-				process = prcCol.document(params.doc.name);
-			} catch(error) {
-				params.doc._key = params.doc.name;
-				if (error.errorNum === 1202)
-					process = prcCol.save(params.doc);
-				else
-					throw (error);
-			}
-
-			var edgesCol = db.` + edgeColName + `;
-			var edge = {_from: stage._id, _to: process._id, _key: stage._key + "_" + process._key}
-			edge = edgesCol.save (edge);
-			return {success: true, entityId: process._id};
-		} catch (error) {
-			return {success: false, errorMsg: error.errorMessage, errorNum: error.errorNum};
+			toDoc = toCol.document(params.doc.name);
+		} catch(error) {
+			params.doc._key = params.doc.name;
+			if (error.errorNum === 1202)
+				toDoc = toCol.save(params.doc);
+			else
+				throw (error);
 		}
+
+		var edgesCol = db.` + edgeColName + `;
+		var edge = {_from: fromDoc._id, _to: toDoc._id, _key: fromDoc._key + "_" + toDoc._key}
+		edge = edgesCol.save (edge);
+		return {success: true, entityId: toDoc._id};
         }`
 
 	t := ara.NewTransaction(q, write, nil)
-	t.Params = map[string]interface{}{ "doc" : outObj, "stageId": outKey }
+	t.Params = map[string]interface{}{ "doc" : outObj, "fromId": outKey }
 
 	err := t.Execute(dao.Database())
 	model.CheckErr(err)
 
+	log.Println(t.Result)
+
 	res := t.Result.(map[string]interface{})
 	if res["success"] != true {
-		model.CheckErr(fmt.Errorf(res["errorMsg"].(string)))
+		model.CheckErr(fmt.Errorf("%i", res["errorMsg"]))
 	}
 
 	return res["entityId"].(string)
 }
 
-func (dao baseDao) removeConnectedObjTx (inEntity model.Entity, outEntity model.Entity, edgeColName string) string {
-	return dao.removeConnectedTx (
-		inEntity.GetCollection(), 	// from
-		outEntity.GetCollection(),	// to
-		edgeColName,
-		outEntity.GetKey(),		// from key
-		inEntity)
-}
-
-func (dao baseDao) removeConnectedTx (outColName string, inColName string, edgeColName string, inKey string, outObj model.Entity) string {
-	log.Printf("removeConnectedTx: %i, %i, %i, %, %i", outColName, inColName, edgeColName, inKey, outObj)
+func (dao baseDao) removeConnectedTx (outColName string, edgeColName string, outKey string) string {
+	log.Printf("removeConnectedTx: %i, %i, %i", outColName, edgeColName, outKey)
 	write := []string { outColName, edgeColName }
 
 	q := `function(params) {
 		var db = require('internal').db;
-		var prcCol = db. ` + outColName + `;
-		var stageCol = db. ` + inColName + `;
-	 	var process, stage;
+		var toCol = db. ` + outColName + `;
+		var edgeCol = db. `+ edgeColName + `;
 
-		try {
-			stage = stageCol.document(params.stageId);
-			process = prcCol.document(params.doc.name);
-			var edgesCol = db.` + edgeColName + `;
-			var key = stage._key + "_" + process._key}
-			edgesCol.remove (key);
-			prcCol.remove (process);
-			return {success: true, entityId: process._id};
-		} catch (error) {
-			return {success: false, errorMsg: error.errorMessage, errorNum: error.errorNum};
+		var doc = toCol.document(params.docKey);
+		var outEdges = edgeCol.outEdges (doc);
+		if (outEdges != null && outEdges.length > 0) {
+			throw ("Deleting vertices with the presence outgoing edges is not allowed")
 		}
+
+		var inEdges = edgeCol.inEdges(doc);
+		for (var i = 0; i < inEdges.length; i++) {
+		    edgeCol.remove (inEdges[i])
+		}
+
+		toCol.remove (doc)
+		return {success: true, entityId: doc._key};
         }`
 
 	t := ara.NewTransaction(q, write, nil)
-	t.Params = map[string]interface{}{ "doc" : outObj, "stageId": inKey }
+	t.Params = map[string]interface{}{ "docKey" : outKey}
 
 	err := t.Execute(dao.Database())
 	model.CheckErr(err)
 
+	log.Println(t.Result)
 	res := t.Result.(map[string]interface{})
+	log.Println(res)
+
 	if res["success"] != true {
 		model.CheckErr(fmt.Errorf(res["errorMsg"].(string)))
 	}

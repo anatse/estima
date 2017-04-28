@@ -18,9 +18,13 @@ func JwtHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer (func() {
 			if r := recover(); r != nil {
-				//log.Println(r.(*errors.Error).ErrorStack())
-				//fmt.Println("Recovered in Handler:", r)
-				model.WriteResponse(false, fmt.Sprint(r), nil, w)
+				araErr := model.GetAraError (r)
+				if araErr != nil {
+					ae := araErr.(model.AraError)
+					model.WriteResponse(false, fmt.Sprintf("%s", ae.Exception), nil, w)
+				} else {
+					model.WriteResponse(false, fmt.Sprint(r), nil, w)
+				}
 			}
 		})()
 
