@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"fmt"
+	"log"
 )
 
 type Ldap struct {
@@ -56,7 +57,14 @@ func LoadConfig() (Profile) {
 		return config.ActiveProfile()
 	}
 
-	file, _ := os.Open("config.json")
+	cfgPath := os.Getenv("CONFIG_PATH")
+	if cfgPath == "" {
+		cfgPath = "config.json"
+	}
+
+	log.Println(cfgPath)
+
+	file, _ := os.Open(cfgPath)
 	decoder := json.NewDecoder(file)
 	err := decoder.Decode(&config)
 	if err != nil {
@@ -66,5 +74,3 @@ func LoadConfig() (Profile) {
 	fmt.Println(config.ActiveProfile())
 	return config.ActiveProfile()
 }
-
-

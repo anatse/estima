@@ -11,7 +11,17 @@ import (
 	"regexp"
 	"fmt"
 	"log"
+	"github.com/gorilla/mux"
 )
+
+var router *mux.Router
+func GetRouter() *mux.Router{
+	if router == nil {
+		router = mux.NewRouter()
+	}
+
+	return router
+}
 
 var serviceMap map[string]interface{}
 func RegisterService (name string, service interface{}) {
