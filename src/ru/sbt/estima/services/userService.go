@@ -56,6 +56,9 @@ func (us *UserService) list (w http.ResponseWriter, r *http.Request) {
 	model.WriteArrayResponse (true, nil, users, w)
 }
 
+// Service using to search users by name. Searches using like comparison operator in users database collection
+// You can use % placeholder. By default service use % + name + % string to search users
+// Parameters: name
 func (us *UserService) search (w http.ResponseWriter, r *http.Request) {
 	user := model.GetUserFromRequest (w, r)
 
@@ -81,7 +84,7 @@ func (us *UserService) search (w http.ResponseWriter, r *http.Request) {
 func (us *UserService) create (w http.ResponseWriter, r *http.Request) {
 	var user model.EstimaUser
 	model.ReadJsonBody (r, &user)
-	entity, err := us.getDao().Save(user)
+	entity, err := us.getDao().Save(&user)
 	model.CheckErr (err)
 	model.WriteResponse(true, nil, entity, w)
 }
