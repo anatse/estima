@@ -32,7 +32,7 @@ cd ./src/github.com/diegogub/
 rm -rf aranGO
 
 git init
-git clone https://github.com/victorspringer/aranGO.git
+git clone https://github.com/anatse/aranGO.git
 git clone https://github.com/diegogub/napping
 ```
 * Для сборки проекта используется команда go build, в результате появится исполняекмый файл **estima**
