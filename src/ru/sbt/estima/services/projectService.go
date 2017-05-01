@@ -141,6 +141,7 @@ func (ps ProjectService) addStage (w http.ResponseWriter, r *http.Request) {
 	prjEntity := ps.getPrjFromURL(r)
 	var stage model.Stage
 	model.ReadJsonBody(r, &stage)
+	stage.SetKey(prjEntity.(model.Project).GetKey() + "_" + stage.Name)
 	err := ps.getDao().AddStage(prjEntity.(model.Project), stage)
 	model.CheckErr (err)
 
@@ -151,7 +152,8 @@ func (ps ProjectService) removeStage (w http.ResponseWriter, r *http.Request) {
 	prjEntity := ps.getPrjFromURL(r)
 	var stage model.Stage
 	model.ReadJsonBody(r, &stage)
-	stage.Key = stage.Name // only for stage should set key  == name manually
+	stage.SetKey(prjEntity.(model.Project).GetKey() + "_" + stage.Name)
+
 	ps.getDao().RemoveStage(prjEntity.(model.Project), stage)
 	model.WriteResponse(true, nil, stage, w)
 }

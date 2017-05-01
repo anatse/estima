@@ -162,7 +162,7 @@ func (dao baseDao) createAndConnectObjTx (inEntity model.Entity, outEntity model
 }
 
 func (dao baseDao) createAndConnectTx (inColName string, outColName string, edgeColName string, outKey string, outObj model.Entity) string {
-	//log.Printf("createAndConnectTx: %i, %i, %i, %, %i", inColName, outColName, edgeColName, outKey, outObj)
+	//log.Printf("createAndConnectTx: %v, %v, %v, %v, %v", inColName, outColName, edgeColName, outKey, outObj)
 	write := []string {inColName, edgeColName }
 
 	q := `function(params) {
@@ -174,9 +174,9 @@ func (dao baseDao) createAndConnectTx (inColName string, outColName string, edge
 		fromDoc = fromCol.document(params.fromId);
 
 		try {
-			toDoc = toCol.document(params.doc.name);
+			toDoc = toCol.document(params.doc._key ? params.doc._key : params.doc.name);
 		} catch(error) {
-			params.doc._key = params.doc.name;
+			params.doc._key = params.doc._key ? params.doc._key : params.doc.name;
 			if (error.errorNum === 1202)
 				toDoc = toCol.save(params.doc);
 			else
@@ -184,7 +184,7 @@ func (dao baseDao) createAndConnectTx (inColName string, outColName string, edge
 		}
 
 		var edgesCol = db.` + edgeColName + `;
-		var edge = {_from: fromDoc._id, _to: toDoc._id, _key: fromDoc._key + "_" + toDoc._key}
+		var edge = {_from: fromDoc._id, _to: toDoc._id}; //, _key: fromDoc._key + "_" + toDoc._key}
 		edge = edgesCol.save (edge);
 		return {success: true, entityId: toDoc._key};
         }`

@@ -72,7 +72,6 @@ type Stage struct {
 func NewStage (name string) Stage {
 	var prj Stage
 	prj.Name = name
-	prj.SetKey(name)
 	prj.StartDate = time.Now()
 	return prj
 }

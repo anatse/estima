@@ -34,6 +34,7 @@ type StageArrayResponse struct {
 
 const (
 	PRJ_NUM = "000000"
+	STAGE = "Stage1"
 )
 
 // Test project creation service
@@ -57,7 +58,7 @@ func TestProjectCreate (t *testing.T) {
 		checkError(err, t)
 
 		if resp.Success != true {
-			t.Errorf("Expected success=false. Got suceess=%v, error=%v", resp.Success, resp.Error)
+			t.Errorf("Expected success=true. Got suceess=%v, error=%v", resp.Success, resp.Error)
 			t.FailNow()
 		}
 
@@ -251,7 +252,7 @@ func TestProjectStagesList (t *testing.T) {
 func TestAddStageToProject (t *testing.T) {
 	var stg model.Stage
 
-	stg.Name = "Stage1"
+	stg.Name = STAGE
 	stg.Description = "First stage"
 	stg.Status = "READY"
 	stg.StartDate = time.Now()
@@ -282,7 +283,7 @@ func TestAddStageToProject (t *testing.T) {
 func TestRemoveStageFromProject (t *testing.T) {
 	var stg model.Stage
 
-	stg.Name = "Stage1"
+	stg.Name = STAGE
 	stg.Description = "First stage"
 	stg.Status = "READY"
 	stg.StartDate = time.Now()
