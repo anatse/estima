@@ -120,3 +120,11 @@ git clone https://github.com/diegogub/napping
       * В Working Directory указать путь до дириктории проекта.
       
 * Теперт проект доступен по ссылке [localhost:9080](http://localhost:9080/)
+
+## TESTING
+
+* Установить переменную окружения CONFIG_PATH = полный путь до файла config.json
+* Запустить комманду 
+```Shell 
+go test ./src/ru/... -v
+`
