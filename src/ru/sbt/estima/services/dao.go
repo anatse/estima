@@ -11,7 +11,6 @@ import (
 	"bytes"
 	"strconv"
 	"fmt"
-	"log"
 )
 
 type FilterValue struct {
@@ -163,7 +162,7 @@ func (dao baseDao) createAndConnectObjTx (inEntity model.Entity, outEntity model
 }
 
 func (dao baseDao) createAndConnectTx (inColName string, outColName string, edgeColName string, outKey string, outObj model.Entity) string {
-	log.Printf("createAndConnectTx: %i, %i, %i, %, %i", inColName, outColName, edgeColName, outKey, outObj)
+	//log.Printf("createAndConnectTx: %i, %i, %i, %, %i", inColName, outColName, edgeColName, outKey, outObj)
 	write := []string {inColName, edgeColName }
 
 	q := `function(params) {
@@ -187,7 +186,7 @@ func (dao baseDao) createAndConnectTx (inColName string, outColName string, edge
 		var edgesCol = db.` + edgeColName + `;
 		var edge = {_from: fromDoc._id, _to: toDoc._id, _key: fromDoc._key + "_" + toDoc._key}
 		edge = edgesCol.save (edge);
-		return {success: true, entityId: toDoc._id};
+		return {success: true, entityId: toDoc._key};
         }`
 
 	t := ara.NewTransaction(q, write, nil)
@@ -195,8 +194,6 @@ func (dao baseDao) createAndConnectTx (inColName string, outColName string, edge
 
 	err := t.Execute(dao.Database())
 	model.CheckErr(err)
-
-	log.Println(t.Result)
 
 	res := t.Result.(map[string]interface{})
 	if res["success"] != true {
@@ -207,7 +204,7 @@ func (dao baseDao) createAndConnectTx (inColName string, outColName string, edge
 }
 
 func (dao baseDao) removeConnectedTx (outColName string, edgeColName string, outKey string) string {
-	log.Printf("removeConnectedTx: %i, %i, %i", outColName, edgeColName, outKey)
+	//log.Printf("removeConnectedTx: %i, %i, %i", outColName, edgeColName, outKey)
 	write := []string { outColName, edgeColName }
 
 	q := `function(params) {
@@ -236,10 +233,7 @@ func (dao baseDao) removeConnectedTx (outColName string, edgeColName string, out
 	err := t.Execute(dao.Database())
 	model.CheckErr(err)
 
-	log.Println(t.Result)
 	res := t.Result.(map[string]interface{})
-	log.Println(res)
-
 	if res["success"] != true {
 		model.CheckErr(fmt.Errorf(res["errorMsg"].(string)))
 	}

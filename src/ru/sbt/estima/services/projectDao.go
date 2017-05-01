@@ -130,7 +130,7 @@ func (dao projectDao) AddUser (prj model.Project, user model.EstimaUser, role st
 		panic("Some identifiers are not set")
 	}
 
-	return dao.database.Col(PRJ_EDGES).SaveEdge(map[string]interface{} {"role": role}, prj.Id, user.Id)
+	return dao.database.Col(PRJ_EDGES).SaveEdge(map[string]interface{} {"role": role, "_key": prj.Key + "2" + user.Key}, prj.Id, user.Id)
 }
 
 func (dao projectDao) RemoveUser (prj model.Project, user model.EstimaUser) error {
@@ -146,9 +146,7 @@ func (dao projectDao) AddStage (prj model.Project, stage model.Stage) error {
 		panic("Some identifiers are not set")
 	}
 
-	log.Println(stage)
-
-	stage.Id = dao.createAndConnectObjTx(
+	stage.Key = dao.createAndConnectObjTx(
 		stage,
 		prj,
 		PRJ_EDGES)
@@ -157,8 +155,8 @@ func (dao projectDao) AddStage (prj model.Project, stage model.Stage) error {
 }
 
 func (dao projectDao) RemoveStage (prj model.Project, stage model.Stage) error {
-	if stage.Id == "" || prj.Id == "" {
-		panic("Some identifiers are not set")
+	if stage.Key == "" || prj.Key == "" {
+		log.Panicf("Some identifiers are not set %v, %v", stage.Key, prj.Key)
 	}
 
 	// remove edge between project and stage and remove stage

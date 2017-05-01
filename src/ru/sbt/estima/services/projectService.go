@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"github.com/gorilla/mux"
 	"time"
-	"log"
 )
 
 // Function for REST services
@@ -78,14 +77,14 @@ func (ps ProjectService) getPrjFromURL (r *http.Request) model.Entity {
 }
 
 func (ps ProjectService) getUsers (w http.ResponseWriter, r *http.Request) {
-	start := time.Now().Nanosecond()
+	//start := time.Now().Nanosecond()
 
 	prjEntity := ps.getPrjFromURL(r)
 	roles := r.URL.Query()["roles"]
 	users, err := ps.getDao().Users(prjEntity.(model.Project), roles)
 	model.CheckErr (err)
 
-	log.Printf ("Get Users: spent time (ms): %d", (time.Now().Nanosecond() - start) / 1000000)
+	//log.Printf ("Get Users: spent time (ms): %d", (time.Now().Nanosecond() - start) / 1000000)
 
 	// Write response
 	model.WriteArrayResponse(true, nil, users, w)
@@ -152,6 +151,7 @@ func (ps ProjectService) removeStage (w http.ResponseWriter, r *http.Request) {
 	prjEntity := ps.getPrjFromURL(r)
 	var stage model.Stage
 	model.ReadJsonBody(r, &stage)
+	stage.Key = stage.Name // only for stage should set key  == name manually
 	ps.getDao().RemoveStage(prjEntity.(model.Project), stage)
 	model.WriteResponse(true, nil, stage, w)
 }
