@@ -1,0 +1,46 @@
+{
+  "name": "estima",
+  "version": "1.0.0",
+  "description": "## ABOUT",
+  "main": "index.js",
+  "scripts": {
+    "start": "webpack --watch --progress",
+    "build": "webpack --progress",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anatse/estima.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/anatse/estima/issues"
+  },
+  "homepage": "https://github.com/anatse/estima#readme",
+  "devDependencies": {
+    "@types/lodash": "^4.14.63",
+    "@types/react": "^15.0.23",
+    "@types/react-dom": "^15.5.0",
+    "@types/react-redux": "^4.4.40",
+    "@types/react-router-dom": "^4.0.4",
+    "@types/redux": "^3.6.0",
+    "awesome-typescript-loader": "^3.1.2",
+    "css-loader": "^0.28.0",
+    "source-map-loader": "^0.2.1",
+    "style-loader": "^0.17.0",
+    "tslint": "^5.1.0",
+    "tslint-config-airbnb": "^1.1.1",
+    "typescript": "^2.3.1",
+    "url-loader": "^0.5.8",
+    "webpack": "^2.4.1"
+  },
+  "dependencies": {
+    "lodash": "^4.17.4",
+    "react": "^15.5.4",
+    "react-dom": "^15.5.4",
+    "react-redux": "^5.0.4",
+    "react-router-dom": "^4.1.1",
+    "redux": "^3.6.0"
+  }
+}

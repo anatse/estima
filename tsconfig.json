@@ -1,0 +1,26 @@
+{
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts"
+  ],
+  "include": [
+    "src/frontend/**/*"
+  ],
+  "compilerOptions": {
+    "outDir": "./views/dist/",
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "module": "commonjs",
+    "target": "es5",
+    "jsx": "react",
+    "allowJs": true,
+    "types" : [
+      "lodash",
+      "react",
+      "react-dom",
+      "react-redux",
+      "react-router-dom",
+      "redux"
+    ]
+  }
+}

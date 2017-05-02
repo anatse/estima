@@ -15,3 +15,6 @@ rd /s /q aranGO
 git init
 git clone https://github.com/anatse/aranGO.git
 git clone https://github.com/diegogub/napping
+
+npm install
+npm run build

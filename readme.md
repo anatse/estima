@@ -55,7 +55,7 @@ git clone https://github.com/diegogub/napping
         ```
     * Через браузер войти в web интерфейс http://localhost:8529, создать там новую базу данных **estima**
 * Проверить конфигурацию - файл config.json (комментарии в JSON не поддердиваются, здесь приведены для понимания)
-    ```javascript
+    ```JSON
     {
       // Текущаий профиль 
       "active": "develop",

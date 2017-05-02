@@ -1,9 +1,12 @@
+*.iml
+.idea
+/npm-debug.log
+/views/dist/
+bin
 github.com
 golang.org
 gopkg.in
-.idea
-bin
-pkg
-*.iml
 gotest
+node_modules
+pkg
 stop
