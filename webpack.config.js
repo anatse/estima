@@ -5,8 +5,9 @@ const webpack = require('webpack');
 const { CheckerPlugin } = require('awesome-typescript-loader');
 const path = require('path');
 
+const PRODUCTION = 'production';
 
-module.exports = {
+let config = {
     entry: {
         index: "./src/frontend/index.tsx",
     },
@@ -21,7 +22,7 @@ module.exports = {
     },
 
     // Source maps support ('inline-source-map' also works)
-    devtool: 'cheap-module-source-map',
+    //devtool: 'cheap-module-source-map',
 
     // Add the loader for .ts files.
     module: {
@@ -30,9 +31,10 @@ module.exports = {
                 test: /\.css$/,
                 use: [
                     { loader: 'style-loader' },
-                    { loader: 'css-loader' ,
+                    { loader: 'css-loader',
                         options: {
-                            sourceMap: true
+                            minimize: process.env.NODE_ENV === PRODUCTION,
+                            sourceMap: process.env.NODE_EN !== PRODUCTION
                         }
                     }
                 ]
@@ -59,9 +61,15 @@ module.exports = {
                 // this assumes your vendor imports exist in the node_modules directory
                 return module.context && module.context.indexOf('node_modules') !== -1;
             }
-        }),
-        // new webpack.optimize.UglifyJsPlugin({
-        //     sourceMap: 'cheap-module-source-map'
-        // })
+        })
     ]
 };
+
+if (process.env.NODE_ENV === PRODUCTION) {
+    delete config.devtool;
+    config.plugins.push(
+        new webpack.optimize.UglifyJsPlugin()
+    )
+}
+
+module.exports = config;

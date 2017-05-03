@@ -34,6 +34,9 @@ rm -rf aranGO
 git init
 git clone https://github.com/anatse/aranGO.git
 git clone https://github.com/diegogub/napping
+
+npm install
+npm run build
 ```
 * Для сборки проекта используется команда go build, в результате появится исполняекмый файл **estima**
 * Перед запуском программы необходимо также установить [arangodb](https://www.arangodb.com). Есть два способа установки:
@@ -55,8 +58,8 @@ git clone https://github.com/diegogub/napping
         ```
     * Через браузер войти в web интерфейс http://localhost:8529, создать там новую базу данных **estima**
 * Проверить конфигурацию - файл config.json (комментарии в JSON не поддердиваются, здесь приведены для понимания)
-    ```JSON
-    {
+    ```javascript
+    const config = {
       // Текущаий профиль 
       "active": "develop",
     
@@ -120,6 +123,18 @@ git clone https://github.com/diegogub/napping
       * В Working Directory указать путь до дириктории проекта.
       
 * Теперт проект доступен по ссылке [localhost:9080](http://localhost:9080/)
+
+## Разработка Presentation Layer
+
+* Запуск сборки проекта с пересборкой при изменении файлов в директории
+  ../projects/estima/src/frontend
+    ```bash
+    > npm run start
+    ```
+* Запуск сборки проекта с production версией
+    ```bash
+    > npm run build
+    ```
 
 ## Unit тестирование
 

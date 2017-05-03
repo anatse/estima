@@ -16,6 +16,10 @@ export class Login extends React.Component<void, IState> {
         login: '',
         password: '',
         isLoading: false,
+    };
+
+    componentWillMount () {
+        document.title = 'Логин';
     }
 
     /**
