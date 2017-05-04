@@ -21,10 +21,8 @@ func (ps ProcessService) getDao() processDao {
 
 func (ps ProcessService) findByStage (w http.ResponseWriter, r *http.Request) {
 	stageId := mux.Vars(r)["id"]
-
 	processList, err := ps.getDao().FindByStage(stageId)
 	model.CheckErr (err)
-
 	model.WriteArrayResponse(true, nil, processList, w)
 }
 
@@ -66,22 +64,16 @@ func (ps ProcessService) findOne (w http.ResponseWriter, r *http.Request) {
 	p.Key = mux.Vars(r)["id"]
 	err := ps.getDao().FindById(&p)
 	model.CheckErr (err)
-
 	model.WriteResponse(true, nil, p, w)
 }
 
 func (ps ProcessService) updateProcess (w http.ResponseWriter, r *http.Request) {
-	//var p model.Process
-	//p.Key = mux.Vars(r)["id"] // Number field used as identifier
-	//err := ps.getDao().FindById(&p)
-	//model.CheckErr (err)
 	var process model.Process
 	model.ReadJsonBody (r, &process)
 	process.Key = mux.Vars(r)["id"]
 
 	pe, err := ps.getDao().Save (&process)
 	model.CheckErr (err)
-
 	model.WriteResponse(true, nil, pe, w)
 }
 
