@@ -24,29 +24,22 @@ func NewProjectDao () *projectDao {
 	return &dao
 }
 
-func (dao projectDao) Save (prjEntity model.Entity) (model.Entity, error) {
-	prj := prjEntity.(model.Project)
-	coll := dao.database.Col(prj.GetCollection())
-
-	var foundProject model.Project
-	err := coll.Get(prj.Number, &foundProject)
+func (dao projectDao) FindOne (prjEntity model.Entity) error {
+	prj := prjEntity.(*model.Project)
+	prjs, err := dao.FindAll (NewFilter().Filter("number", "==", prj.Number), 0, 0)
 	model.CheckErr (err)
-
-	if foundProject.Id != "" {
-		coll.Replace(prj.Number, &prj)
-	} else {
-		prj.Document.SetKey(prj.Number)
-		err = coll.Save(&prj)
-		model.CheckErr (err)
+	if len(prjs) != 1 {
+		return nil
 	}
 
-	return prj, nil
+	*prj = (prjs[0].(model.Project))
+	return nil
 }
 
 func (dao projectDao) SetStatus (prjEntity model.Entity, status string) (model.Entity, error) {
 	// If Id o fthe entity is not set tring to find entity in database
 	if prjEntity.AraDoc().Id == "" {
-		err := dao.FindOne(prjEntity)
+		err := dao.FindById(prjEntity)
 		model.CheckErr (err)
 	}
 
@@ -69,7 +62,7 @@ func (dao projectDao) FindAll(daoFilter DaoFilter, offset int, pageSize int)([]m
 }
 
 func (dao projectDao) FindByUser (user model.EstimaUser, offset int, pageSize int)([]model.Entity, error) {
-	sql := `FOR v, e, p IN 1..1 INBOUND @startId @@edgeCollection RETURN v`
+	sql := `FOR v, e, p IN 1..1 INBOUND @startId @@edgeCollection FILTER e.label == 'user' RETURN v`
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = user.Id
@@ -96,7 +89,7 @@ func (dao projectDao) Users (prj model.Project, roles []string) ([]model.Entity,
 	filterMap["startId"] = prj.Id
 	filterMap["@edgeCollection"] = PRJ_EDGES
 
-	filter.WriteString(`FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection`)
+	filter.WriteString(`FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'user' `)
 	if roles != nil {
 		filterMap["roles"] = roles
 		filter.WriteString(` FILTER p.edges[0].role in @roles`)
@@ -130,7 +123,7 @@ func (dao projectDao) AddUser (prj model.Project, user model.EstimaUser, role st
 		panic("Some identifiers are not set")
 	}
 
-	return dao.database.Col(PRJ_EDGES).SaveEdge(map[string]interface{} {"role": role, "_key": prj.Key + "2" + user.Key}, prj.Id, user.Id)
+	return dao.Database().Col(PRJ_EDGES).SaveEdge(map[string]interface{} {"role": role, "label": "user"}, prj.Id, user.Id)
 }
 
 func (dao projectDao) RemoveUser (prj model.Project, user model.EstimaUser) error {
@@ -138,34 +131,79 @@ func (dao projectDao) RemoveUser (prj model.Project, user model.EstimaUser) erro
 		panic("Some identifiers are not set")
 	}
 
-	return dao.database.Col(PRJ_EDGES).Delete(prj.Key + "2" + user.Key)
+	sql := `FOR v, e, p IN 1..1 OUTBOUND @prj @@edgeCollection FILTER v._id == @user && e.label == 'user' REMOVE {_key: e._key} IN @@edgeCollection`
+	filterMap := make(map[string]interface{})
+	filterMap["prj"] = prj.Id
+	filterMap["user"] = user.Id
+	filterMap["@edgeCollection"] = PRJ_EDGES
+
+	var query ara.Query
+	query.Aql = sql
+	query.BindVars = filterMap
+
+	_, err := dao.Database().Execute(&query)
+	model.CheckErr(err)
+
+	return nil
+}
+
+func (dao projectDao) findStageByName (prjId string, name string) model.Stage {
+	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'stage' && v.name == @stageName RETURN v`
+
+	filterMap := make(map[string]interface{})
+	filterMap["startId"] = prjId
+	filterMap["stageName"] = name
+	filterMap["@edgeCollection"] = PRJ_EDGES
+
+	var query ara.Query
+	query.Aql = sql
+	query.BindVars = filterMap
+
+	var stage model.Stage
+	cursor, err := dao.Database().Execute(&query)
+	model.CheckErr(err)
+	cursor.FetchOne(&stage)
+
+	return stage
 }
 
 func (dao projectDao) AddStage (prj model.Project, stage model.Stage) error {
-	if prj.Id == "" {
-		panic("Some identifiers are not set")
+	if prj.Id == "" || stage.Name == "" {
+		log.Panicf("Some identifiers are not set %v %v", prj.Key, stage.Name)
+	}
+
+	// First trying to find stage with this name
+	found := dao.findStageByName (prj.Id, stage.Name)
+	if found.Id != "" {
+		log.Panicf("Stage with the name '%v' already exists in project '%v'", stage.Name, prj.Number)
 	}
 
 	stage.Key = dao.createAndConnectObjTx(
 		stage,
 		prj,
-		PRJ_EDGES)
+		PRJ_EDGES,
+		map[string]string {"label": "stage"})
 
-	return dao.FindOne(&stage)
+	return dao.FindById(&stage)
 }
 
 func (dao projectDao) RemoveStage (prj model.Project, stage model.Stage) error {
-	if stage.Key == "" || prj.Key == "" {
-		log.Panicf("Some identifiers are not set %v, %v", stage.Key, prj.Key)
+	if  prj.Key == "" {
+		log.Panicf("Some identifiers are not set %v, %v", prj.Key)
+	}
+
+	found := dao.findStageByName (prj.Id, stage.Name)
+	if found.Id == "" {
+		log.Panicf("Stage '%v' not found", stage.Name)
 	}
 
 	// remove edge between project and stage and remove stage
-	dao.removeConnectedTx (stage.GetCollection(), PRJ_EDGES, stage.GetKey())
+	dao.removeConnectedTx (stage.GetCollection(), PRJ_EDGES, found.GetKey())
 	return nil;
 }
 
 func (dao projectDao) Stages (prj model.Project) ([]model.Entity, error) {
-	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection RETURN v`
+	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'stage' RETURN v`
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = prj.Id
@@ -178,23 +216,11 @@ func (dao projectDao) Stages (prj model.Project) ([]model.Entity, error) {
 	var stages []model.Entity
 	var stage *model.Stage = new(model.Stage)
 	cursor, err := dao.Database().Execute(&query)
+	model.CheckErr(err)
 	for cursor.FetchOne(stage) {
 		stages = append (stages, *stage)
 		stage = new(model.Stage)
 	}
 
 	return stages, err
-}
-
-func (dao projectDao) createStage (prj model.Project, stage model.Stage) model.Stage {
-	var stageKey string = prj.GetKey() + "_" + stage.GetKey()
-	err := dao.database.Col(stage.GetCollection()).Get(stageKey, &stage)
-	model.CheckErr (err)
-	if stage.Id == "" {
-		stage.SetKey(stageKey)
-		err = dao.database.Col(stage.GetCollection()).Save(&stage)
-		model.CheckErr (err)
-	}
-
-	return stage
 }

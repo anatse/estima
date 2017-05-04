@@ -58,10 +58,17 @@ func (flt DaoFilter) Sort (field string, asc Ascending) DaoFilter {
 type Dao interface {
 	Session() *ara.Session
 	Database() *ara.Database
+	// Save entity this functions can override by concrete implementation
 	Save(model.Entity) (model.Entity, error)
+	// This function used to find entity by it's unique set of attributes, if key field is unknown
 	FindOne (entity model.Entity) error
+	// This function implements find by key functional
+	FindById (entity model.Entity) error
+	// Select with filter
 	FindAll(filter DaoFilter, offset int, pageSize int)([]model.Entity, error)
-	Coll(string)
+	// Get and create Collection by collection name
+	Col(string) *ara.Collection
+	// Remove collection from database
 	RemoveColl(string)
 }
 
@@ -78,15 +85,17 @@ func (dao baseDao) Database() *ara.Database {
 	return dao.database
 }
 
-func (dao baseDao) Coll(colName string) {
+func (dao baseDao) Col(colName string) *ara.Collection {
 	if !dao.database.ColExist(colName) {
 		newColl := ara.NewCollectionOptions(colName, true)
-		dao.database.CreateCollection(newColl)
+		dao.Database().CreateCollection(newColl)
 	}
+
+	return dao.Database().Col(colName)
 }
 
 func (dao baseDao) RemoveColl (colName string) {
-	dao.database.DropCollection(colName)
+	dao.Database().DropCollection(colName)
 }
 
 func (dao baseDao) buildQuery (daoFilter DaoFilter)(string, map[string]interface{}) {
@@ -147,21 +156,26 @@ func (dao baseDao) findAll(daoFilter DaoFilter, colName string, offset int, page
 	return dao.Database().Execute(&query)
 }
 
-func (dao baseDao) FindOne (entity model.Entity) (error) {
-	coll := dao.Database().Col(entity.GetCollection())
-	return coll.Get(entity.GetKey(), &entity)
+func (dao baseDao) FindById(entity model.Entity) (error) {
+	if entity.GetKey() != "" {
+		coll := dao.Database().Col(entity.GetCollection())
+		return coll.Get(entity.GetKey(), &entity)
+	} else {
+		return nil
+	}
 }
 
-func (dao baseDao) createAndConnectObjTx (inEntity model.Entity, outEntity model.Entity, edgeColName string) string {
+func (dao baseDao) createAndConnectObjTx (inEntity model.Entity, outEntity model.Entity, edgeColName string, props map[string]string) string {
 	return dao.createAndConnectTx (
 		inEntity.GetCollection(), 	// from
 		outEntity.GetCollection(),	// to
 		edgeColName,
 		outEntity.GetKey(),		// from key
-		inEntity)
+		inEntity,
+		props)
 }
 
-func (dao baseDao) createAndConnectTx (inColName string, outColName string, edgeColName string, outKey string, outObj model.Entity) string {
+func (dao baseDao) createAndConnectTx (inColName string, outColName string, edgeColName string, outKey string, outObj model.Entity, props map[string]string) string {
 	//log.Printf("createAndConnectTx: %v, %v, %v, %v, %v", inColName, outColName, edgeColName, outKey, outObj)
 	write := []string {inColName, edgeColName }
 
@@ -174,9 +188,9 @@ func (dao baseDao) createAndConnectTx (inColName string, outColName string, edge
 		fromDoc = fromCol.document(params.fromId);
 
 		try {
-			toDoc = toCol.document(params.doc._key ? params.doc._key : params.doc.name);
+			if (params.doc._key !== "") toDoc = toCol.save(params.doc);
+			else toDoc = toCol.document(params.doc._key);
 		} catch(error) {
-			params.doc._key = params.doc._key ? params.doc._key : params.doc.name;
 			if (error.errorNum === 1202)
 				toDoc = toCol.save(params.doc);
 			else
@@ -184,13 +198,17 @@ func (dao baseDao) createAndConnectTx (inColName string, outColName string, edge
 		}
 
 		var edgesCol = db.` + edgeColName + `;
-		var edge = {_from: fromDoc._id, _to: toDoc._id}; //, _key: fromDoc._key + "_" + toDoc._key}
+		var edge = {_from: fromDoc._id, _to: toDoc._id};
+		for (v in params.props) {
+			edge[v] = params.props[v]
+		}
+
 		edge = edgesCol.save (edge);
-		return {success: true, entityId: toDoc._key};
+		return {success: true, entityKey: toDoc._key};
         }`
 
 	t := ara.NewTransaction(q, write, nil)
-	t.Params = map[string]interface{}{ "doc" : outObj, "fromId": outKey }
+	t.Params = map[string]interface{}{ "doc" : outObj, "fromId": outKey, "props": props }
 
 	err := t.Execute(dao.Database())
 	model.CheckErr(err)
@@ -200,7 +218,12 @@ func (dao baseDao) createAndConnectTx (inColName string, outColName string, edge
 		model.CheckErr(fmt.Errorf("%i", res["errorMsg"]))
 	}
 
-	return res["entityId"].(string)
+	var ret string
+	if res["entityKey"] != nil {
+		ret = res["entityKey"].(string)
+	}
+
+	return ret
 }
 
 func (dao baseDao) removeConnectedTx (outColName string, edgeColName string, outKey string) string {
@@ -224,7 +247,7 @@ func (dao baseDao) removeConnectedTx (outColName string, edgeColName string, out
 		}
 
 		toCol.remove (doc)
-		return {success: true, entityId: doc._key};
+		return {success: true, entityKey: doc._key};
         }`
 
 	t := ara.NewTransaction(q, write, nil)
@@ -238,5 +261,27 @@ func (dao baseDao) removeConnectedTx (outColName string, edgeColName string, out
 		model.CheckErr(fmt.Errorf(res["errorMsg"].(string)))
 	}
 
-	return res["entityId"].(string)
+	var ret string
+	if res["entityKey"] != nil {
+		ret = res["entityKey"].(string)
+	}
+
+	return ret
+}
+
+func (dao baseDao) Save (userEntity model.Entity) (model.Entity, error) {
+	coll := dao.Database().Col(userEntity.GetCollection())
+
+	if userEntity.GetKey() != "" {
+		if userEntity.AraDoc().Id != "" {
+			err := coll.Replace(userEntity.GetKey(), userEntity)
+			model.CheckErr(err)
+			return userEntity, nil
+		}
+	} else {
+		err := coll.Save(userEntity)
+		model.CheckErr(err)
+	}
+
+	return userEntity, nil
 }

@@ -29,13 +29,11 @@ func (prj Project) Entity() interface{} {
 
 		OmitId  omit `json:"_id,omitempty"`
 		OmitRev omit `json:"_rev,omitempty"`
-		OmitKey omit `json:"_key,omitempty"`
 
 		OmitError   omit   `json:"error,omitempty"`
 		OmitMessage omit `json:"errorMessage,omitempty"`
 	} {
 		&prj,
-		nil,
 		nil,
 		nil,
 		nil,
@@ -48,7 +46,7 @@ func (prj Project) AraDoc() (ara.Document) {
 }
 
 func (prj Project)GetKey() string {
-	return prj.Number
+	return prj.Key
 }
 
 func (prj Project) GetCollection() string {
@@ -82,7 +80,6 @@ func (stage Stage) Entity() interface{} {
 
 		OmitId  omit `json:"_id,omitempty"`
 		OmitRev omit `json:"_rev,omitempty"`
-		OmitKey omit `json:"_key,omitempty"`
 
 		OmitError   omit   `json:"error,omitempty"`
 		OmitMessage omit `json:"errorMessage,omitempty"`
@@ -92,14 +89,10 @@ func (stage Stage) Entity() interface{} {
 		nil,
 		nil,
 		nil,
-		nil,
 	}
 }
 
 func (stage Stage) AraDoc() (ara.Document) {
-	var p Stage
-	p.Status = "10"
-
 	return stage.Document
 }
 

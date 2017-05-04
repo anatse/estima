@@ -62,7 +62,7 @@ func createCookie (user model.EstimaUser, w http.ResponseWriter) {
 	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
 	claims["uid"] = user.Uid
 	claims["roles"] = user.Roles
-	claims["id"] = user.Id
+	claims["key"] = user.Key
 
 	/* Sign the token with our secret */
 	tokenString, _ := token.SignedString(mySigningKey)
@@ -96,13 +96,12 @@ func login (w http.ResponseWriter, username string, password string) {
 		model.CheckErr (err)
 	}
 
-	// Try to find information from database
+	// Try to find information from database. Search user by name
 	dao := NewUserDao ()
-	err = dao.FindOne(user)
-	model.CheckErr (err)
+	dao.FindOne (user)
 
 	// If user not found
-	if user.AraDoc().Id == "" {
+	if user.Id == "" {
 		// Update user information in database
 		_, err = NewUserDao().Save(user)
 		model.CheckErr (err)
@@ -136,13 +135,19 @@ var Login = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
 
 })
 
+
 // Function generate new auth token (JWT) and store it in cookie. Also this function store user information in database
 // if this user not exists yet
 var GetTokenHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
 	defer (func() {
 		if r := recover(); r != nil {
-			fmt.Println("Recovered in GetTokenHandler:", r)
-			model.WriteResponse (false, fmt.Sprint(r), nil, w)
+			araErr := model.GetAraError (r)
+			if araErr != nil {
+				ae := araErr.(model.AraError)
+				model.WriteResponse(false, fmt.Sprintf("%s", model.GetErrorText(ae)), nil, w)
+			} else {
+				model.WriteResponse(false, fmt.Sprint(r), nil, w)
+			}
 		}
 	})()
 

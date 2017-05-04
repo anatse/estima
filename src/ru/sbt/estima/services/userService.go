@@ -84,6 +84,10 @@ func (us *UserService) search (w http.ResponseWriter, r *http.Request) {
 func (us *UserService) create (w http.ResponseWriter, r *http.Request) {
 	var user model.EstimaUser
 	model.ReadJsonBody (r, &user)
+
+	// Trying to find user
+	model.CheckErr (us.getDao().FindOne(&user))
+
 	entity, err := us.getDao().Save(&user)
 	model.CheckErr (err)
 	model.WriteResponse(true, nil, entity, w)

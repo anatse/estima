@@ -87,32 +87,42 @@ func CheckErr (err error) {
 }
 
 type AraError struct {
-	Exception string `json:"exception"`
-	Stacktrace []string `json:"stacktrace"`
+	Exception string `json:"exception,omitempty"`
+	Stacktrace []string `json:"stacktrace,omitempty"`
 	Error bool `json:"error"`
 	Code int `json:"code"`
 	ErrorNum int `json:"errorNum"`
 	ErrorMessage string `json:"errorMessage"`
 }
 
+func GetErrorText (err AraError) string {
+	if err.ErrorMessage != "" {
+		return err.ErrorMessage
+	}
+
+	if err.Exception != "" {
+		return err.Exception
+	}
+
+	return string (err.ErrorNum)
+}
+
 func GetAraError (err interface{}) interface{} {
-	errFmt, _ := regexp.Compile(`(\{"exception":".*".+"error":.+"code":.+"errorNum":.+"errorMessage".+\})`)
+	//errFmt, _ := regexp.Compile(`(\{"exception":".*".+"error":.+"code":.+"errorNum":.+"errorMessage".+\})`)
+	errFmt, _ := regexp.Compile(`(\{"error":.+\})`)
 	errorString := fmt.Sprint(err)
 
 	errorStrings := errFmt.FindAllStringSubmatch(errorString, -1)
-	log.Println(errorStrings)
-
 	if len(errorStrings) > 0 && len(errorStrings[0]) > 0 {
 		errorString = errorStrings[0][0]
 		var ae AraError
 		json.Unmarshal([]byte(errorString), &ae)
-
 		log.Printf (`Parsed error:
-	exception: %s
-	code: %s
-	errorNum: %s
-	errorMessage: %s
-	stackTrace: %s		`,
+	exception: %v
+	code: %v
+	errorNum: %v
+	errorMessage: %v
+	stackTrace: %v`,
 			ae.Exception,
 			ae.Code,
 			ae.ErrorNum,

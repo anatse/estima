@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"ru/sbt/estima/model"
 	"ru/sbt/estima/services"
-	"fmt"
 	"github.com/gorilla/mux"
 	"reflect"
 	"unsafe"
@@ -12,6 +11,7 @@ import (
 	"github.com/gorilla/handlers"
 	"os"
 	"log"
+	"fmt"
 )
 
 func JwtHandler(h http.Handler) http.Handler {
@@ -21,7 +21,7 @@ func JwtHandler(h http.Handler) http.Handler {
 				araErr := model.GetAraError (r)
 				if araErr != nil {
 					ae := araErr.(model.AraError)
-					model.WriteResponse(false, fmt.Sprintf("%s", ae.Exception), nil, w)
+					model.WriteResponse(false, fmt.Sprintf("%s", model.GetErrorText(ae)), nil, w)
 				} else {
 					model.WriteResponse(false, fmt.Sprint(r), nil, w)
 				}

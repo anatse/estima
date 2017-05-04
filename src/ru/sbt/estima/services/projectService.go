@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"github.com/gorilla/mux"
 	"time"
+	"log"
 )
 
 // Function for REST services
@@ -22,10 +23,12 @@ func (ps *ProjectService)getDao() projectDao {
 
 func (ps ProjectService) findOne (w http.ResponseWriter, r *http.Request) {
 	var p model.Project
-	p.Number = mux.Vars(r)["id"] // Number field used as identifier
+	p.Key = mux.Vars(r)["id"] // Number field used as identifier
 
-	err := ps.getDao().FindOne(&p)
-	model.CheckErr (err)
+	model.CheckErr (ps.getDao().FindById(&p))
+	if p.Id == "" {
+		log.Panicf("Project not found")
+	}
 
 	model.WriteResponse(true, nil, p, w)
 }
@@ -55,22 +58,29 @@ func (ps ProjectService) findAll (w http.ResponseWriter, r *http.Request) {
 func (ps ProjectService) create (w http.ResponseWriter, r *http.Request) {
 	var prj model.Project
 	model.ReadJsonBody(r, &prj)
-	var emptyTime = time.Time{}
-	if prj.StartDate == emptyTime {
-		prj.StartDate = time.Now()
+
+	found := prj
+	model.CheckErr(ps.getDao().FindOne(&found))
+	if found.Id == "" {
+		var emptyTime = time.Time{}
+		if prj.StartDate == emptyTime {
+			prj.StartDate = time.Now()
+		}
+	} else {
+		// Set identifiers from found object
+		prj.Key = found.Key
+		prj.Id = found.Id
 	}
 
-	entity, err := ps.getDao().Save(prj)
+	entity, err := ps.getDao().Save(&prj)
 	model.CheckErr (err)
-
-	prj = entity.(model.Project)
-	model.WriteResponse(true, nil, prj, w)
+	model.WriteResponse(true, nil, entity, w)
 }
 
 func (ps ProjectService) getPrjFromURL (r *http.Request) model.Entity {
 	prjKey := mux.Vars(r)["id"]
 	prj := model.NewPrj(prjKey)
-	err := ps.getDao().FindOne(&prj)
+	err := ps.getDao().FindById(&prj)
 	model.CheckErr (err)
 
 	return prj
@@ -128,6 +138,15 @@ func (ps ProjectService) removeUser (w http.ResponseWriter, r *http.Request) {
 	model.WriteResponse(true, nil, nil, w)
 }
 
+func (ps ProjectService)getStageByName (w http.ResponseWriter, r *http.Request) {
+	prjEntity := ps.getPrjFromURL(r)
+	var stage model.Stage
+	model.ReadJsonBody(r, &stage)
+	stage = ps.getDao().findStageByName (prjEntity.(model.Project).Id, stage.Name)
+	// Write response
+	model.WriteResponse(true, nil, stage, w)
+}
+
 func (ps ProjectService) getStages (w http.ResponseWriter, r *http.Request) {
 	prjEntity := ps.getPrjFromURL(r)
 	stages, err := ps.getDao().Stages(prjEntity.(model.Project))
@@ -141,10 +160,7 @@ func (ps ProjectService) addStage (w http.ResponseWriter, r *http.Request) {
 	prjEntity := ps.getPrjFromURL(r)
 	var stage model.Stage
 	model.ReadJsonBody(r, &stage)
-	stage.SetKey(prjEntity.(model.Project).GetKey() + "_" + stage.Name)
-	err := ps.getDao().AddStage(prjEntity.(model.Project), stage)
-	model.CheckErr (err)
-
+	model.CheckErr (ps.getDao().AddStage(prjEntity.(model.Project), stage))
 	model.WriteResponse(true, nil, stage, w)
 }
 
@@ -152,15 +168,14 @@ func (ps ProjectService) removeStage (w http.ResponseWriter, r *http.Request) {
 	prjEntity := ps.getPrjFromURL(r)
 	var stage model.Stage
 	model.ReadJsonBody(r, &stage)
-	stage.SetKey(prjEntity.(model.Project).GetKey() + "_" + stage.Name)
-
 	ps.getDao().RemoveStage(prjEntity.(model.Project), stage)
 	model.WriteResponse(true, nil, stage, w)
 }
 
 func (ps ProjectService) findByUser (w http.ResponseWriter, r *http.Request) {
 	user := model.GetUserFromRequest (w, r)
-
+	userSrv := model.FindService("user").(UserService)
+	model.CheckErr(userSrv.getDao().FindOne(user))
 	offset := model.GetInt (r.URL.Query(), "offset", 0)
 	pageSize := model.GetInt (r.URL.Query(), "pageSize", 0)
 
@@ -196,6 +211,7 @@ func (ps *ProjectService) ConfigRoutes (router *mux.Router, handler HandlerOfHan
 	router.Handle ("/project/{id}/stage/list", handler(http.HandlerFunc(ps.getStages))).Methods("POST", "GET").Name("List stages for project")
 	router.Handle ("/project/{id}/stage/add", handler(http.HandlerFunc(ps.addStage))).Methods("POST").Name("Add stage to project")
 	router.Handle ("/project/{id}/stage/remove", handler(http.HandlerFunc(ps.removeStage))).Methods("POST", "DELETE").Name("Remove stage from project")
+	router.Handle ("/project/{id}/stage/get", handler(http.HandlerFunc(ps.getStageByName))).Methods("GET", "POST").Name("Get project stage by name")
 	router.Handle ("/project/{id}/status", handler(http.HandlerFunc(ps.setStatus))).Methods("POST").Name("Set project status")
 	router.Handle ("/project/{id}", handler(http.HandlerFunc(ps.findOne))).Methods("GET").Name("Get project by id. Id = Number")
 }

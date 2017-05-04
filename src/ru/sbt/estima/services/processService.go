@@ -39,9 +39,10 @@ func (ps ProcessService) create (w http.ResponseWriter, r *http.Request) {
 	prc.Id = ps.getDao().createAndConnectObjTx(
 		prc,
 		stage,
-		PRJ_EDGES)
+		PRJ_EDGES,
+		nil)
 
-	err := ps.getDao().FindOne(&prc)
+	err := ps.getDao().FindById(&prc)
 	model.CheckErr(err)
 
 	model.WriteResponse(true, nil, prc, w)
@@ -71,7 +72,7 @@ func (ps ProcessService) findOne (w http.ResponseWriter, r *http.Request) {
 	var p model.Process
 	p.Name = mux.Vars(r)["id"] // Number field used as identifier
 
-	err := ps.getDao().FindOne(&p)
+	err := ps.getDao().FindById(&p)
 	model.CheckErr (err)
 
 	model.WriteResponse(true, nil, p, w)
@@ -80,7 +81,7 @@ func (ps ProcessService) findOne (w http.ResponseWriter, r *http.Request) {
 func (ps ProcessService) updateProcess (w http.ResponseWriter, r *http.Request) {
 	var p model.Process
 	p.Name = mux.Vars(r)["id"] // Number field used as identifier
-	err := ps.getDao().FindOne(&p)
+	err := ps.getDao().FindById(&p)
 	model.CheckErr (err)
 
 	var prj model.Process

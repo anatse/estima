@@ -26,7 +26,10 @@ const (
 func TestPrepareProcess (t *testing.T) {
 	TestProjectCreate(t)
 	TestAddStageToProject(t)
+	TestGetStageByName(t)
 }
+
+var prcKey string
 
 // Test for process creation
 // URL: /stage/{id}/process/create, method POST
@@ -36,7 +39,7 @@ func TestProcessCreate (t *testing.T) {
 	prc.Description = "First Test Process"
 	prc.Status = "TEST"
 
-	response := callSecured(http.NewRequest("POST", "/stage/" + PRJ_NUM + "_" + STAGE + "/process/create", CreateBody(prc)))
+	response := callSecured(http.NewRequest("POST", "/stage/" + stageKey + "/process/create", CreateBody(prc)))
 	checkResponseCode(t, http.StatusOK, response.Code)
 
 	if body := response.Body.String(); body != "" {
@@ -58,6 +61,13 @@ func TestProcessCreate (t *testing.T) {
 			t.Errorf("Expected process status = TEST. Got %v", resp.Body.Status)
 			t.FailNow()
 		}
+
+		if resp.Body.Key == "" {
+			t.Errorf("Project key should not be empty")
+			t.FailNow()
+		} else {
+			prcKey = resp.Body.Key
+		}
 	}
 }
 
@@ -69,7 +79,7 @@ func TestProcessDelete (t *testing.T) {
 	prc.Description = "First Test Process"
 	prc.Status = "TEST"
 
-	response := callSecured(http.NewRequest("DELETE", "/process/" + PRC_NAME + "/remove", CreateBody(prc)))
+	response := callSecured(http.NewRequest("DELETE", "/process/" + prcKey + "/remove", CreateBody(prc)))
 	checkResponseCode(t, http.StatusOK, response.Code)
 
 	if body := response.Body.String(); body != "" {

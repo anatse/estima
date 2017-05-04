@@ -24,7 +24,7 @@ type EstimaUser struct {
 	Roles	[]string `json:"roles,omitempty"`
 }
 
-func NewUser (name string, email string, password string, displayName string, uid string, roles []string, id string) *EstimaUser {
+func NewUser (name string, email string, password string, displayName string, uid string, roles []string, key string) *EstimaUser {
 	var pwd string
 
 	if password != "" {
@@ -38,7 +38,7 @@ func NewUser (name string, email string, password string, displayName string, ui
 	user.Password = pwd
 	user.Uid = uid
 	user.Roles = roles
-	user.Id = id
+	user.Key = key
 
 	return &user
 }
@@ -50,13 +50,11 @@ func (user EstimaUser) Entity() interface{} {
 
 		OmitId  omit `json:"_id,omitempty"`
 		OmitRev omit `json:"_rev,omitempty"`
-		OmitKey omit `json:"_key,omitempty"`
 
 		OmitError   omit   `json:"error,omitempty"`
 		OmitMessage omit `json:"errorMessage,omitempty"`
 	} {
 		&user,
-		nil,
 		nil,
 		nil,
 		nil,
@@ -69,7 +67,7 @@ func (user EstimaUser) AraDoc() (ara.Document) {
 }
 
 func (user EstimaUser)GetKey() string {
-	return user.Name
+	return user.Key
 }
 
 func (user EstimaUser) GetCollection() string {
@@ -163,6 +161,6 @@ func GetUserFromRequest (w http.ResponseWriter, r *http.Request) (*EstimaUser) {
 		claims["displayName"].(string),
 		claims["uid"].(string),
 		roles,
-		claims["id"].(string),
+		claims["key"].(string),
 	)
 }

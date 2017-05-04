@@ -23,17 +23,10 @@ func NewProcessDao () *processDao {
 	return &dao
 }
 
-func (dao processDao) Save (prjEntity model.Entity) (model.Entity, error) {
-	prj := prjEntity.(model.Process)
-	coll := dao.database.Col(prj.GetCollection())
-	coll.Replace(prj.GetKey(), &prj)
-	return prj, nil
-}
-
 func (dao processDao) SetStatus (prjEntity model.Entity, status string) (model.Entity, error) {
 	var prc *model.Process
 	prc = prjEntity.(*model.Process)
-	err := dao.FindOne(prc)
+	err := dao.FindById(prc)
 	model.CheckErr (err)
 
 	prc.Status = status

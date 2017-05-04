@@ -37,6 +37,9 @@ const (
 	STAGE = "Stage1"
 )
 
+var prjKey string
+var stageKey string
+
 // Test project creation service
 // URL: /project/create, method POST
 func TestProjectCreate (t *testing.T) {
@@ -53,9 +56,14 @@ func TestProjectCreate (t *testing.T) {
 
 	if body := response.Body.String(); body != "" {
 		var resp ProjectResponse
+		checkError(json.Unmarshal([]byte(body), &resp), t)
 
-		err := json.Unmarshal([]byte(body), &resp)
-		checkError(err, t)
+		if resp.Body.Key == "" {
+			t.Errorf("Project key should not be empty")
+			t.FailNow()
+		} else {
+			prjKey = resp.Body.Key
+		}
 
 		if resp.Success != true {
 			t.Errorf("Expected success=true. Got suceess=%v, error=%v", resp.Success, resp.Error)
@@ -81,6 +89,7 @@ func TestProjectCreate (t *testing.T) {
 			t.Errorf("Expected project number: 'Flag'. Got %v", resp.Body.Flag)
 			t.FailNow()
 		}
+
 	}
 }
 
@@ -96,13 +105,11 @@ func TestAddUserToProject (t *testing.T) {
 	userInfo.Role = "TEST_ROLE"
 
 	body := CreateBody(userInfo)
-	response := callSecured(http.NewRequest("POST", "/project/"+ PRJ_NUM + "/user/add", body))
+	response := callSecured(http.NewRequest("POST", "/project/"+ prjKey + "/user/add", body))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp ProjectResponse
-
-		err := json.Unmarshal([]byte(body), &resp)
-		checkError(err, t)
+		checkError(json.Unmarshal([]byte(body), &resp), t)
 
 		if resp.Success != true {
 			t.Errorf("Expected success=true. Got suceess=%v, error=%v", resp.Success, resp.Error)
@@ -118,8 +125,7 @@ func TestGetProjectsByUser (t *testing.T) {
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp ProjectArrayResponse
-		err := json.Unmarshal([]byte(body), &resp)
-		checkError(err, t)
+		checkError(json.Unmarshal([]byte(body), &resp), t)
 
 		if resp.Success != true {
 			t.Errorf("Expected success=true. Got suceess=%v, error=%v", resp.Success, resp.Error)
@@ -136,12 +142,11 @@ func TestGetProjectsByUser (t *testing.T) {
 // Test getting list of all project's users
 // URL: /project/{id}/user/list
 func TestProjectUserList (t *testing.T) {
-	response := callSecured(http.NewRequest("GET", "/project/" + PRJ_NUM + "/user/list", nil))
+	response := callSecured(http.NewRequest("GET", "/project/" + prjKey + "/user/list", nil))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp UserArrayResponse
-		err := json.Unmarshal([]byte(body), &resp)
-		checkError(err, t)
+		checkError(json.Unmarshal([]byte(body), &resp), t)
 
 		if resp.Success != true {
 			t.Errorf("Expected success=true. Got suceess=%v, error=%v", resp.Success, resp.Error)
@@ -167,13 +172,11 @@ func TestRemoveUserFromProject (t *testing.T) {
 	userInfo.Role = "TEST_ROLE"
 
 	body := CreateBody(userInfo)
-	response := callSecured(http.NewRequest("DELETE", "/project/"+ PRJ_NUM + "/user/remove", body))
+	response := callSecured(http.NewRequest("DELETE", "/project/"+ prjKey + "/user/remove", body))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp ProjectResponse
-
-		err := json.Unmarshal([]byte(body), &resp)
-		checkError(err, t)
+		checkError(json.Unmarshal([]byte(body), &resp), t)
 
 		if resp.Success != true {
 			t.Errorf("Expected success=true. Got suceess=%v, error=%v", resp.Success, resp.Error)
@@ -184,12 +187,11 @@ func TestRemoveUserFromProject (t *testing.T) {
 
 // Test user list check for empty lists, this test should be called after remove user test
 func TestProjectEmptyUserList (t *testing.T) {
-	response := callSecured(http.NewRequest("GET", "/project/" + PRJ_NUM + "/user/list", nil))
+	response := callSecured(http.NewRequest("GET", "/project/" + prjKey + "/user/list", nil))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp UserArrayResponse
-		err := json.Unmarshal([]byte(body), &resp)
-		checkError(err, t)
+		checkError(json.Unmarshal([]byte(body), &resp), t)
 
 		if resp.Success != true {
 			t.Errorf("Expected success=true. Got suceess=%v, error=%v", resp.Success, resp.Error)
@@ -210,8 +212,7 @@ func TestFindAllProjects (t *testing.T) {
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp ProjectArrayResponse
-		err := json.Unmarshal([]byte(body), &resp)
-		checkError(err, t)
+		checkError(json.Unmarshal([]byte(body), &resp), t)
 
 		if resp.Success != true {
 			t.Errorf("Expected success=true. Got suceess=%v, error=%v", resp.Success, resp.Error)
@@ -228,12 +229,11 @@ func TestFindAllProjects (t *testing.T) {
 // Testing project stages. This test for empty list of stages
 // URL: /project/{id}/stage/list, method GET
 func TestProjectStagesList (t *testing.T) {
-	response := callSecured(http.NewRequest("GET", "/project/"+ PRJ_NUM + "/stage/list", nil))
+	response := callSecured(http.NewRequest("GET", "/project/"+ prjKey + "/stage/list", nil))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp StageArrayResponse
-		err := json.Unmarshal([]byte(body), &resp)
-		checkError(err, t)
+		checkError(json.Unmarshal([]byte(body), &resp), t)
 
 		if resp.Success != true {
 			t.Errorf("Expected success=true. Got suceess=%v, error=%v", resp.Success, resp.Error)
@@ -259,7 +259,7 @@ func TestAddStageToProject (t *testing.T) {
 	stg.EndDate = stg.StartDate.AddDate(1, 0, 0)
 
 	body := CreateBody(stg)
-	response := callSecured(http.NewRequest("POST", "/project/"+ PRJ_NUM + "/stage/add", body))
+	response := callSecured(http.NewRequest("POST", "/project/"+ prjKey + "/stage/add", body))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp struct {
@@ -268,13 +268,36 @@ func TestAddStageToProject (t *testing.T) {
 			EntityId string `json:"entityId"`
 		}
 
-		err := json.Unmarshal([]byte(body), &resp)
-		checkError(err, t)
+		checkError(json.Unmarshal([]byte(body), &resp), t)
 
 		if resp.Success != true {
 			t.Errorf("Expected success=true. Got suceess=%v, error=%v", resp.Success, resp.Error)
 			t.FailNow()
 		}
+	}
+}
+
+func TestGetStageByName (t *testing.T) {
+	var stg model.Stage
+	stg.Name = STAGE
+	body := CreateBody(stg)
+	response := callSecured(http.NewRequest("POST", "/project/"+ prjKey + "/stage/get", body))
+	checkResponseCode(t, http.StatusOK, response.Code)
+	if body := response.Body.String(); body != "" {
+		var resp StageResponse
+		checkError(json.Unmarshal([]byte(body), &resp), t)
+
+		if resp.Success != true {
+			t.Errorf("Expected success=true. Got suceess=%v, error=%v", resp.Success, resp.Error)
+			t.FailNow()
+		}
+
+		if resp.Body.Name != STAGE {
+			t.Errorf("Expected stage name=true. Got %v", STAGE, resp.Body.Name)
+			t.FailNow()
+		}
+
+		stageKey = resp.Body.Key
 	}
 }
 
@@ -290,13 +313,11 @@ func TestRemoveStageFromProject (t *testing.T) {
 	stg.EndDate = stg.StartDate.AddDate(1, 0, 0)
 
 	body := CreateBody(stg)
-	response := callSecured(http.NewRequest("DELETE", "/project/"+ PRJ_NUM + "/stage/remove", body))
+	response := callSecured(http.NewRequest("DELETE", "/project/"+ prjKey + "/stage/remove", body))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp StageResponse
-
-		err := json.Unmarshal([]byte(body), &resp)
-		checkError(err, t)
+		checkError(json.Unmarshal([]byte(body), &resp), t)
 
 		if resp.Success != true {
 			t.Errorf("Expected success=true. Got suceess=%v, error=%v", resp.Success, resp.Error)
@@ -308,7 +329,7 @@ func TestRemoveStageFromProject (t *testing.T) {
 // Test getting project info by its number
 // URL: /project/{id}, method GET
 func TestGetProjectByNumber (t *testing.T) {
-	response := callSecured(http.NewRequest("GET", "/project/" + PRJ_NUM, nil))
+	response := callSecured(http.NewRequest("GET", "/project/" + prjKey, nil))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp ProjectResponse
@@ -333,12 +354,11 @@ func TestSetProjectStatus (t *testing.T) {
 	var prj model.Project
 	prj.Status = "CHANGED"
 
-	response := callSecured(http.NewRequest("POST", "/project/" + PRJ_NUM + "/status", CreateBody(prj)))
+	response := callSecured(http.NewRequest("POST", "/project/" + prjKey + "/status", CreateBody(prj)))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp ProjectResponse
-		err := json.Unmarshal([]byte(body), &resp)
-		checkError(err, t)
+		checkError(json.Unmarshal([]byte(body), &resp), t)
 
 		if resp.Success != true {
 			t.Errorf("Expected success=true. Got suceess=%v, error=%v", resp.Success, resp.Error)

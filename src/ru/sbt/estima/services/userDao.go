@@ -22,33 +22,25 @@ func NewUserDao () *userDao {
 	return &dao
 }
 
-func (dao userDao) Save (userEntity model.Entity) (model.Entity, error) {
-	user := userEntity.(*model.EstimaUser)
-	var foundUser model.EstimaUser
-	coll := dao.Database().Col(user.GetCollection())
-	err := coll.Get(user.Name, &foundUser)
+// Function used to find user by user name
+func (dao userDao) FindOne (entity model.Entity) error {
+	user := entity.(*model.EstimaUser)
+	users, err := dao.FindAll (NewFilter().Filter("name", "==", user.Name), 0, 0)
 	model.CheckErr (err)
-
-	exists := foundUser.Id != ""
-	if exists {
-		err := coll.Replace(user.Name, user)
-		model.CheckErr (err)
-
-		return user, nil
+	if len(users) != 1 {
+		return nil
 	}
 
-	err = user.Document.SetKey(user.Name)
-	model.CheckErr (err)
-
-	err = coll.Save(user)
-	model.CheckErr (err)
-
-	return user, nil
+	*user = *(users[0].(*model.EstimaUser))
+	return nil
 }
 
+// Function search all users using parameters in filter
 func (dao userDao) FindAll(daoFilter DaoFilter, offset int, pageSize int)([]model.Entity, error) {
 	var user *model.EstimaUser = new(model.EstimaUser)
 	cursor, err := dao.baseDao.findAll(daoFilter, user.GetCollection(), offset, pageSize)
+	model.CheckErr(err)
+
 	var users []model.Entity
 	for cursor.FetchOne(user) {
 		users = append (users, user)
@@ -57,4 +49,3 @@ func (dao userDao) FindAll(daoFilter DaoFilter, offset int, pageSize int)([]mode
 
 	return users, err
 }
-
