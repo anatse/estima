@@ -71,3 +71,35 @@ func (dao processDao) FindByStage (stageId string)([]model.Entity, error) {
 
 	return processes, err
 }
+
+func (dao processDao) FindOne (entity model.Entity) error {
+	prc := entity.(*model.Process)
+	processes, err := dao.FindAll (NewFilter().Filter("name", "==", prc.Name), 0, 0)
+	model.CheckErr (err)
+	if len(processes) != 1 {
+		return nil
+	}
+
+	*prc = (processes[0].(model.Process))
+	return nil
+}
+
+func (dao processDao) Create (stage model.Stage, prc model.Process) (model.Process, error) {
+	found := prc
+	model.CheckErr(dao.FindOne(&found))
+	if found.Key != "" {
+		prc.Key = found.Key
+		prc.Id = found.Id
+		dao.Database().Col(PRJ_EDGES).SaveEdge(map[string]interface{} { "label": "process"}, stage.GetCollection() + "/" + stage.GetKey(), found.Id)
+
+	} else {
+		prc.Key = dao.createAndConnectObjTx(
+			prc,
+			stage,
+			PRJ_EDGES,
+			map[string]string{"label": "process"})
+	}
+
+	err := dao.FindById(&prc)
+	return prc, err
+}

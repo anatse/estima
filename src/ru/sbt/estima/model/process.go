@@ -17,13 +17,12 @@ func (prc Process) Entity() interface{} {
 
 		OmitId  omit `json:"_id,omitempty"`
 		OmitRev omit `json:"_rev,omitempty"`
-		OmitKey omit `json:"_key,omitempty"`
+
 
 		OmitError   omit   `json:"error,omitempty"`
 		OmitMessage omit `json:"errorMessage,omitempty"`
 	} {
 		&prc,
-		nil,
 		nil,
 		nil,
 		nil,
@@ -36,7 +35,7 @@ func (prc Process) AraDoc() (ara.Document) {
 }
 
 func (prc Process)GetKey() string {
-	return prc.Name
+	return prc.Key
 }
 
 func (prc Process) GetCollection() string {

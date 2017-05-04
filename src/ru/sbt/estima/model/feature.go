@@ -18,13 +18,11 @@ func (fea Feature) Entity() interface{} {
 
 		OmitId  omit `json:"_id,omitempty"`
 		OmitRev omit `json:"_rev,omitempty"`
-		OmitKey omit `json:"_key,omitempty"`
 
 		OmitError   omit   `json:"error,omitempty"`
 		OmitMessage omit `json:"errorMessage,omitempty"`
 	} {
 		&fea,
-		nil,
 		nil,
 		nil,
 		nil,
@@ -37,7 +35,7 @@ func (fea Feature) AraDoc() (ara.Document) {
 }
 
 func (fea Feature)GetKey() string {
-	return fea.Name
+	return fea.Key
 }
 
 func (fea Feature) GetCollection() string {

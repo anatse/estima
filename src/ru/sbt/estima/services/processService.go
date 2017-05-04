@@ -29,20 +29,13 @@ func (ps ProcessService) findByStage (w http.ResponseWriter, r *http.Request) {
 }
 
 func (ps ProcessService) create (w http.ResponseWriter, r *http.Request) {
-	stageId := mux.Vars(r)["id"]
 	var stage model.Stage
-	stage.SetKey(stageId)
+	stage.SetKey(mux.Vars(r)["id"])
 
 	var prc model.Process
 	model.ReadJsonBody(r, &prc)
 
-	prc.Id = ps.getDao().createAndConnectObjTx(
-		prc,
-		stage,
-		PRJ_EDGES,
-		nil)
-
-	err := ps.getDao().FindById(&prc)
+	prc, err := ps.getDao().Create(stage, prc)
 	model.CheckErr(err)
 
 	model.WriteResponse(true, nil, prc, w)
@@ -63,15 +56,14 @@ func (ps ProcessService) setStatus (w http.ResponseWriter, r *http.Request) {
 
 func (ps ProcessService) remove (w http.ResponseWriter, r *http.Request) {
 	var prc model.Process
-	prc.Name = mux.Vars(r)["id"]
+	prc.Key = mux.Vars(r)["id"]
 	ps.getDao().removeConnectedTx (prc.GetCollection(), PRJ_EDGES, prc.GetKey())
 	model.WriteResponse(true, nil, prc, w)
 }
 
 func (ps ProcessService) findOne (w http.ResponseWriter, r *http.Request) {
 	var p model.Process
-	p.Name = mux.Vars(r)["id"] // Number field used as identifier
-
+	p.Key = mux.Vars(r)["id"]
 	err := ps.getDao().FindById(&p)
 	model.CheckErr (err)
 
@@ -79,16 +71,15 @@ func (ps ProcessService) findOne (w http.ResponseWriter, r *http.Request) {
 }
 
 func (ps ProcessService) updateProcess (w http.ResponseWriter, r *http.Request) {
-	var p model.Process
-	p.Name = mux.Vars(r)["id"] // Number field used as identifier
-	err := ps.getDao().FindById(&p)
-	model.CheckErr (err)
+	//var p model.Process
+	//p.Key = mux.Vars(r)["id"] // Number field used as identifier
+	//err := ps.getDao().FindById(&p)
+	//model.CheckErr (err)
+	var process model.Process
+	model.ReadJsonBody (r, &process)
+	process.Key = mux.Vars(r)["id"]
 
-	var prj model.Process
-	model.ReadJsonBody (r, &prj)
-	prj.Id = p.Id
-
-	pe, err := ps.getDao().Save(prj)
+	pe, err := ps.getDao().Save (&process)
 	model.CheckErr (err)
 
 	model.WriteResponse(true, nil, pe, w)

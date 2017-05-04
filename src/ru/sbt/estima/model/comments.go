@@ -18,13 +18,11 @@ func (com Comment) Entity() interface{} {
 
 		OmitId  omit `json:"_id,omitempty"`
 		OmitRev omit `json:"_rev,omitempty"`
-		OmitKey omit `json:"_key,omitempty"`
 
 		OmitError   omit   `json:"error,omitempty"`
 		OmitMessage omit `json:"errorMessage,omitempty"`
 	} {
 		&com,
-		nil,
 		nil,
 		nil,
 		nil,
@@ -37,7 +35,7 @@ func (com Comment) AraDoc() (ara.Document) {
 }
 
 func (com Comment)GetKey() string {
-	return com.Name
+	return com.Key
 }
 
 func (com Comment) GetCollection() string {

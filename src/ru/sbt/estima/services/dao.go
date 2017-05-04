@@ -273,11 +273,9 @@ func (dao baseDao) Save (userEntity model.Entity) (model.Entity, error) {
 	coll := dao.Database().Col(userEntity.GetCollection())
 
 	if userEntity.GetKey() != "" {
-		if userEntity.AraDoc().Id != "" {
-			err := coll.Replace(userEntity.GetKey(), userEntity)
-			model.CheckErr(err)
-			return userEntity, nil
-		}
+		err := coll.Replace(userEntity.GetKey(), userEntity)
+		model.CheckErr(err)
+		return userEntity, nil
 	} else {
 		err := coll.Save(userEntity)
 		model.CheckErr(err)
