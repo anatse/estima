@@ -77,6 +77,7 @@ func (ps ProcessService) updateProcess (w http.ResponseWriter, r *http.Request) 
 	model.WriteResponse(true, nil, pe, w)
 }
 
+// Function used by main app to add this routers to application
 func (ps *ProcessService) ConfigRoutes (router *mux.Router, handler HandlerOfHandlerFunc) {
 	router.Handle ("/stage/{id}/process/list", handler(http.HandlerFunc(ps.findByStage))).Methods("POST", "GET").Name("Process list for selected project stage")
 	router.Handle ("/stage/{id}/process/create", handler(http.HandlerFunc(ps.create))).Methods("POST").Name("Create and app process to projects stage")

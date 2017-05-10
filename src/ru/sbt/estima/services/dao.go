@@ -4,7 +4,6 @@ package services
 	ArangoDB DAO classes
 	Documentation: https://gowalker.org/github.com/diegogub/aranGO
  */
-
 import (
 	ara "github.com/diegogub/aranGO"
 	"ru/sbt/estima/model"
@@ -14,15 +13,13 @@ import (
 )
 
 type FilterValue struct {
-	CmpOperand string
-	Value interface{}
+	CmpOperand string // Comparison operand can be any of ==, !=, <, >, like, etc
+	Value interface{} // Value to compare with
 }
 
 type Ascending bool
 
-/**
-	Base filter class
- */
+// Filter class
 type DaoFilter struct {
 	Params map[string]FilterValue
 	Orders map[string]Ascending 	// ASC=true, DESC=false
@@ -32,6 +29,8 @@ func NewFilter () DaoFilter {
 	return DaoFilter{}
 }
 
+// Function - build factory for filters
+// Example: NewFilter().Filter("name", "==", nameValue).Filter ("value", "like", "%1234").Sort ("name", true)
 func (flt DaoFilter) Filter (field string, compare string, value interface{}) DaoFilter {
 	// Skip if empty
 	if value == "" {
@@ -47,6 +46,8 @@ func (flt DaoFilter) Filter (field string, compare string, value interface{}) Da
 	return flt
 }
 
+// Function - build factory for filters
+// Example: NewFilter().Filter("name", "==", nameValue).Filter ("value", "like", "%1234").Sort ("name", true)
 func (flt DaoFilter) Sort (field string, asc Ascending) DaoFilter {
 	if flt.Orders == nil {
 		flt.Orders = make(map[string]Ascending)
@@ -55,8 +56,11 @@ func (flt DaoFilter) Sort (field string, asc Ascending) DaoFilter {
 	return flt
 }
 
+// Interface for dao classes
 type Dao interface {
+	// Arango db session
 	Session() *ara.Session
+	// Arango db database
 	Database() *ara.Database
 	// Save entity this functions can override by concrete implementation
 	Save(model.Entity) (model.Entity, error)
@@ -64,17 +68,21 @@ type Dao interface {
 	FindOne (entity model.Entity) error
 	// This function implements find by key functional
 	FindById (entity model.Entity) error
-	// Select with filter
+	// Function retrieves all processes with no regards to any other objects and object hierarchy
+	// DaoFilter described in DaoFilter struct definition
+	// You may use DaoFilter.Filter and DaopFilter.Sort factory build functions
+	// Offset and pageSize may be used for paging if no paging needed user zero values for both
 	FindAll(filter DaoFilter, offset int, pageSize int)([]model.Entity, error)
-	// Get and create Collection by collection name
+	// Get and/or create Collection by collection name
 	Col(string) *ara.Collection
 	// Remove collection from database
 	RemoveColl(string)
 }
 
+// Struct imlplements base dao functions
 type baseDao struct {
-	session *ara.Session
-	database *ara.Database
+	session *ara.Session	// arangoDb http session
+	database *ara.Database  // arangoDb database object
 }
 
 func (dao baseDao) Session() *ara.Session {
@@ -98,6 +106,7 @@ func (dao baseDao) RemoveColl (colName string) {
 	dao.Database().DropCollection(colName)
 }
 
+// Private function to build query based on filter parameters
 func (dao baseDao) buildQuery (daoFilter DaoFilter)(string, map[string]interface{}) {
 	var filter bytes.Buffer
 	filterMap := make(map[string]interface{})
@@ -140,6 +149,7 @@ func (dao baseDao) buildQuery (daoFilter DaoFilter)(string, map[string]interface
 	return filter.String(), filterMap
 }
 
+// Function used to get list of entities using filters, limits and sorts
 func (dao baseDao) findAll(daoFilter DaoFilter, colName string, offset int, pageSize int)(*ara.Cursor, error) {
 	filter, filterMap := dao.buildQuery (daoFilter)
 	var limit string
@@ -156,6 +166,7 @@ func (dao baseDao) findAll(daoFilter DaoFilter, colName string, offset int, page
 	return dao.Database().Execute(&query)
 }
 
+// Function used to find entity by its key. ArangoDb identifier equals 'collectionName/Key'
 func (dao baseDao) FindById(entity model.Entity) (error) {
 	if entity.GetKey() != "" {
 		coll := dao.Database().Col(entity.GetCollection())
@@ -165,25 +176,32 @@ func (dao baseDao) FindById(entity model.Entity) (error) {
 	}
 }
 
-func (dao baseDao) createAndConnectObjTx (inEntity model.Entity, outEntity model.Entity, edgeColName string, props map[string]string) string {
+// Function used to create and connect one document to another in one transaction
+// Calls createAndConnectTx function
+func (dao baseDao) createAndConnectObjTx (toEntity model.Entity, fromEntity model.Entity, edgeColName string, props map[string]string) string {
 	return dao.createAndConnectTx (
-		inEntity.GetCollection(), 	// from
-		outEntity.GetCollection(),	// to
-		edgeColName,
-		outEntity.GetKey(),		// from key
-		inEntity,
-		props)
+		toEntity.GetCollection(),   // to
+		fromEntity.GetCollection(), // from
+		edgeColName,                // Edge collection name
+		fromEntity.GetKey(),        // from key
+		toEntity,                   // to entity object
+		props)			    // additional edge properties
 }
 
-func (dao baseDao) createAndConnectTx (inColName string, outColName string, edgeColName string, outKey string, outObj model.Entity, props map[string]string) string {
-	//log.Printf("createAndConnectTx: %v, %v, %v, %v, %v", inColName, outColName, edgeColName, outKey, outObj)
-	write := []string {inColName, edgeColName }
+// Function used to create and connect one document to another in one transaction
+func (dao baseDao) createAndConnectTx (toColName string, fromColName string, edgeColName string, fromKey string, toObj model.Entity, props map[string]string) string {
+	//log.Printf("createAndConnectTx: %v, %v, %v, %v, %v", toColName, fromColName, edgeColName, fromKey, toObj)
+	write := []string {toColName, edgeColName }
 
 	q := `function(params) {
 		var db = require('internal').db;
-		var toCol = db. ` + inColName + `;
-		var fromCol = db. ` + outColName + `;
+		var toCol = db. ` + toColName + `;
+		var fromCol = db. ` + fromColName + `;
 	 	var toDoc, fromDoc;
+
+	 	if (!params.props['label') {
+	 		throw ('Error creation edge - label is not defined')
+	 	}
 
 		fromDoc = fromCol.document(params.fromId);
 
@@ -208,7 +226,7 @@ func (dao baseDao) createAndConnectTx (inColName string, outColName string, edge
         }`
 
 	t := ara.NewTransaction(q, write, nil)
-	t.Params = map[string]interface{}{ "doc" : outObj, "fromId": outKey, "props": props }
+	t.Params = map[string]interface{}{ "doc" : toObj, "fromId": fromKey, "props": props }
 
 	err := t.Execute(dao.Database())
 	model.CheckErr(err)
@@ -226,6 +244,8 @@ func (dao baseDao) createAndConnectTx (inColName string, outColName string, edge
 	return ret
 }
 
+// Function removes connected document. If document has outgoing edges this document should not be deleted
+// Function removes document and all incoming edges in one transaction
 func (dao baseDao) removeConnectedTx (outColName string, edgeColName string, outKey string) string {
 	//log.Printf("removeConnectedTx: %i, %i, %i", outColName, edgeColName, outKey)
 	write := []string { outColName, edgeColName }
@@ -269,6 +289,7 @@ func (dao baseDao) removeConnectedTx (outColName string, edgeColName string, out
 	return ret
 }
 
+// Function save any entity in database if the entity has GetKey value then document will be updated otherwise create one
 func (dao baseDao) Save (userEntity model.Entity) (model.Entity, error) {
 	coll := dao.Database().Col(userEntity.GetCollection())
 

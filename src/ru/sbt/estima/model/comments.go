@@ -6,10 +6,8 @@ import (
 
 type Comment struct {
 	ara.Document `json:-`
-	Name string `json:"name,omitempty" required`
-	Text string `json:"text,omitempty"`
-	User string `json:"user,omitempty"`
-	Version int `json:"version" required`
+	Title string `json:"name,omitempty"`
+	Text string `json:"text,omitempty,required"`
 }
 
 func (com Comment) Entity() interface{} {

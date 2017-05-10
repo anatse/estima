@@ -6,10 +6,10 @@ import (
 
 type Feature struct {
 	ara.Document `json:-`
-	Name string `json:"name,omitempty" required`
+	Name string `json:"name,omitempty,required"`
 	Text string `json:"text,omitempty"`
 	User string `json:"user,omitempty"`
-	Version int `json:"version" required`
+	Version int `json:"version,required"`
 }
 
 func (fea Feature) Entity() interface{} {
@@ -43,6 +43,5 @@ func (fea Feature) GetCollection() string {
 }
 
 func (fea Feature) GetError()(string, bool) {
-	// default error bool and messages. Could be any kind of error
 	return fea.Message, fea.Error
 }

@@ -34,6 +34,8 @@ func JwtHandler(h http.Handler) http.Handler {
 
 		// If there was an error, do not continue.
 		if err != nil {
+			model.WriteResponse(false, fmt.Sprintf("Forbidden: %v", err), nil, w)
+			w.WriteHeader(http.StatusOK)
 			return
 		}
 
@@ -78,10 +80,12 @@ func PrepareRoute () *mux.Router {
 	var us services.UserService
 	var ps services.ProjectService
 	var pcs services.ProcessService
+	var fs services.FeatureService
 
 	model.RegisterService("user", us)
 	model.RegisterService("project", ps)
 	model.RegisterService("process", pcs)
+	model.RegisterService("feature", fs)
 
 	r := model.GetRouter()
 	r.Handle("/get-token", services.GetTokenHandler).Methods("GET").Name("Login router (GET). Query parameters uname & upass")
@@ -90,6 +94,7 @@ func PrepareRoute () *mux.Router {
 	us.ConfigRoutes(r, JwtHandler)
 	ps.ConfigRoutes(r, JwtHandler)
 	pcs.ConfigRoutes(r, JwtHandler)
+	fs.ConfigRoutes(r, JwtHandler)
 
 	// Function build router for get router information
 	var routesInformation = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

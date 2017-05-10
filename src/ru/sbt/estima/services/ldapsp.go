@@ -48,9 +48,12 @@ func randStringBytesMaskImprSrc(n int) string {
 var mySigningKey = []byte(randStringBytesMaskImprSrc(64))
 var config = conf.LoadConfig()
 
+var SIGN_METHOD = jwt.SigningMethodHS256
+
+// Function create cookie for logged user
 func createCookie (user model.EstimaUser, w http.ResponseWriter) {
 	/* Create the token */
-	token := jwt.New(jwt.SigningMethodHS256)
+	token := jwt.New(SIGN_METHOD)
 
 	/* Create a map to store our claims */
 	claims := token.Claims.(jwt.MapClaims)
@@ -81,6 +84,7 @@ func createCookie (user model.EstimaUser, w http.ResponseWriter) {
 		nil})
 }
 
+// Function used to log into the system with specified user name and password
 func login (w http.ResponseWriter, username string, password string) {
 	if username == "" || password == "" {
 		panic("Username or/and password doesn't provided")
@@ -132,9 +136,7 @@ var Login = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
 	username := li.Uname
 	password := li.Upass
 	login(w, username, password)
-
 })
-
 
 // Function generate new auth token (JWT) and store it in cookie. Also this function store user information in database
 // if this user not exists yet
@@ -178,11 +180,16 @@ func FromAuthCookie(r *http.Request) (string, error) {
 	return "", err
 }
 
-var JwtMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
+func OnError(w http.ResponseWriter, r *http.Request, err string) {
+	w.WriteHeader(http.StatusForbidden)
+}
+
+var JwtMiddleware = jwtmiddleware.New (jwtmiddleware.Options{
 	ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
 		return mySigningKey, nil
 	},
-	SigningMethod: jwt.SigningMethodHS256,
+	SigningMethod: SIGN_METHOD,
 	Extractor: FromAuthCookie,
+	ErrorHandler: OnError,
 })
 
