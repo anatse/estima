@@ -4,16 +4,16 @@ import (
 	ara "github.com/diegogub/aranGO"
 )
 
-// Structure represents Feature (atomic business part of end to end process)
-type Feature struct {
+// Structure represents User Story (smallest part of business requirement)
+type UserStory struct {
 	ara.Document `json:-`
 	Name string `json:"name,omitempty,required"`
 	Description string `json:"description,omitempty"`
 }
 
-func (fea Feature) Entity() interface{} {
+func (us UserStory) Entity() interface{} {
 	return struct{
-		*Feature
+		*UserStory
 
 		OmitId  omit `json:"_id,omitempty"`
 		OmitRev omit `json:"_rev,omitempty"`
@@ -21,7 +21,7 @@ func (fea Feature) Entity() interface{} {
 		OmitError   omit   `json:"error,omitempty"`
 		OmitMessage omit `json:"errorMessage,omitempty"`
 	} {
-		&fea,
+		&us,
 		nil,
 		nil,
 		nil,
@@ -29,18 +29,18 @@ func (fea Feature) Entity() interface{} {
 	}
 }
 
-func (fea Feature) AraDoc() (ara.Document) {
-	return fea.Document
+func (us UserStory) AraDoc() (ara.Document) {
+	return us.Document
 }
 
-func (fea Feature)GetKey() string {
-	return fea.Key
+func (us UserStory)GetKey() string {
+	return us.Key
 }
 
-func (fea Feature) GetCollection() string {
-	return "features"
+func (us UserStory) GetCollection() string {
+	return "stories"
 }
 
-func (fea Feature) GetError()(string, bool) {
-	return fea.Message, fea.Error
+func (us UserStory) GetError()(string, bool) {
+	return us.Message, us.Error
 }

@@ -4,16 +4,16 @@ import (
 	ara "github.com/diegogub/aranGO"
 )
 
-// Structure represents Feature (atomic business part of end to end process)
-type Feature struct {
+type Component struct {
 	ara.Document `json:-`
 	Name string `json:"name,omitempty,required"`
 	Description string `json:"description,omitempty"`
+	Owner string `json:"owner,omitempty"`
 }
 
-func (fea Feature) Entity() interface{} {
+func (cmp Component) Entity() interface{} {
 	return struct{
-		*Feature
+		*Component
 
 		OmitId  omit `json:"_id,omitempty"`
 		OmitRev omit `json:"_rev,omitempty"`
@@ -21,7 +21,7 @@ func (fea Feature) Entity() interface{} {
 		OmitError   omit   `json:"error,omitempty"`
 		OmitMessage omit `json:"errorMessage,omitempty"`
 	} {
-		&fea,
+		&cmp,
 		nil,
 		nil,
 		nil,
@@ -29,18 +29,18 @@ func (fea Feature) Entity() interface{} {
 	}
 }
 
-func (fea Feature) AraDoc() (ara.Document) {
-	return fea.Document
+func (cmp Component) AraDoc() (ara.Document) {
+	return cmp.Document
 }
 
-func (fea Feature)GetKey() string {
-	return fea.Key
+func (cmp Component)GetKey() string {
+	return cmp.Key
 }
 
-func (fea Feature) GetCollection() string {
-	return "features"
+func (cmp Component) GetCollection() string {
+	return "components"
 }
 
-func (fea Feature) GetError()(string, bool) {
-	return fea.Message, fea.Error
+func (cmp Component) GetError()(string, bool) {
+	return cmp.Message, cmp.Error
 }

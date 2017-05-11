@@ -5,6 +5,8 @@ import (
 	"ru/sbt/estima/model"
 	"ru/sbt/estima/conf"
 	"log"
+	"errors"
+	"fmt"
 )
 
 type featureDao struct {
@@ -83,4 +85,88 @@ func (dao featureDao) FindOne (entity model.Entity) error {
 
 	*prc = (processes[0].(model.Process))
 	return nil
+}
+
+// Function find and retrieves active text for feature
+// If active text not found returns nil if found more than one active text returns an error
+func (dao featureDao) GetActiveText (feature model.Feature) (*model.VersionedText, error) {
+	if feature.GetKey() == "" {
+		return nil, errors.New("GetText: Key is not defined")
+	}
+
+	id := feature.GetCollection() + "/" + feature.GetKey()
+	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label = 'text' && v.active == true RETURN v`
+
+	filterMap := make(map[string]interface{})
+	filterMap["startId"] = id
+	filterMap["@edgeCollection"] = PRJ_EDGES
+
+	var query ara.Query
+	query.Aql = sql
+	query.BindVars = filterMap
+
+	cursor, err := dao.Database().Execute(&query)
+	model.CheckErr(err)
+	entities := dao.readCursor(cursor)
+	if len(entities) == 0 {
+		return nil, nil
+	} else if len(entities) == 1 {
+		versionedText := new (model.VersionedText)
+		*versionedText = entities[0].(model.VersionedText)
+		return versionedText, nil
+	} else {
+		return nil, errors.New ("Found more than one active text for one feature. Please, fix this problem manually")
+	}
+}
+
+// Function add text version to the feature. During this process currently active text should be stays inactive but new one stays active
+// Version for the new added text should be oldVersion + 1. Two active versions is not acceptable.
+// All changes will process in one transaction
+func (dao featureDao) AddText (feature model.Feature, text string) (*model.VersionedText, error) {
+	versionedText := new (model.VersionedText)
+	versionedText.Text = text
+	versionedText.Active = true
+
+	// Defines collections which will be changed during transaction
+	write := []string { versionedText.GetCollection() }
+	// Define transaction text (javascript)
+	q := `function(params) {
+		var db = require('internal').db;
+		var toCol = db. ` + versionedText.GetCollection() + `;
+		var edgeCol = db. `+ PRJ_EDGES + `;
+
+		var doc = toCol.document(params.fKey);
+		var activeText = null;
+		var numActives = 0;
+		db._createStatement({
+	      		query: 'FOR v, e IN OUTBOUND "' + doc._id + '" ` + PRJ_EDGES + ` FILTER e.label == 'test' && v.active RETURN v'
+	    		}).execute().toArray().forEach(function (d) {
+			activeText = d;
+			numActives++;
+	    	});
+
+	    	if (numActives > 1) {
+	    		throw ("Found more than one active texts for given feature. Please, contact with administrator to fix problem")
+	    	}
+
+		activeText.active = false;
+		toCol.save (activeText);
+
+		return {success: true, entityKey: doc._key};
+        }`
+
+	// TODO add edge between feature and text
+	t := ara.NewTransaction(q, write, nil)
+	t.Params = map[string]interface{}{ "fKey" : feature.GetKey(), "text": versionedText}
+
+	err := t.Execute(dao.Database())
+	model.CheckErr(err)
+
+	res := t.Result.(map[string]interface{})
+	if res["success"] != true {
+		model.CheckErr(fmt.Errorf(res["errorMsg"].(string)))
+	}
+
+
+	return nil, nil
 }

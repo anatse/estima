@@ -7,6 +7,7 @@ import (
 	"ru/sbt/estima/model"
 	"net/http/httptest"
 	"bytes"
+	"ru/sbt/estima/services"
 )
 
 const (
@@ -110,6 +111,13 @@ func callGuestSecured (req *http.Request, err error) *httptest.ResponseRecorder 
 	authCookie := response.Result().Cookies()[0]
 	req.AddCookie(authCookie)
 	return executeRequest(req)
+}
+
+// Test index creation. This function should create unique index user.name
+func TestCreateIndex(t *testing.T) {
+	dao := services.NewUserDao()
+	err := dao.CreateIndexes("users")
+	checkError(err, t)
 }
 
 // Test login for predefined user wps8admin, used for LDAP protocol = fake

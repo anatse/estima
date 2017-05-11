@@ -49,3 +49,8 @@ func (dao userDao) FindAll(daoFilter DaoFilter, offset int, pageSize int)([]mode
 
 	return users, err
 }
+
+func (dao userDao) CreateIndexes (colName string) error {
+	col := dao.Database().Col(colName)
+	return col.CreatePersistent(true, "name")
+}

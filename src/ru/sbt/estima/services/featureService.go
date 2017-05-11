@@ -29,3 +29,7 @@ func (fs FeatureService) findByProcess (w http.ResponseWriter, r *http.Request) 
 func (fs *FeatureService) ConfigRoutes (router *mux.Router, handler HandlerOfHandlerFunc) {
 	router.Handle("/process/{id}/feature/list", handler(http.HandlerFunc(fs.findByProcess))).Methods("POST", "GET").Name("Features list for specified process")
 }
+
+func (fs *FeatureService) getText () {
+
+}

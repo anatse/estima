@@ -52,6 +52,14 @@ func (ps ProcessService) setStatus (w http.ResponseWriter, r *http.Request) {
 	model.WriteResponse(true, nil, prc, w)
 }
 
+// Function not really deletes process just hide it using disable status
+func (ps ProcessService) disable (w http.ResponseWriter, r *http.Request) {
+	var prc model.Process
+	prc.Key = mux.Vars(r)["id"]
+	ps.getDao().DisableProcess(prc)
+	model.WriteResponse(true, nil, prc, w)
+}
+
 func (ps ProcessService) remove (w http.ResponseWriter, r *http.Request) {
 	var prc model.Process
 	prc.Key = mux.Vars(r)["id"]
@@ -83,6 +91,7 @@ func (ps *ProcessService) ConfigRoutes (router *mux.Router, handler HandlerOfHan
 	router.Handle ("/stage/{id}/process/create", handler(http.HandlerFunc(ps.create))).Methods("POST").Name("Create and app process to projects stage")
 	router.Handle ("/process/{id}/status", handler(http.HandlerFunc(ps.setStatus))).Methods("POST").Name("Set process status")
 	router.Handle ("/process/{id}/remove", handler(http.HandlerFunc(ps.remove))).Methods("POST", "DELETE").Name("Remove process")
+	router.Handle ("/process/{id}/disable", handler(http.HandlerFunc(ps.remove))).Methods("POST", "DELETE").Name("Disable (hide) process")
 	router.Handle ("/process/{id}", handler(http.HandlerFunc(ps.findOne))).Methods("GET").Name("GET: Retrieve information about selected process")
 	router.Handle ("/process/{id}", handler(http.HandlerFunc(ps.updateProcess))).Methods("POST").Name("POST: Update selected process")
 }

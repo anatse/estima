@@ -30,5 +30,5 @@ const (
 	ROLE_VSE = "VSE"		// Something else
 
 	// Statuses
-	PROCESS_STATUS = "("
+	DISABLED_STATUS = "DISABLED"
 )

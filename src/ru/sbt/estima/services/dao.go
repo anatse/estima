@@ -199,7 +199,7 @@ func (dao baseDao) createAndConnectTx (toColName string, fromColName string, edg
 		var fromCol = db. ` + fromColName + `;
 	 	var toDoc, fromDoc;
 
-	 	if (!params.props['label') {
+	 	if (!params.props['label']) {
 	 		throw ('Error creation edge - label is not defined')
 	 	}
 
