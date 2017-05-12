@@ -199,6 +199,7 @@ func loadJsScript (name string)string {
 
 // Support for Es6 in ArangoDB https://jsteemann.github.io/blog/2014/12/19/using-es6-features-in-arangodb/
 func (dao baseDao) LoadJsFromCache(name string, cache *memcache.Client)string {
+	// TODO fix path
 	prefix := "/Users/asementsov/projects/estima/dbjs/src/"
 
 	var jsTx string
