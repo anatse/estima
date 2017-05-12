@@ -9,7 +9,7 @@ const PRODUCTION = 'production';
 
 let config = {
     entry: {
-        index: "./src/frontend/index.tsx",
+        index: "./src/frontend/index.tsx"
     },
     output: {
         path: path.resolve(__dirname, 'views', 'dist'),

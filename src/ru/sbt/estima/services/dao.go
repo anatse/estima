@@ -10,6 +10,9 @@ import (
 	"bytes"
 	"strconv"
 	"fmt"
+	"ru/sbt/estima/conf"
+	"io/ioutil"
+	"github.com/bradfitz/gomemcache/memcache"
 )
 
 type FilterValue struct {
@@ -188,45 +191,41 @@ func (dao baseDao) createAndConnectObjTx (toEntity model.Entity, fromEntity mode
 		props)			    // additional edge properties
 }
 
+func loadJsScript (name string)string {
+	data, err := ioutil.ReadFile (name)
+	model.CheckErr(err)
+	return string(data)
+}
+
+// Support for Es6 in ArangoDB https://jsteemann.github.io/blog/2014/12/19/using-es6-features-in-arangodb/
+func (dao baseDao) LoadJsFromCache(name string, cache *memcache.Client)string {
+	prefix := "/Users/asementsov/projects/estima/dbjs/src/"
+
+	var jsTx string
+	if cache != nil {
+		item, _ := cache.Get(name)
+		if item == nil {
+			jsTx = loadJsScript (prefix + name)
+			// Expiration - 10 seconds
+			cache.Set(&memcache.Item{Key: name, Value: []byte(jsTx), Expiration: 10})
+		} else {
+			jsTx = string(item.Value)
+		}
+	} else {
+		jsTx = loadJsScript (prefix + name)
+	}
+
+	return jsTx
+}
+
 // Function used to create and connect one document to another in one transaction
 func (dao baseDao) createAndConnectTx (toColName string, fromColName string, edgeColName string, fromKey string, toObj model.Entity, props map[string]string) string {
 	//log.Printf("createAndConnectTx: %v, %v, %v, %v, %v", toColName, fromColName, edgeColName, fromKey, toObj)
 	write := []string {toColName, edgeColName }
-
-	q := `function(params) {
-		var db = require('internal').db;
-		var toCol = db. ` + toColName + `;
-		var fromCol = db. ` + fromColName + `;
-	 	var toDoc, fromDoc;
-
-	 	if (!params.props['label']) {
-	 		throw ('Error creation edge - label is not defined')
-	 	}
-
-		fromDoc = fromCol.document(params.fromId);
-
-		try {
-			if (params.doc._key !== "") toDoc = toCol.save(params.doc);
-			else toDoc = toCol.document(params.doc._key);
-		} catch(error) {
-			if (error.errorNum === 1202)
-				toDoc = toCol.save(params.doc);
-			else
-				throw (error);
-		}
-
-		var edgesCol = db.` + edgeColName + `;
-		var edge = {_from: fromDoc._id, _to: toDoc._id};
-		for (v in params.props) {
-			edge[v] = params.props[v]
-		}
-
-		edge = edgesCol.save (edge);
-		return {success: true, entityKey: toDoc._key};
-        }`
+	q := dao.LoadJsFromCache("addConnectedTx.js", conf.LoadConfig().Cache())
 
 	t := ara.NewTransaction(q, write, nil)
-	t.Params = map[string]interface{}{ "doc" : toObj, "fromId": fromKey, "props": props }
+	t.Params = map[string]interface{}{ "doc" : toObj, "fromId": fromKey, "props": props, "toColName": toColName, "fromColName": fromColName, "edgeColName": edgeColName }
 
 	err := t.Execute(dao.Database())
 	model.CheckErr(err)
@@ -249,29 +248,10 @@ func (dao baseDao) createAndConnectTx (toColName string, fromColName string, edg
 func (dao baseDao) removeConnectedTx (outColName string, edgeColName string, outKey string) string {
 	//log.Printf("removeConnectedTx: %i, %i, %i", outColName, edgeColName, outKey)
 	write := []string { outColName, edgeColName }
-
-	q := `function(params) {
-		var db = require('internal').db;
-		var toCol = db. ` + outColName + `;
-		var edgeCol = db. `+ edgeColName + `;
-
-		var doc = toCol.document(params.docKey);
-		var outEdges = edgeCol.outEdges (doc);
-		if (outEdges != null && outEdges.length > 0) {
-			throw ("Deleting vertices with the presence outgoing edges is not allowed")
-		}
-
-		var inEdges = edgeCol.inEdges(doc);
-		for (var i = 0; i < inEdges.length; i++) {
-		    edgeCol.remove (inEdges[i])
-		}
-
-		toCol.remove (doc)
-		return {success: true, entityKey: doc._key};
-        }`
+	q := dao.LoadJsFromCache("removeConnectedTx.js", conf.LoadConfig().Cache())
 
 	t := ara.NewTransaction(q, write, nil)
-	t.Params = map[string]interface{}{ "docKey" : outKey}
+	t.Params = map[string]interface{}{ "docKey" : outKey, "outColName": outColName, "edgeColName": edgeColName}
 
 	err := t.Execute(dao.Database())
 	model.CheckErr(err)

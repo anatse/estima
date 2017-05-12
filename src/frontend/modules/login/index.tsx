@@ -1,10 +1,12 @@
 import * as React from 'react';
 import './styles/login.css';
+import {Redirect} from "react-router";
 
 interface IState {
     login: string;
     password: string;
     isLoading: boolean;
+    isLogged: false;
 }
 
 /**
@@ -16,6 +18,7 @@ export class Login extends React.Component<void, IState> {
         login: '',
         password: '',
         isLoading: false,
+        isLogged: false
     };
 
     componentWillMount () {
@@ -31,7 +34,31 @@ export class Login extends React.Component<void, IState> {
             password,
         } = this.state;
 
-        console.log('start login with: ', login, password);
+        this.setState(() => {
+            return {isLoading: true};
+        });
+
+        var url = '/login';
+        fetch(url, {
+            method: "post",
+            body: JSON.stringify({uname: login, upass: password}),
+            headers: {
+                'Accept': 'application/json',
+                'Cache': 'no-cache'
+            },
+            credentials: "same-origin"
+        }).then((response) => {
+            response.text().then ((text) => {
+                this.setState(() => {
+                    return {
+                        isLoading: false,
+                        isLogged: true
+                    };
+                });
+
+                // console.log (text)
+            })
+        })
     }
 
     render() {
@@ -39,7 +66,12 @@ export class Login extends React.Component<void, IState> {
             login,
             password,
             isLoading,
+            isLogged
         } = this.state;
+
+        if (isLogged) {
+            return <Redirect to="/projects"/>
+        }
 
         return (
             <div className="login">

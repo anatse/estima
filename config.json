@@ -20,6 +20,12 @@
       "Auth": {
         "cookieName": "Estima",
         "maxAge": 10000
+      },
+      "Memcached": {
+        "Machines": [{
+            "host": "localhost",
+            "port": 11211
+        }]
       }
     }, {
       "name": "test",

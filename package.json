@@ -30,11 +30,12 @@
     "file-loader": "^0.11.1",
     "source-map-loader": "^0.2.1",
     "style-loader": "^0.17.0",
-    "tslint": "^5.1.0",
+    "tslint": "^5.2.0",
     "tslint-config-airbnb": "^1.1.1",
     "typescript": "^2.3.1",
     "url-loader": "^0.5.8",
-    "webpack": "^2.4.1"
+    "webpack": "^2.4.1",
+    "uglify-js": "^3.0.4"
   },
   "dependencies": {
     "lodash": "^4.17.4",
@@ -42,6 +43,9 @@
     "react-dom": "^15.5.4",
     "react-redux": "^5.0.4",
     "react-router-dom": "^4.1.1",
-    "redux": "^3.6.0"
+    "redux": "^3.6.0",
+    "tslint": "^5.2.0",
+    "tslint-config-airbnb": "^1.1.1",
+    "uglify-js": "^3.0.4"
   }
 }

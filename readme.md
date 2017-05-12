@@ -21,6 +21,7 @@ go get -u -v "github.com/auth0/go-jwt-middleware"
 go get -u -v "github.com/glycerine/zygomys/repl"
 go get -u -v "gopkg.in/ldap.v2"
 go get -u -v "github.com/go-errors/errors"
+...
 
 #
 # Библиотека AranGO должна собираться из исходников, так как релиз слишком старый
@@ -39,6 +40,7 @@ npm install
 npm run build
 ```
 * Для сборки проекта используется команда go build, в результате появится исполняекмый файл **estima**
+* Добавлена поддержка Memcached, конфигурация опционально указывается в config.json
 * Перед запуском программы необходимо также установить [arangodb](https://www.arangodb.com). Есть два способа установки:
   1. Через [docker](https://www.docker.com/)
         * Установить [docker](https://www.docker.com/)
@@ -83,6 +85,12 @@ npm run build
           "Auth": {             // Параметры для формирование Auth куки
             "cookieName": "Estima",
             "maxAge": 10000
+          },
+         "Memcached": {         // Конфигурация для memcached 
+            "Machines": [{
+                "host": "localhost",
+                "port": 11211
+            }]
           }
         }, { // Следующий профиль
           "name": "test",

@@ -122,7 +122,7 @@ func (dao featureDao) GetActiveText (feature model.Feature) (*model.VersionedTex
 // Function add text version to the feature. During this process currently active text should be stays inactive but new one stays active
 // Version for the new added text should be oldVersion + 1. Two active versions is not acceptable.
 // All changes will process in one transaction
-func (dao featureDao) AddText (feature model.Feature, text string) (*model.VersionedText, error) {
+func (dao featureDao) AddText (feature model.Feature, text string, props map[string]string) (*model.VersionedText, error) {
 	versionedText := new (model.VersionedText)
 	versionedText.Text = text
 	versionedText.Active = true
@@ -130,34 +130,10 @@ func (dao featureDao) AddText (feature model.Feature, text string) (*model.Versi
 	// Defines collections which will be changed during transaction
 	write := []string { versionedText.GetCollection() }
 	// Define transaction text (javascript)
-	q := `function(params) {
-		var db = require('internal').db;
-		var toCol = db. ` + versionedText.GetCollection() + `;
-		var edgeCol = db. `+ PRJ_EDGES + `;
+	q := dao.LoadJsFromCache("addText.js", conf.LoadConfig().Cache())
 
-		var doc = toCol.document(params.fKey);
-		var activeText = null;
-		var numActives = 0;
-		db._createStatement({
-	      		query: 'FOR v, e IN OUTBOUND "' + doc._id + '" ` + PRJ_EDGES + ` FILTER e.label == 'test' && v.active RETURN v'
-	    		}).execute().toArray().forEach(function (d) {
-			activeText = d;
-			numActives++;
-	    	});
-
-	    	if (numActives > 1) {
-	    		throw ("Found more than one active texts for given feature. Please, contact with administrator to fix problem")
-	    	}
-
-		activeText.active = false;
-		toCol.save (activeText);
-
-		return {success: true, entityKey: doc._key};
-        }`
-
-	// TODO add edge between feature and text
 	t := ara.NewTransaction(q, write, nil)
-	t.Params = map[string]interface{}{ "fKey" : feature.GetKey(), "text": versionedText}
+	t.Params = map[string]interface{}{ "fKey" : feature.GetKey(), "fromColName": feature.GetCollection(), "toColName":versionedText.GetCollection(), "text": versionedText, "props": props}
 
 	err := t.Execute(dao.Database())
 	model.CheckErr(err)

@@ -5,6 +5,7 @@ import (
 	"os"
 	"fmt"
 	"log"
+	"github.com/bradfitz/gomemcache/memcache"
 )
 
 type Ldap struct {
@@ -27,12 +28,22 @@ type Auth struct {
 	MaxAge int
 }
 
+type Memcached struct {
+	Machines []struct {
+		Host string
+		Port int
+	}
+
+	cache *memcache.Client
+}
+
 type Profile struct {
 	Name string
 	Secret string
 	Ldap	Ldap
 	Database Database
 	Auth Auth
+	Memcached Memcached
 }
 
 type Configuration struct {
@@ -51,6 +62,30 @@ func (cf Configuration) ActiveProfile ()(Profile) {
 	return profile
 }
 
+func (mem *Memcached) create () {
+	if mem.Machines != nil && len(mem.Machines) > 0 {
+		var memHosts []string = make ([]string, len(mem.Machines))
+		for i, host := range mem.Machines {
+			memHosts[i] = fmt.Sprintf("%s:%d", host.Host, host.Port)
+		}
+
+		log.Printf("hosts: %v", memHosts)
+		mem.cache = memcache.New (memHosts...)
+		log.Printf("client: %v", mem.cache)
+	}
+}
+
+
+func (profile Profile) Cache () *memcache.Client {
+	log.Println(profile.Memcached)
+
+	if profile.Memcached.cache == nil {
+		profile.Memcached.create()
+	}
+
+	return profile.Memcached.cache
+}
+
 var config Configuration
 func LoadConfig() (Profile) {
 	if config.Active != "" {
@@ -62,7 +97,7 @@ func LoadConfig() (Profile) {
 		cfgPath = "config.json"
 	}
 
-	log.Println(cfgPath)
+	log.Printf("Config loaded from %s", cfgPath)
 
 	file, _ := os.Open(cfgPath)
 	decoder := json.NewDecoder(file)
