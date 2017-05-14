@@ -1,3 +1,8 @@
-Diagrams folder
+## Компонентная структура
 
 ![Database structure](https://github.com/anatse/estima/blob/master/diagramm/structure.png)
+
+### Цветовая разметка:
+* Синий - Процесс, вычисление
+* Зеленый - Справочники
+* Остальные цвета не имеют смысловой нагрузки, используются для выделение компонентов
