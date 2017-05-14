@@ -2,21 +2,22 @@ package model
 
 import (
 	ara "github.com/diegogub/aranGO"
+	"math/big"
 	"time"
 )
 
-type Component struct {
+type CalcUnitPrice struct {
 	ara.Document `json:-`
 	Name string `json:"name,omitempty,required"`
 	Description string `json:"description,omitempty"`
-	Owner string `json:"owner,omitempty"`
-	Status string `json:"status,omitempty"`
-	DueDate time.Time `json:"dueDate,omitempty"`
+	StoryPoints big.Float `json:"storyPoins,omitempty"`
+	Group string `json:"group,omitempty"`
+	Changed time.Time `json:"changed,omitempty"`
 }
 
-func (cmp Component) Entity() interface{} {
+func (cmp CalcUnitPrice) Entity() interface{} {
 	return struct{
-		*Component
+		*CalcUnitPrice
 
 		OmitId  omit `json:"_id,omitempty"`
 		OmitRev omit `json:"_rev,omitempty"`
@@ -32,18 +33,18 @@ func (cmp Component) Entity() interface{} {
 	}
 }
 
-func (cmp Component) AraDoc() (ara.Document) {
+func (cmp CalcUnitPrice) AraDoc() (ara.Document) {
 	return cmp.Document
 }
 
-func (cmp Component)GetKey() string {
+func (cmp CalcUnitPrice)GetKey() string {
 	return cmp.Key
 }
 
-func (cmp Component) GetCollection() string {
-	return "components"
+func (cmp CalcUnitPrice) GetCollection() string {
+	return "cuprices"
 }
 
-func (cmp Component) GetError()(string, bool) {
+func (cmp CalcUnitPrice) GetError()(string, bool) {
 	return cmp.Message, cmp.Error
 }

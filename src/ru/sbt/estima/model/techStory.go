@@ -4,16 +4,16 @@ import (
 	ara "github.com/diegogub/aranGO"
 )
 
-// Structure represents User Story (smallest part of business requirement)
-type UserStory struct {
+type TechStory struct {
 	ara.Document `json:-`
 	Name string `json:"name,omitempty,required"`
 	Description string `json:"description,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
-func (us UserStory) Entity() interface{} {
+func (cmp TechStory) Entity() interface{} {
 	return struct{
-		*UserStory
+		*TechStory
 
 		OmitId  omit `json:"_id,omitempty"`
 		OmitRev omit `json:"_rev,omitempty"`
@@ -21,7 +21,7 @@ func (us UserStory) Entity() interface{} {
 		OmitError   omit   `json:"error,omitempty"`
 		OmitMessage omit `json:"errorMessage,omitempty"`
 	} {
-		&us,
+		&cmp,
 		nil,
 		nil,
 		nil,
@@ -29,18 +29,18 @@ func (us UserStory) Entity() interface{} {
 	}
 }
 
-func (us UserStory) AraDoc() (ara.Document) {
-	return us.Document
+func (cmp TechStory) AraDoc() (ara.Document) {
+	return cmp.Document
 }
 
-func (us UserStory)GetKey() string {
-	return us.Key
+func (cmp TechStory)GetKey() string {
+	return cmp.Key
 }
 
-func (us UserStory) GetCollection() string {
-	return "ustories"
+func (cmp TechStory) GetCollection() string {
+	return "tstories"
 }
 
-func (us UserStory) GetError()(string, bool) {
-	return us.Message, us.Error
+func (cmp TechStory) GetError()(string, bool) {
+	return cmp.Message, cmp.Error
 }

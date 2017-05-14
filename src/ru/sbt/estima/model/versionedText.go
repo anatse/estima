@@ -2,7 +2,6 @@ package model
 
 import (
 	ara "github.com/diegogub/aranGO"
-	"math/big"
 )
 
 type VersionedText struct {
@@ -10,7 +9,6 @@ type VersionedText struct {
 	Text string `json:"text,omitempty,required"`
 	Version int `json:"version,required"`
 	Active bool `json:"isActive,required"`
-	Price big.Float
 }
 
 func (txt VersionedText) Entity() interface{} {

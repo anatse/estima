@@ -2,18 +2,21 @@ package model
 
 import (
 	ara "github.com/diegogub/aranGO"
+	"math/big"
+	"time"
 )
 
 // Structure represents User Story (smallest part of business requirement)
-type UserStory struct {
+type TechStoryPrice struct {
 	ara.Document `json:-`
-	Name string `json:"name,omitempty,required"`
-	Description string `json:"description,omitempty"`
+	Group string `json:"group,omitempty,required"`
+	StoryPoints big.Float `json:"storyPoints,omitempty"`
+	Calculated time.Time `json:"calcDate,omitempty"`
 }
 
-func (us UserStory) Entity() interface{} {
+func (us TechStoryPrice) Entity() interface{} {
 	return struct{
-		*UserStory
+		*TechStoryPrice
 
 		OmitId  omit `json:"_id,omitempty"`
 		OmitRev omit `json:"_rev,omitempty"`
@@ -29,18 +32,18 @@ func (us UserStory) Entity() interface{} {
 	}
 }
 
-func (us UserStory) AraDoc() (ara.Document) {
+func (us TechStoryPrice) AraDoc() (ara.Document) {
 	return us.Document
 }
 
-func (us UserStory)GetKey() string {
+func (us TechStoryPrice)GetKey() string {
 	return us.Key
 }
 
-func (us UserStory) GetCollection() string {
+func (us TechStoryPrice) GetCollection() string {
 	return "ustories"
 }
 
-func (us UserStory) GetError()(string, bool) {
+func (us TechStoryPrice) GetError()(string, bool) {
 	return us.Message, us.Error
 }

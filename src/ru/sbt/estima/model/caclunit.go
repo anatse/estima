@@ -2,19 +2,21 @@ package model
 
 import (
 	ara "github.com/diegogub/aranGO"
+	"time"
 )
 
-// Structure represents Feature (atomic business part of end to end process)
-type Feature struct {
+type CalcUnit struct {
 	ara.Document `json:-`
 	Name string `json:"name,omitempty,required"`
 	Description string `json:"description,omitempty"`
+	Version string `json:"version,omitempty"`
 	Status string `json:"status,omitempty"`
+	Changed time.Time `json:"changed,omitempty"`
 }
 
-func (fea Feature) Entity() interface{} {
+func (cmp CalcUnit) Entity() interface{} {
 	return struct{
-		*Feature
+		*CalcUnit
 
 		OmitId  omit `json:"_id,omitempty"`
 		OmitRev omit `json:"_rev,omitempty"`
@@ -22,7 +24,7 @@ func (fea Feature) Entity() interface{} {
 		OmitError   omit   `json:"error,omitempty"`
 		OmitMessage omit `json:"errorMessage,omitempty"`
 	} {
-		&fea,
+		&cmp,
 		nil,
 		nil,
 		nil,
@@ -30,18 +32,18 @@ func (fea Feature) Entity() interface{} {
 	}
 }
 
-func (fea Feature) AraDoc() (ara.Document) {
-	return fea.Document
+func (cmp CalcUnit) AraDoc() (ara.Document) {
+	return cmp.Document
 }
 
-func (fea Feature)GetKey() string {
-	return fea.Key
+func (cmp CalcUnit)GetKey() string {
+	return cmp.Key
 }
 
-func (fea Feature) GetCollection() string {
-	return "features"
+func (cmp CalcUnit) GetCollection() string {
+	return "calcunits"
 }
 
-func (fea Feature) GetError()(string, bool) {
-	return fea.Message, fea.Error
+func (cmp CalcUnit) GetError()(string, bool) {
+	return cmp.Message, cmp.Error
 }

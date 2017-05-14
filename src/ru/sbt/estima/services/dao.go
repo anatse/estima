@@ -13,6 +13,8 @@ import (
 	"ru/sbt/estima/conf"
 	"io/ioutil"
 	"github.com/bradfitz/gomemcache/memcache"
+	"errors"
+	"os"
 )
 
 type FilterValue struct {
@@ -199,8 +201,10 @@ func loadJsScript (name string)string {
 
 // Support for Es6 in ArangoDB https://jsteemann.github.io/blog/2014/12/19/using-es6-features-in-arangodb/
 func (dao baseDao) LoadJsFromCache(name string, cache *memcache.Client)string {
-	// TODO fix path
-	prefix := "/Users/asementsov/projects/estima/dbjs/src/"
+	prefix := os.Getenv("DBJS_PATH")
+	if prefix == "" {
+		prefix = "./dbjs/"
+	}
 
 	var jsTx string
 	if cache != nil {
@@ -284,4 +288,177 @@ func (dao baseDao) Save (userEntity model.Entity) (model.Entity, error) {
 	}
 
 	return userEntity, nil
+}
+
+// Function add text version to the feature. During this process currently active text should be stays inactive but new one stays active
+// Version for the new added text should be oldVersion + 1. Two active versions is not acceptable.
+// All changes will process in one transaction
+func (dao baseDao) AddText (entity model.Entity, text string) *model.VersionedText {
+	versionedText := new (model.VersionedText)
+	versionedText.Text = text
+	versionedText.Active = true
+
+	// Defines collections which will be changed during transaction
+	write := []string { versionedText.GetCollection() }
+	// Define transaction text (javascript)
+	q := dao.LoadJsFromCache("addText.js", conf.LoadConfig().Cache())
+
+	t := ara.NewTransaction(q, write, nil)
+	t.Params = map[string]interface{}{ "fKey" : entity.GetKey(), "fromColName": entity.GetCollection(), "toColName": versionedText.GetCollection(), "text": versionedText}
+
+	err := t.Execute(dao.Database())
+	model.CheckErr(err)
+
+	res := t.Result.(map[string]interface{})
+	if res["success"] != true {
+		model.CheckErr(fmt.Errorf(res["errorMsg"].(string)))
+	}
+
+	versionedText.SetKey(res["entityKey"].(string))
+	return versionedText
+}
+
+func (dao baseDao) AddComment (entity model.Entity, title string, text string, userId string) *model.Comment {
+	comment := new (model.Comment)
+	comment.Text = text
+	comment.Title = title
+
+	// Defines collections which will be changed during transaction
+	write := []string {comment.GetCollection() }
+	// Define transaction text (javascript)
+	q := dao.LoadJsFromCache("addComment.js", conf.LoadConfig().Cache())
+
+	t := ara.NewTransaction(q, write, nil)
+	t.Params = map[string]interface{}{ "fKey" : entity.GetKey(), "fromColName": entity.GetCollection(), "toColName": comment.GetCollection(), "comment": comment, "userId": userId}
+
+	err := t.Execute(dao.Database())
+	model.CheckErr(err)
+
+	res := t.Result.(map[string]interface{})
+	if res["success"] != true {
+		model.CheckErr(fmt.Errorf(res["errorMsg"].(string)))
+	}
+
+	comment.SetKey(res["entityKey"].(string))
+	return comment
+}
+
+// Function read cursor into array of versioned text entities
+func (dao baseDao) readVersionedText(cursor *ara.Cursor)[]*model.VersionedText {
+	var text *model.VersionedText = new(model.VersionedText)
+	var versionedTexts []*model.VersionedText
+	for cursor.FetchOne(text) {
+		versionedTexts = append (versionedTexts, text)
+		text = new(model.VersionedText)
+	}
+	return versionedTexts;
+}
+
+// Function read cursor into array of versioned text entities
+func (dao baseDao) readComments(cursor *ara.Cursor)[]*model.Comment {
+	var comment *model.Comment = new(model.Comment)
+	var comments []*model.Comment
+	for cursor.FetchOne(comment) {
+		comments = append (comments, comment)
+		comment = new(model.Comment)
+	}
+	return comments;
+}
+
+// Function retrieves active text for any given object
+// Text retrieved by outgoing edge with label = text and active field of versioned text equals to true
+func (dao baseDao) GetActiveText (entity model.Entity) (*model.VersionedText, error) {
+	if entity.GetKey() == "" {
+		return nil, errors.New("GetText: Key is not defined")
+	}
+
+	id := entity.GetCollection() + "/" + entity.GetKey()
+	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label = 'text' && v.active RETURN v`
+
+	filterMap := make(map[string]interface{})
+	filterMap["startId"] = id
+	filterMap["@edgeCollection"] = PRJ_EDGES
+
+	var query ara.Query
+	query.Aql = sql
+	query.BindVars = filterMap
+
+	cursor, err := dao.Database().Execute(&query)
+	model.CheckErr(err)
+	entities := dao.readVersionedText(cursor)
+	if len(entities) == 0 {
+		return nil, nil
+	} else if len(entities) == 1 {
+		return entities[0], nil
+	} else {
+		return nil, errors.New ("Found more than one active text for one entity. Please, fix this problem manually")
+	}
+}
+
+// Function retrieves text connected to the goiven object with specified text version
+func (dao baseDao) GetTextByVersion (entity model.Entity, version int) (*model.VersionedText, error) {
+	if entity.GetKey() == "" {
+		return nil, errors.New("GetText: Key is not defined")
+	}
+
+	id := entity.GetCollection() + "/" + entity.GetKey()
+	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label = 'text' && v.version == @version RETURN v`
+
+	filterMap := make(map[string]interface{})
+	filterMap["startId"] = id
+	filterMap["@edgeCollection"] = PRJ_EDGES
+	filterMap["startId"] = version
+
+	var query ara.Query
+	query.Aql = sql
+	query.BindVars = filterMap
+
+	cursor, err := dao.Database().Execute(&query)
+	model.CheckErr(err)
+	entities := dao.readVersionedText(cursor)
+	if len(entities) == 0 {
+		return nil, nil
+	} else if len(entities) == 1 {
+		return entities[0], nil
+	} else {
+		return nil, errors.New ("Found more than one active text for one entity. Please, fix this problem manually")
+	}
+}
+
+// Function retrieves comments for given object
+// To implements paging it use additional parameters pageSize and offset
+func (dao baseDao) GetComments (entity model.Entity, pageSize int, offset int) (*model.Comment, error) {
+	if entity.GetKey() == "" {
+		return nil, errors.New("GetText: Key is not defined")
+	}
+
+	id := entity.GetCollection() + "/" + entity.GetKey()
+
+	var limit string
+	if offset > 0 {
+		limit = "\nLIMIT " + strconv.Itoa(offset) + ", " + strconv.Itoa(pageSize)
+	} else if pageSize > 0 {
+		limit = "\nLIMIT " + strconv.Itoa(pageSize)
+	}
+
+	sql := fmt.Sprintf("FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label = 'comment' %s RETURN v", limit)
+
+	filterMap := make(map[string]interface{})
+	filterMap["startId"] = id
+	filterMap["@edgeCollection"] = PRJ_EDGES
+
+	var query ara.Query
+	query.Aql = sql
+	query.BindVars = filterMap
+
+	cursor, err := dao.Database().Execute(&query)
+	model.CheckErr(err)
+	entities := dao.readComments(cursor)
+	if len(entities) == 0 {
+		return nil, nil
+	} else if len(entities) == 1 {
+		return entities[0], nil
+	} else {
+		return nil, errors.New ("Found more than one active text for one entity. Please, fix this problem manually")
+	}
 }

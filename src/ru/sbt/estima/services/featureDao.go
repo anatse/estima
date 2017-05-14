@@ -5,8 +5,6 @@ import (
 	"ru/sbt/estima/model"
 	"ru/sbt/estima/conf"
 	"log"
-	"errors"
-	"fmt"
 )
 
 type featureDao struct {
@@ -62,87 +60,42 @@ func (dao featureDao) FindByProcess (processId string)([]model.Entity, error) {
 // You may use DaoFilter.Filter and DaopFilter.Sort factory build functions
 // Offset and pageSize may be used for paging if no paging needed user zero values for both
 func (dao featureDao) FindAll(daoFilter DaoFilter, offset int, pageSize int)([]model.Entity, error) {
-	var prj *model.Process = new(model.Process)
-	cursor, err := dao.baseDao.findAll(daoFilter, prj.GetCollection(), offset, pageSize)
-	var processes []model.Entity
-	for cursor.FetchOne(prj) {
-		processes = append (processes, *prj)
-		prj = new(model.Process)
+	var feature *model.Feature = new(model.Feature)
+	cursor, err := dao.baseDao.findAll(daoFilter, feature.GetCollection(), offset, pageSize)
+	var features []model.Entity
+	for cursor.FetchOne(feature) {
+		features = append (features, *feature)
+		feature = new(model.Feature)
 	}
 
-	return processes, err
+	return features, err
 }
 
 // Function implemented in each struct and used to find unique instance of related object based on various set of fields
 // If it is not possible to recognize unique set of fields function should throws an error
 func (dao featureDao) FindOne (entity model.Entity) error {
-	prc := entity.(*model.Process)
-	processes, err := dao.FindAll (NewFilter().Filter("name", "==", prc.Name), 0, 0)
+	feature := entity.(*model.Feature)
+	features, err := dao.FindAll (NewFilter().Filter("name", "==", feature.Name), 0, 0)
 	model.CheckErr (err)
-	if len(processes) != 1 {
+	if len(features) != 1 {
 		return nil
 	}
 
-	*prc = (processes[0].(model.Process))
+	*feature = (features[0].(model.Feature))
 	return nil
 }
 
-// Function find and retrieves active text for feature
-// If active text not found returns nil if found more than one active text returns an error
-func (dao featureDao) GetActiveText (feature model.Feature) (*model.VersionedText, error) {
-	if feature.GetKey() == "" {
-		return nil, errors.New("GetText: Key is not defined")
-	}
+// Function set feature status
+func (dao featureDao) SetStatus (feaEntity model.Entity, status string) (model.Entity, error) {
+	var feature *model.Feature
+	feature = feaEntity.(*model.Feature)
+	err := dao.FindById(feature)
+	model.CheckErr (err)
 
-	id := feature.GetCollection() + "/" + feature.GetKey()
-	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label = 'text' && v.active == true RETURN v`
+	feature.Status = status
 
-	filterMap := make(map[string]interface{})
-	filterMap["startId"] = id
-	filterMap["@edgeCollection"] = PRJ_EDGES
-
-	var query ara.Query
-	query.Aql = sql
-	query.BindVars = filterMap
-
-	cursor, err := dao.Database().Execute(&query)
-	model.CheckErr(err)
-	entities := dao.readCursor(cursor)
-	if len(entities) == 0 {
-		return nil, nil
-	} else if len(entities) == 1 {
-		versionedText := new (model.VersionedText)
-		*versionedText = entities[0].(model.VersionedText)
-		return versionedText, nil
-	} else {
-		return nil, errors.New ("Found more than one active text for one feature. Please, fix this problem manually")
-	}
-}
-
-// Function add text version to the feature. During this process currently active text should be stays inactive but new one stays active
-// Version for the new added text should be oldVersion + 1. Two active versions is not acceptable.
-// All changes will process in one transaction
-func (dao featureDao) AddText (feature model.Feature, text string, props map[string]string) (*model.VersionedText, error) {
-	versionedText := new (model.VersionedText)
-	versionedText.Text = text
-	versionedText.Active = true
-
-	// Defines collections which will be changed during transaction
-	write := []string { versionedText.GetCollection() }
-	// Define transaction text (javascript)
-	q := dao.LoadJsFromCache("addText.js", conf.LoadConfig().Cache())
-
-	t := ara.NewTransaction(q, write, nil)
-	t.Params = map[string]interface{}{ "fKey" : feature.GetKey(), "fromColName": feature.GetCollection(), "toColName":versionedText.GetCollection(), "text": versionedText, "props": props}
-
-	err := t.Execute(dao.Database())
-	model.CheckErr(err)
-
-	res := t.Result.(map[string]interface{})
-	if res["success"] != true {
-		model.CheckErr(fmt.Errorf(res["errorMsg"].(string)))
-	}
-
-
-	return nil, nil
+	// Entity found
+	feaEntity, err = dao.Save(*feature)
+	*feature = feaEntity.(model.Feature)
+	return *feature, err
 }

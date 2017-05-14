@@ -20,15 +20,12 @@ function foo(params) {
     activeText.active = false;
     toCol.save (activeText);
 
-    // Save new text
+    // Save new text with ++version
     params.text.active = true;
+    params.text.version = activeText.version + 1
     let toDoc = toCol.save (params.text);
 
     // Add edge between text and object
-    let edge = {_from: doc._id, _to: toDoc._id};
-    for (let v in p.props) {
-        edge[v] = p.props[v];
-    }
-    edge = edgesCol.save (edge);
+    edgesCol.save ({_from: doc._id, _to: toDoc._id, label: 'text'});
     return {success: true, entityKey: toDoc._key};
 }
