@@ -30,12 +30,13 @@
 //         })
 //     })
 // }
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
-import {AppRouters} from './components/AppRouters';
 
 import './styles/fonts.css';
 import './styles/app.css';
+
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
+import {AppRouters} from './components/AppRouters';
 
 function contentLoaded() {
     ReactDOM.render(<AppRouters />, document.getElementById('app'));

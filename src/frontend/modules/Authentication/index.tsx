@@ -1,6 +1,7 @@
 import * as React from 'react';
+import {Redirect} from 'react-router';
+
 import './styles/login.css';
-import {Redirect} from "react-router";
 
 interface IState {
     login: string;
@@ -12,17 +13,52 @@ interface IState {
 /**
  * Страница авторизации пользователя.
  */
-export class Login extends React.Component<void, IState> {
+export class Authentication extends React.Component<any, IState> {
 
     state: IState = {
         login: '',
         password: '',
         isLoading: false,
-        isLogged: false
+        isLogged: false,
     };
 
     componentWillMount () {
-        document.title = 'Логин';
+        document.title = 'Авторизация';
+    }
+
+    /**
+     * Вызов сервиса для авторизации пользователя в системе.
+     *
+     * @param login {string} Логин пользователя.
+     * @param password {string} Пароль пользователя.
+     */
+    getAuthorization (login: string, password: string) {
+        this.setState({isLoading: true});
+        const url = '/login';
+        fetch(url, {
+            method: 'post',
+            body: JSON.stringify({uname: login, upass: password}),
+            headers: {
+                Accept: 'application/json',
+                Cache: 'no-cache',
+            },
+            credentials: 'same-origin',
+        }).then((response) => {
+            response.json().then ((response) => {
+                this.setState(() => {
+                    return {
+                        isLoading: false,
+                        isLogged: true,
+                    };
+                });
+
+                console.log ('response', response.body);
+            }, (error) => {
+                console.log ('error json', error);
+            });
+        }, (error) => {
+            console.log ('error connect', error);
+        });
     }
 
     /**
@@ -34,31 +70,7 @@ export class Login extends React.Component<void, IState> {
             password,
         } = this.state;
 
-        this.setState(() => {
-            return {isLoading: true};
-        });
-
-        var url = '/login';
-        fetch(url, {
-            method: "post",
-            body: JSON.stringify({uname: login, upass: password}),
-            headers: {
-                'Accept': 'application/json',
-                'Cache': 'no-cache'
-            },
-            credentials: "same-origin"
-        }).then((response) => {
-            response.text().then ((text) => {
-                this.setState(() => {
-                    return {
-                        isLoading: false,
-                        isLogged: true
-                    };
-                });
-
-                // console.log (text)
-            })
-        })
+        this.getAuthorization(login, password);
     }
 
     render() {
@@ -66,11 +78,11 @@ export class Login extends React.Component<void, IState> {
             login,
             password,
             isLoading,
-            isLogged
+            isLogged,
         } = this.state;
 
         if (isLogged) {
-            return <Redirect to="/projects"/>
+            return <Redirect to="/projects" />;
         }
 
         return (
@@ -81,6 +93,7 @@ export class Login extends React.Component<void, IState> {
                     </div>
                     <div className="login_row login_row__align_center">
                         <input
+                            id="Authentication__input__login"
                             className="login_input"
                             type="text"
                             placeholder="Логин"
@@ -90,6 +103,7 @@ export class Login extends React.Component<void, IState> {
                     </div>
                     <div className="login_row login_row__align_center">
                         <input
+                            id="Authentication__input__password"
                             className="login_input"
                             type="password"
                             placeholder="Пароль"
@@ -99,6 +113,7 @@ export class Login extends React.Component<void, IState> {
                     </div>
                     <div className="login_row login_row__align_center">
                         <button
+                            id="Authentication__button__enter"
                             type="button"
                             disabled={isLoading}
                             className="login_sign-in"

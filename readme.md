@@ -143,6 +143,14 @@ npm run build
     ```bash
     > npm run build
     ```
+* Запуск тестов для проекта (используется [jest](https://facebook.github.io/jest/))
+    ```bash
+    > npm run test
+    ```
+* Запуск тестов для проекта в режиме постоянного отслеживания изменений в тестах
+    ```bash
+    > npm run test:watch
+    ```
 
 ## Unit тестирование
 
