@@ -10,3 +10,4 @@ gotest
 node_modules
 pkg
 stop
+/views/sc/runtime/

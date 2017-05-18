@@ -1,0 +1,106 @@
+<HTML><HEAD>
+    <SCRIPT>var isomorphicDir="/sc/runtime/";</SCRIPT>
+    <SCRIPT SRC=/sc/runtime/system/modules/ISC_Core.js></SCRIPT>
+    <SCRIPT SRC=/sc/runtime/system/modules/ISC_Foundation.js></SCRIPT>
+    <SCRIPT SRC=/sc/runtime/system/modules/ISC_Containers.js></SCRIPT>
+    <SCRIPT SRC=/sc/runtime/system/modules/ISC_Grids.js></SCRIPT>
+    <SCRIPT SRC=/sc/runtime/system/modules/ISC_Forms.js></SCRIPT>
+    <SCRIPT SRC=/sc/runtime/system/modules/ISC_DataBinding.js></SCRIPT>
+    <SCRIPT SRC=/sc/runtime/skins/Enterprise/load_skin.js></SCRIPT>
+</HEAD><BODY>
+
+<SCRIPT>
+    'use strict';
+
+    isc.HLayout.create({
+        align: 'center',
+        width: '100%',
+        height: "100%",
+        members: [
+            isc.VLayout.create({
+                ID: "hLayoutAlignCenter",
+                width: 300,
+                height: "100%",
+                layoutMargin: 6,
+                membersMargin: 6,
+                align: "center",
+                members: [
+                    isc.VStack.create ({
+                        height: 150,
+                        //border: "1px solid black",
+                        align: "center",
+                        members: [
+
+                            isc.DynamicForm.create({
+                                ID: "exampleForm",
+                                layoutMargin: 6,
+                                fields: [{
+                                    type:"header",
+                                    defaultValue:"Вход в систему ведения бэклога",
+                                    align: "center"
+                                }, {
+                                    name: "username",
+                                    title: "Пользователь",
+                                    type: "text",
+                                    required: true,
+                                    width:"100%",
+                                    defaultValue: "wps8admin"
+                                }, {
+                                    name: "password",
+                                    title: "Пароль",
+                                    width:"100%",
+                                    required: true,
+                                    type: "password"
+                                }
+                                ]
+                            }),
+
+                            isc.HLayout.create ({
+                                height: 30,
+                                align: 'right',
+                                members: [
+                                    isc.Button.create({
+                                        title:" Войти",
+                                        click : () => {
+                                            let form = isc.DynamicForm.getById("exampleForm");
+                                            let login = form.getValue('username');
+                                            let password = form.getValue ('password');
+                                            const url = '/login';
+                                            fetch(url, {
+                                                method: 'post',
+                                                body: JSON.stringify({uname: login, upass: password}),
+                                                headers: {
+                                                    Accept: 'application/json',
+                                                    Cache: 'no-cache',
+                                                },
+                                                credentials: 'same-origin',
+                                            }).then((response) => {
+                                                response.json().then ((response) => {
+                                                    window.location = "projects.html"
+                                                    console.log ('response', response.body);
+                                                }, (error) => {
+                                                    alert (error)
+                                                    console.log ('error json', error);
+                                                });
+                                            }, (error) => {
+                                                console.log ('error connect', error);
+                                            });
+                                        }
+                                    }),
+                                    isc.Button.create({
+                                        title:"Отмена",
+                                        click : () => {
+                                            window.location = "/";
+                                        }
+                                    })
+                                ]
+                            })
+                        ]
+                    })
+                ]
+            })
+        ]
+    })
+
+</SCRIPT>
+</BODY></HTML>
