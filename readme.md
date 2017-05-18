@@ -147,7 +147,11 @@ npm run build
 ## Unit тестирование
 
 * Установить переменную окружения CONFIG_PATH = полный путь до файла config.json
-* Запустить комманду 
-```Shell 
-go test ./src/ru/... -v
-```
+* Установить переменную окружения DBJS_PATH = полный путь до папки с файлами JavaScript для транзакций
+* Запустить тесты (файл runtest.sh)
+    ```Shell 
+    export CONFIG_PATH=~/projects/estima/config.json
+    export DBJS_PATH=~/projects/estima/dbjs/
+    
+    go test ./src/ru/... -v
+    ```
