@@ -40,7 +40,7 @@ func TestProcessCreate (t *testing.T) {
 	prc.Description = "First Test Process"
 	prc.Status = "TEST"
 
-	response := callSecured(http.NewRequest("POST", "/stage/" + stageKey + "/process/create", CreateBody(prc)))
+	response := callSecured(http.NewRequest("POST", "/api/v.0.0.1/stage/" + stageKey + "/process/create", CreateBody(prc)))
 	checkResponseCode(t, http.StatusOK, response.Code)
 
 	if body := response.Body.String(); body != "" {
@@ -79,7 +79,7 @@ func TestProcessUpdate (t *testing.T) {
 	prc.Status = "CLOSED"
 
 	log.Printf("Process key: %$v", prcKey)
-	response := callSecured(http.NewRequest("POST", "/process/" + prcKey, CreateBody(prc)))
+	response := callSecured(http.NewRequest("POST", "/api/v.0.0.1/process/" + prcKey, CreateBody(prc)))
 	checkResponseCode(t, http.StatusOK, response.Code)
 
 	if body := response.Body.String(); body != "" {
@@ -111,7 +111,7 @@ func TestProcessDelete (t *testing.T) {
 	prc.Description = "First Test Process"
 	prc.Status = "TEST"
 
-	response := callSecured(http.NewRequest("DELETE", "/process/" + prcKey + "/remove", CreateBody(prc)))
+	response := callSecured(http.NewRequest("DELETE", "/api/v.0.0.1/process/" + prcKey + "/remove", CreateBody(prc)))
 	checkResponseCode(t, http.StatusOK, response.Code)
 
 	if body := response.Body.String(); body != "" {

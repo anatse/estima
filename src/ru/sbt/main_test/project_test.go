@@ -41,7 +41,7 @@ var prjKey string
 var stageKey string
 
 // Test project creation service
-// URL: /project/create, method POST
+// URL: /api/v.0.0.1/project/create, method POST
 func TestProjectCreate (t *testing.T) {
 	var prj model.Project
 	prj.Number = PRJ_NUM
@@ -51,7 +51,7 @@ func TestProjectCreate (t *testing.T) {
 	prj.StartDate = time.Now()
 	prj.EndDate = prj.StartDate.Add(time.Hour * 24)
 
-	response := callSecured(http.NewRequest("POST", "/project/create", CreateBody(prj)))
+	response := callSecured(http.NewRequest("POST", "/api/v.0.0.1/project/create", CreateBody(prj)))
 	checkResponseCode(t, http.StatusOK, response.Code)
 
 	if body := response.Body.String(); body != "" {
@@ -94,7 +94,7 @@ func TestProjectCreate (t *testing.T) {
 }
 
 // Test adding predefined user to project 000000
-// URL: /project/{id}/user/add, method POST
+// URL: /api/v.0.0.1/project/{id}/user/add, method POST
 func TestAddUserToProject (t *testing.T) {
 	var userInfo struct {
 		Name string `json:"name"`
@@ -105,7 +105,7 @@ func TestAddUserToProject (t *testing.T) {
 	userInfo.Role = "TEST_ROLE"
 
 	body := CreateBody(userInfo)
-	response := callSecured(http.NewRequest("POST", "/project/"+ prjKey + "/user/add", body))
+	response := callSecured(http.NewRequest("POST", "/api/v.0.0.1/project/"+ prjKey + "/user/add", body))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp ProjectResponse
@@ -121,7 +121,7 @@ func TestAddUserToProject (t *testing.T) {
 // Test getting projects list for current user
 // URL: /user/projects, method GET
 func TestGetProjectsByUser (t *testing.T) {
-	response := callSecured(http.NewRequest("GET", "/user/projects", nil))
+	response := callSecured(http.NewRequest("GET", "/api/v.0.0.1/user/projects", nil))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp ProjectArrayResponse
@@ -140,9 +140,9 @@ func TestGetProjectsByUser (t *testing.T) {
 }
 
 // Test getting list of all project's users
-// URL: /project/{id}/user/list
+// URL: /api/v.0.0.1/project/{id}/user/list
 func TestProjectUserList (t *testing.T) {
-	response := callSecured(http.NewRequest("GET", "/project/" + prjKey + "/user/list", nil))
+	response := callSecured(http.NewRequest("GET", "/api/v.0.0.1/project/" + prjKey + "/user/list", nil))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp UserArrayResponse
@@ -161,7 +161,7 @@ func TestProjectUserList (t *testing.T) {
 }
 
 // Test removing user from project
-// URL: /project/{id}/user/remove, method DELETE
+// URL: /api/v.0.0.1/project/{id}/user/remove, method DELETE
 func TestRemoveUserFromProject (t *testing.T) {
 	var userInfo struct {
 		Name string `json:"name"`
@@ -172,7 +172,7 @@ func TestRemoveUserFromProject (t *testing.T) {
 	userInfo.Role = "TEST_ROLE"
 
 	body := CreateBody(userInfo)
-	response := callSecured(http.NewRequest("DELETE", "/project/"+ prjKey + "/user/remove", body))
+	response := callSecured(http.NewRequest("DELETE", "/api/v.0.0.1/project/"+ prjKey + "/user/remove", body))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp ProjectResponse
@@ -187,7 +187,7 @@ func TestRemoveUserFromProject (t *testing.T) {
 
 // Test user list check for empty lists, this test should be called after remove user test
 func TestProjectEmptyUserList (t *testing.T) {
-	response := callSecured(http.NewRequest("GET", "/project/" + prjKey + "/user/list", nil))
+	response := callSecured(http.NewRequest("GET", "/api/v.0.0.1/project/" + prjKey + "/user/list", nil))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp UserArrayResponse
@@ -206,9 +206,9 @@ func TestProjectEmptyUserList (t *testing.T) {
 }
 
 // Test getting list of all projects
-// URL: /project/list, method GET
+// URL: /api/v.0.0.1/project/list, method GET
 func TestFindAllProjects (t *testing.T) {
-	response := callSecured(http.NewRequest("GET", "/project/list", nil))
+	response := callSecured(http.NewRequest("GET", "/api/v.0.0.1/project/list", nil))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp ProjectArrayResponse
@@ -227,9 +227,9 @@ func TestFindAllProjects (t *testing.T) {
 }
 
 // Testing project stages. This test for empty list of stages
-// URL: /project/{id}/stage/list, method GET
+// URL: /api/v.0.0.1/project/{id}/stage/list, method GET
 func TestProjectStagesList (t *testing.T) {
-	response := callSecured(http.NewRequest("GET", "/project/"+ prjKey + "/stage/list", nil))
+	response := callSecured(http.NewRequest("GET", "/api/v.0.0.1/project/"+ prjKey + "/stage/list", nil))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp StageArrayResponse
@@ -248,7 +248,7 @@ func TestProjectStagesList (t *testing.T) {
 }
 
 // Test adding stage to project
-// URL: /project/{id}/stage/add, method POST
+// URL: /api/v.0.0.1/project/{id}/stage/add, method POST
 func TestAddStageToProject (t *testing.T) {
 	var stg model.Stage
 
@@ -259,7 +259,7 @@ func TestAddStageToProject (t *testing.T) {
 	stg.EndDate = stg.StartDate.AddDate(1, 0, 0)
 
 	body := CreateBody(stg)
-	response := callSecured(http.NewRequest("POST", "/project/"+ prjKey + "/stage/add", body))
+	response := callSecured(http.NewRequest("POST", "/api/v.0.0.1/project/"+ prjKey + "/stage/add", body))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp struct {
@@ -281,7 +281,7 @@ func TestGetStageByName (t *testing.T) {
 	var stg model.Stage
 	stg.Name = STAGE
 	body := CreateBody(stg)
-	response := callSecured(http.NewRequest("POST", "/project/"+ prjKey + "/stage/get", body))
+	response := callSecured(http.NewRequest("POST", "/api/v.0.0.1/project/"+ prjKey + "/stage/get", body))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp StageResponse
@@ -302,7 +302,7 @@ func TestGetStageByName (t *testing.T) {
 }
 
 // Test removing stage from project
-// URL: /project/{id}/stage/remove, method DELETE
+// URL: /api/v.0.0.1/project/{id}/stage/remove, method DELETE
 func TestRemoveStageFromProject (t *testing.T) {
 	var stg model.Stage
 
@@ -313,7 +313,7 @@ func TestRemoveStageFromProject (t *testing.T) {
 	stg.EndDate = stg.StartDate.AddDate(1, 0, 0)
 
 	body := CreateBody(stg)
-	response := callSecured(http.NewRequest("DELETE", "/project/"+ prjKey + "/stage/remove", body))
+	response := callSecured(http.NewRequest("DELETE", "/api/v.0.0.1/project/"+ prjKey + "/stage/remove", body))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp StageResponse
@@ -327,9 +327,9 @@ func TestRemoveStageFromProject (t *testing.T) {
 }
 
 // Test getting project info by its number
-// URL: /project/{id}, method GET
+// URL: /api/v.0.0.1/project/{id}, method GET
 func TestGetProjectByNumber (t *testing.T) {
-	response := callSecured(http.NewRequest("GET", "/project/" + prjKey, nil))
+	response := callSecured(http.NewRequest("GET", "/api/v.0.0.1/project/" + prjKey, nil))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp ProjectResponse
@@ -349,12 +349,12 @@ func TestGetProjectByNumber (t *testing.T) {
 }
 
 // Test setting project status
-// URL: /project/{id}/status, method POST
+// URL: /api/v.0.0.1/project/{id}/status, method POST
 func TestSetProjectStatus (t *testing.T) {
 	var prj model.Project
 	prj.Status = "CHANGED"
 
-	response := callSecured(http.NewRequest("POST", "/project/" + prjKey + "/status", CreateBody(prj)))
+	response := callSecured(http.NewRequest("POST", "/api/v.0.0.1/project/" + prjKey + "/status", CreateBody(prj)))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp ProjectResponse

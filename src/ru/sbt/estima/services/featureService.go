@@ -84,9 +84,9 @@ func (fs FeatureService) setStatus (w http.ResponseWriter, r *http.Request) {
 }
 
 func (fs *FeatureService) ConfigRoutes (router *mux.Router, handler HandlerOfHandlerFunc) {
-	router.Handle("/process/{id}/feature/list", handler(http.HandlerFunc(fs.findByProcess))).Methods("POST", "GET").Name("Features list for specified process")
-	router.Handle("/feature/{id}", handler(http.HandlerFunc(fs.findById))).Methods("GET").Name("Get feature by id")
-	router.Handle("/feature/{id}/text", handler(http.HandlerFunc(fs.getText))).Methods("POST", "GET").Name("Get text for feature. If version parameter is provided then return specified version of text")
-	router.Handle("/feature/{id}/addtext", handler(http.HandlerFunc(fs.addText))).Methods("POST").Name("Add text for feature")
-	router.Handle("/feature/{id}/status", handler(http.HandlerFunc(fs.setStatus))).Methods("POST").Name("Set feature status")
+	router.Handle("/api/v.0.0.1/process/{id}/feature/list", handler(http.HandlerFunc(fs.findByProcess))).Methods("POST", "GET").Name("Features list for specified process")
+	router.Handle("/api/v.0.0.1/feature/{id}", handler(http.HandlerFunc(fs.findById))).Methods("GET").Name("Get feature by id")
+	router.Handle("/api/v.0.0.1/feature/{id}/text", handler(http.HandlerFunc(fs.getText))).Methods("POST", "GET").Name("Get text for feature. If version parameter is provided then return specified version of text")
+	router.Handle("/api/v.0.0.1/feature/{id}/addtext", handler(http.HandlerFunc(fs.addText))).Methods("POST").Name("Add text for feature")
+	router.Handle("/api/v.0.0.1/feature/{id}/status", handler(http.HandlerFunc(fs.setStatus))).Methods("POST").Name("Set feature status")
 }

@@ -65,7 +65,7 @@ func checkUserName (response *httptest.ResponseRecorder, t *testing.T) {
 // Function login in GET implementation. Using predefined user wps8admin with LDAP fake configuration
 // URL: /get-token, method GET
 func login () *httptest.ResponseRecorder {
-	req, _ := http.NewRequest("GET", "/get-token?uname=" + USER_NAME + "&upass=xxx", nil)
+	req, _ := http.NewRequest("GET", "/api/v.0.0.1/get-token?uname=" + USER_NAME + "&upass=xxx", nil)
 	response := executeRequest(req)
 	return response
 }
@@ -85,14 +85,14 @@ func loginPost (t *testing.T) *httptest.ResponseRecorder {
 	checkError(err, t)
 	body := bytes.NewReader(credB)
 
-	req, _ := http.NewRequest("POST", "/login", body)
+	req, _ := http.NewRequest("POST", "/api/v.0.0.1/login", body)
 	response := executeRequest(req)
 	return response
 }
 
 // Function log into system using user without any privileges - guest
 func loginGuest () *httptest.ResponseRecorder {
-	req, _ := http.NewRequest("GET", "/get-token?uname=guest&upass=xxx", nil)
+	req, _ := http.NewRequest("GET", "/api/v.0.0.1/get-token?uname=guest&upass=xxx", nil)
 	response := executeRequest(req)
 	return response
 }
@@ -140,7 +140,7 @@ func TestLoginPost (t *testing.T) {
 // Usign login function to log ito the system
 // URL: /users/current, method GET
 func TestGetCurrentUser (t *testing.T) {
-	response := callSecured (http.NewRequest("GET", "/users/current", nil))
+	response := callSecured (http.NewRequest("GET", "/api/v.0.0.1/users/current", nil))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	checkUserName(response, t)
 }
@@ -148,7 +148,7 @@ func TestGetCurrentUser (t *testing.T) {
 // Testing service which retrieves list of all users
 // URL: /users/list, method GET
 func TestGetUserList (t *testing.T) {
-	response := callSecured (http.NewRequest("GET", "/users/list", nil))
+	response := callSecured (http.NewRequest("GET", "/api/v.0.0.1/users/list", nil))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp UserArrayResponse
@@ -167,7 +167,7 @@ func TestGetUserList (t *testing.T) {
 // Using predefine user name to search 8adm - should find al least one user wps8admin
 // URL: /users/search, method GET
 func TestSearchPredefinedUsers (t *testing.T) {
-	response := callSecured (http.NewRequest("GET", "/users/search?name=8adm", nil))
+	response := callSecured (http.NewRequest("GET", "/api/v.0.0.1/users/search?name=8adm", nil))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp UserArrayResponse
@@ -195,7 +195,7 @@ func TestSearchPredefinedUsers (t *testing.T) {
 // We are using user without any privileges to search users
 // URL: /users/search, method GET
 func TestSearchUsersByGuest (t *testing.T) {
-	response := callGuestSecured (http.NewRequest("GET", "/users/search?name=8adm", nil))
+	response := callGuestSecured (http.NewRequest("GET", "/api/v.0.0.1/users/search?name=8adm", nil))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp UserArrayResponse
@@ -229,7 +229,7 @@ func TestCreateUser (t *testing.T) {
 
 	body := CreateBody (user)
 
-	response := callSecured (http.NewRequest("POST", "/users/create", body))
+	response := callSecured (http.NewRequest("POST", "/api/v.0.0.1/users/create", body))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
 		var resp UserResponse

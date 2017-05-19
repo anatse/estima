@@ -88,8 +88,8 @@ func PrepareRoute () *mux.Router {
 	model.RegisterService("feature", fs)
 
 	r := model.GetRouter()
-	r.Handle("/get-token", services.GetTokenHandler).Methods("GET").Name("Login router (GET). Query parameters uname & upass")
-	r.Handle("/login", services.Login).Methods("POST").Name("Login router (POST). Body: uname & upass")
+	r.Handle("/api/v.0.0.1/get-token", services.GetTokenHandler).Methods("GET").Name("Login router (GET). Query parameters uname & upass")
+	r.Handle("/api/v.0.0.1/login", services.Login).Methods("POST").Name("Login router (POST). Body: uname & upass")
 
 	us.ConfigRoutes(r, JwtHandler)
 	ps.ConfigRoutes(r, JwtHandler)
@@ -103,7 +103,7 @@ func PrepareRoute () *mux.Router {
 		w.Write([]byte(js))
 	})
 
-	r.Handle("/ri", routesInformation)
+	r.Handle("/api/v.0.0.1/ri", routesInformation)
 
 	// Add static router. Should be last in routes list
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./views")))

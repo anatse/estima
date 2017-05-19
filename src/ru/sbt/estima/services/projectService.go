@@ -202,16 +202,16 @@ func (ps ProjectService) setStatus (w http.ResponseWriter, r *http.Request) {
 }
 
 func (ps *ProjectService) ConfigRoutes (router *mux.Router, handler HandlerOfHandlerFunc) {
-	router.Handle ("/user/projects", handler(http.HandlerFunc(ps.findByUser))).Methods("POST", "GET").Name("Project list for current user")
-	router.Handle ("/project/create", handler(http.HandlerFunc(ps.create))).Methods("POST").Name("Create project")
-	router.Handle ("/project/list", handler(http.HandlerFunc(ps.findAll))).Methods("POST", "GET").Name("List all projects, filter: [name, description, status], offset, pageSize")
-	router.Handle ("/project/{id}/user/list", handler(http.HandlerFunc(ps.getUsers))).Methods("POST", "GET").Name("List users for project")
-	router.Handle ("/project/{id}/user/add", handler(http.HandlerFunc(ps.addUser))).Methods("POST").Name("Add user to project")
-	router.Handle ("/project/{id}/user/remove", handler(http.HandlerFunc(ps.removeUser))).Methods("POST", "DELETE").Name("Remove user from project")
-	router.Handle ("/project/{id}/stage/list", handler(http.HandlerFunc(ps.getStages))).Methods("POST", "GET").Name("List stages for project")
-	router.Handle ("/project/{id}/stage/add", handler(http.HandlerFunc(ps.addStage))).Methods("POST").Name("Add stage to project")
-	router.Handle ("/project/{id}/stage/remove", handler(http.HandlerFunc(ps.removeStage))).Methods("POST", "DELETE").Name("Remove stage from project")
-	router.Handle ("/project/{id}/stage/get", handler(http.HandlerFunc(ps.getStageByName))).Methods("GET", "POST").Name("Get project stage by name")
-	router.Handle ("/project/{id}/status", handler(http.HandlerFunc(ps.setStatus))).Methods("POST").Name("Set project status")
-	router.Handle ("/project/{id}", handler(http.HandlerFunc(ps.findOne))).Methods("GET").Name("Get project by id. Id = Number")
+	router.Handle ("/api/v.0.0.1/user/projects", handler(http.HandlerFunc(ps.findByUser))).Methods("POST", "GET").Name("Project list for current user")
+	router.Handle ("/api/v.0.0.1/project/create", handler(http.HandlerFunc(ps.create))).Methods("POST").Name("Create project")
+	router.Handle ("/api/v.0.0.1/project/list", handler(http.HandlerFunc(ps.findAll))).Methods("POST", "GET").Name("List all projects, filter: [name, description, status], offset, pageSize")
+	router.Handle ("/api/v.0.0.1/project/{id}/user/list", handler(http.HandlerFunc(ps.getUsers))).Methods("POST", "GET").Name("List users for project")
+	router.Handle ("/api/v.0.0.1/project/{id}/user/add", handler(http.HandlerFunc(ps.addUser))).Methods("POST").Name("Add user to project")
+	router.Handle ("/api/v.0.0.1/project/{id}/user/remove", handler(http.HandlerFunc(ps.removeUser))).Methods("POST", "DELETE").Name("Remove user from project")
+	router.Handle ("/api/v.0.0.1/project/{id}/stage/list", handler(http.HandlerFunc(ps.getStages))).Methods("POST", "GET").Name("List stages for project")
+	router.Handle ("/api/v.0.0.1/project/{id}/stage/add", handler(http.HandlerFunc(ps.addStage))).Methods("POST").Name("Add stage to project")
+	router.Handle ("/api/v.0.0.1/project/{id}/stage/remove", handler(http.HandlerFunc(ps.removeStage))).Methods("POST", "DELETE").Name("Remove stage from project")
+	router.Handle ("/api/v.0.0.1/project/{id}/stage/get", handler(http.HandlerFunc(ps.getStageByName))).Methods("GET", "POST").Name("Get project stage by name")
+	router.Handle ("/api/v.0.0.1/project/{id}/status", handler(http.HandlerFunc(ps.setStatus))).Methods("POST").Name("Set project status")
+	router.Handle ("/api/v.0.0.1/project/{id}", handler(http.HandlerFunc(ps.findOne))).Methods("GET").Name("Get project by id. Id = Number")
 }

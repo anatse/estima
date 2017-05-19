@@ -4,15 +4,92 @@
     <meta charset="UTF-8">
     <title>Проекты</title>
     <SCRIPT>var isomorphicDir="/sc/runtime/";</SCRIPT>
-    <SCRIPT SRC=/sc/runtime/system/modules/ISC_Core.js></SCRIPT>
-    <SCRIPT SRC=/sc/runtime/system/modules/ISC_Foundation.js></SCRIPT>
-    <SCRIPT SRC=/sc/runtime/system/modules/ISC_Containers.js></SCRIPT>
-    <SCRIPT SRC=/sc/runtime/system/modules/ISC_Grids.js></SCRIPT>
-    <SCRIPT SRC=/sc/runtime/system/modules/ISC_Forms.js></SCRIPT>
-    <SCRIPT SRC=/sc/runtime/system/modules/ISC_DataBinding.js></SCRIPT>
+    <SCRIPT SRC=/sc/runtime/system/development/ISC_Core.js></SCRIPT>
+    <SCRIPT SRC=/sc/runtime/system/development/ISC_Foundation.js></SCRIPT>
+    <SCRIPT SRC=/sc/runtime/system/development/ISC_Containers.js></SCRIPT>
+    <SCRIPT SRC=/sc/runtime/system/development/ISC_Grids.js></SCRIPT>
+    <SCRIPT SRC=/sc/runtime/system/development/ISC_Forms.js></SCRIPT>
+    <SCRIPT SRC=/sc/runtime/system/development/ISC_DataBinding.js></SCRIPT>
     <SCRIPT SRC=/sc/runtime/skins/Enterprise/load_skin.js></SCRIPT>
 </head>
 <body>
+    <script>
+//        isc.Log.setPriority("Log", isc.Log.DEBUG);//isc.Log = null;
+//        isc.Log.setPriority('loadTime', isc.Log.DEBUG)
+//        isc.Log.setDefaultPriority(isc.Log.DEBUG)
+//
+//        isc.Log.setLogPriority('loadTime', isc.Log.DEBUG)
+//        isc.Log.setDefaultLogPriority(isc.Log.DEBUG)
+//
+//        var isProd = false; //change to false for develpment mode
+//        if (isProd) isc.addGlobal("showLog",function(){console.log('this should show the log');});
 
+        isc.DataSource.create({
+            dataURL:"/user/projects",
+            dataFormat:"json",
+            allowAdvancedCriteria: true,
+            ID:"userProjectListDS",
+            recordXPath: "body",
+            fields:[{
+                name:"number",
+                title: "Номер проекта"
+            }, {
+                name:"description",
+                title:"Описание",
+                validators:[
+                ]
+            }, {
+                name:"name",
+                title:"Название",
+                validators:[
+                ]
+            }, {
+                name:"status",
+                title: "Статус"
+            }, {
+                name:"startDate",
+                type: "datetime",
+                format: "",
+                title: "Дата старта"
+            }, {
+                name:"endDate",
+                type: "datetime",
+                title: "Дата окончания"
+            }, {
+                name: "flag",
+                title: "флаг"
+            }
+            ]
+        });
+
+        isc.ListGrid.create({
+            ID: "userProjectList",
+            width:500,
+            height:224,
+            alternateRecordStyles:true,
+            showAllRecords:true,
+            dataSource: userProjectListDS,
+            autoFetchData: true,
+            dateTimeFormatter: 'MM.YYYY HH:MM',
+            fields:[
+                {name:"number", title:"Номер", width: 100},
+                {name:"name", title:"Название", width: 200},
+                {
+                    name:"startDate",
+                    title:"Начало",
+                    type:"datetime",
+                    width:200
+                }, {
+                    name:"endDate",
+                    title:"Окончание",
+                    type:"datetime",
+//                    dateFormatter: 'YYYY/MM/DD',
+                    width:200
+                }
+            ]
+        });
+    </script>
+
+    <!--<script src="/sc/js/prjds.js"></script>-->
 </body>
 </html>

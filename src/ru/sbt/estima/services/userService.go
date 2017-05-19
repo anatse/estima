@@ -94,9 +94,9 @@ func (us *UserService) create (w http.ResponseWriter, r *http.Request) {
 }
 
 func (us *UserService) ConfigRoutes (router *mux.Router, handler HandlerOfHandlerFunc) {
-	router.Handle ("/users/current", handler(http.HandlerFunc(us.currentUser))).Methods("POST", "GET").Name("Current user")
-	router.Handle ("/users/list", handler(http.HandlerFunc(us.list))).Methods("POST", "GET").Name("List of all users")
-	router.Handle ("/users/search", handler(http.HandlerFunc(us.search))).Methods("POST", "GET").Name("Search users")
-	router.Handle ("/users/create", handler(http.HandlerFunc(us.create))).Methods("POST").Name(("Create or update user"))
+	router.Handle ("/api/v.0.0.1/users/current", handler(http.HandlerFunc(us.currentUser))).Methods("POST", "GET").Name("Current user")
+	router.Handle ("/api/v.0.0.1/users/list", handler(http.HandlerFunc(us.list))).Methods("POST", "GET").Name("List of all users")
+	router.Handle ("/api/v.0.0.1/users/search", handler(http.HandlerFunc(us.search))).Methods("POST", "GET").Name("Search users")
+	router.Handle ("/api/v.0.0.1/users/create", handler(http.HandlerFunc(us.create))).Methods("POST").Name(("Create or update user"))
 }
 

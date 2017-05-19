@@ -27,7 +27,6 @@
                 members: [
                     isc.VStack.create ({
                         height: 150,
-                        //border: "1px solid black",
                         align: "center",
                         members: [
 
@@ -35,23 +34,25 @@
                                 ID: "exampleForm",
                                 layoutMargin: 6,
                                 fields: [{
-                                    type:"header",
-                                    defaultValue:"Вход в систему ведения бэклога",
-                                    align: "center"
-                                }, {
-                                    name: "username",
-                                    title: "Пользователь",
-                                    type: "text",
-                                    required: true,
-                                    width:"100%",
-                                    defaultValue: "wps8admin"
-                                }, {
-                                    name: "password",
-                                    title: "Пароль",
-                                    width:"100%",
-                                    required: true,
-                                    type: "password"
-                                }
+                                        type:"header",
+                                        defaultValue:"Вход в систему ведения бэклога",
+                                        align: "center"
+                                    }, {
+                                        name: "username",
+                                        title: "Пользователь",
+                                        type: "text",
+                                        hint: "username",
+                                        showHintInField: true,
+                                        required: true,
+                                        width:"100%",
+                                        defaultValue: "wps8admin"
+                                    }, {
+                                        name: "password",
+                                        title: "Пароль",
+                                        width:"100%",
+                                        required: true,
+                                        type: "password"
+                                    }
                                 ]
                             }),
 

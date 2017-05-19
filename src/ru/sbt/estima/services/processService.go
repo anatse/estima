@@ -87,11 +87,11 @@ func (ps ProcessService) updateProcess (w http.ResponseWriter, r *http.Request) 
 
 // Function used by main app to add this routers to application
 func (ps *ProcessService) ConfigRoutes (router *mux.Router, handler HandlerOfHandlerFunc) {
-	router.Handle ("/stage/{id}/process/list", handler(http.HandlerFunc(ps.findByStage))).Methods("POST", "GET").Name("Process list for selected project stage")
-	router.Handle ("/stage/{id}/process/create", handler(http.HandlerFunc(ps.create))).Methods("POST").Name("Create and app process to projects stage")
-	router.Handle ("/process/{id}/status", handler(http.HandlerFunc(ps.setStatus))).Methods("POST").Name("Set process status")
-	router.Handle ("/process/{id}/remove", handler(http.HandlerFunc(ps.remove))).Methods("POST", "DELETE").Name("Remove process")
-	router.Handle ("/process/{id}/disable", handler(http.HandlerFunc(ps.remove))).Methods("POST", "DELETE").Name("Disable (hide) process")
-	router.Handle ("/process/{id}", handler(http.HandlerFunc(ps.findOne))).Methods("GET").Name("GET: Retrieve information about selected process")
-	router.Handle ("/process/{id}", handler(http.HandlerFunc(ps.updateProcess))).Methods("POST").Name("POST: Update selected process")
+	router.Handle ("/api/v.0.0.1/stage/{id}/process/list", handler(http.HandlerFunc(ps.findByStage))).Methods("POST", "GET").Name("Process list for selected project stage")
+	router.Handle ("/api/v.0.0.1/stage/{id}/process/create", handler(http.HandlerFunc(ps.create))).Methods("POST").Name("Create and app process to projects stage")
+	router.Handle ("/api/v.0.0.1/process/{id}/status", handler(http.HandlerFunc(ps.setStatus))).Methods("POST").Name("Set process status")
+	router.Handle ("/api/v.0.0.1/process/{id}/remove", handler(http.HandlerFunc(ps.remove))).Methods("POST", "DELETE").Name("Remove process")
+	router.Handle ("/api/v.0.0.1/process/{id}/disable", handler(http.HandlerFunc(ps.remove))).Methods("POST", "DELETE").Name("Disable (hide) process")
+	router.Handle ("/api/v.0.0.1/process/{id}", handler(http.HandlerFunc(ps.findOne))).Methods("GET").Name("GET: Retrieve information about selected process")
+	router.Handle ("/api/v.0.0.1/process/{id}", handler(http.HandlerFunc(ps.updateProcess))).Methods("POST").Name("POST: Update selected process")
 }

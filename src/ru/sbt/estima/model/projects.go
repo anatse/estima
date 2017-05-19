@@ -8,6 +8,7 @@ import (
 type Project struct {
 	ara.Document `json:-`
 	Number      string `json:"number,omitempty", unique:"projects"`
+	Name string `json:"name",omitempty`
 	Description string `json:"description,omitempty"`
 	Status      string `json:"status"`
 	Flag string `json:"flag" enum:"G,Y,R,B"`
