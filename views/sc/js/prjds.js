@@ -18,7 +18,41 @@ isc.DataSource.create({
     allowAdvancedCriteria: true,
     ID:"userProjectListDS",
     recordXPath: "body",
-    getDataProtocol: function () {return null},
+    operationBindings:[
+        {operationType:"fetch", dataProtocol: "", dataURL: "/api/v.0.0.1/user/projects"},
+        {operationType:"add", dataProtocol:"postMessage", dataURL: "/api/v.0.0.1/project/create"},
+        // {operationType:"remove", dataProtocol:"postMessage", requestProperties:{httpMethod:"POST"}, dataURL: "/api/v.0.0.1/project/{0}/stage/remove"},
+        {operationType:"update", dataProtocol:"postMessage", requestProperties:{httpMethod:"POST"}, dataURL:"/api/v.0.0.1/project/create"}
+    ],
+    transformRequest: function (dsRequest) {
+        switch (dsRequest.operationType) {
+            case "add":
+            case "update":
+            case "remove":
+                return JSON.stringify(dsRequest.data, function(key, value) {
+                    return value;
+                });
+                break;
+
+            default:
+                return dsRequest.data;
+        }
+    },
+    getDataURL: function (dsRequest) {
+        var operationBinding = this.getOperationBinding(dsRequest);
+        var url = "";
+        switch (dsRequest.operationType) {
+            case "add":
+            case "fetch":
+                url = operationBinding.dataURL; //.format (dsRequest.originalData.projectKey);
+                break;
+
+            default:
+                url = operationBinding.dataURL; //.format (dsRequest.oldValues.projectKey);
+        }
+
+        return url;
+    },
     fields:[{
         name:"number",
         title: "Номер проекта"

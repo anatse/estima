@@ -16,6 +16,9 @@ function createSplitPane () {
                 title: "Проекты",
                 items: [
                     createProjectGrid(detailPane)
+                ],
+                controls:[
+                    addProjectButton
                 ]
             }, {
                 expanded: true,
@@ -60,6 +63,7 @@ function createProjectGrid (detailPane) {
         dataSource: userProjectListDS,
         autoFetchData: true,
         dateTimeFormatter: 'MM.YYYY HH:MM',
+        canEdit: true,
         fields:[{
                 name:"number",
                 title:"Номер",
@@ -124,6 +128,7 @@ function createProcessGrid () {
         showAllRecords:true,
         dataSource: stageProcessListDS,
         autoFetchData: false,
+        canEdit: true,
         selectionUpdated : function (data) {
             console.log (data);
         }
@@ -131,6 +136,23 @@ function createProcessGrid () {
 }
 
 function createButtons () {
+    // Project buttons
+    isc.ImgButton.create({
+        ID: "addProjectButton",
+        autoDraw: false,
+        src: "[SKIN]actions/add.png", size: 16,
+        showFocused: false, showRollOver: false, showDown: false,
+        click: "userProjectList.startEditingNew();return false;"
+    });
+
+    isc.ImgButton.create({
+        ID: "removeProjectButton",
+        autoDraw: false,
+        src: "[SKIN]actions/remove.png", size: 16,
+        showFocused: false, showRollOver: false, showDown: false,
+        click: "userProjectList.removeSelectedData();return false;"
+    });
+
     // Stage buttons
     isc.ImgButton.create({
         ID: "addStageButton",
