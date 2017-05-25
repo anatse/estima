@@ -66,7 +66,7 @@
                                             let form = isc.DynamicForm.getById("exampleForm");
                                             let login = form.getValue('username');
                                             let password = form.getValue ('password');
-                                            const url = '/login';
+                                            const url = '/api/v.0.0.1/login';
                                             fetch(url, {
                                                 method: 'post',
                                                 body: JSON.stringify({uname: login, upass: password}),

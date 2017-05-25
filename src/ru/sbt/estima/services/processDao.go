@@ -53,7 +53,7 @@ func (dao processDao) FindAll(daoFilter DaoFilter, offset int, pageSize int)([]m
 }
 
 func (dao processDao) FindByStage (stageId string)([]model.Entity, error) {
-	sql := `FOR v, e, p IN 1..1 INBOUND @startId @@edgeCollection FILTER e.label = 'process' && v.status != '` + DISABLED_STATUS + `' RETURN v`
+	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'process' && v.status != '` + DISABLED_STATUS + `' RETURN v`
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = stageId

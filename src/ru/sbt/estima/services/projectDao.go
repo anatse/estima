@@ -6,6 +6,7 @@ import (
 	"ru/sbt/estima/model"
 	"bytes"
 	"log"
+	"time"
 )
 
 type projectDao struct {
@@ -32,7 +33,7 @@ func (dao projectDao) FindOne (prjEntity model.Entity) error {
 		return nil
 	}
 
-	*prj = (prjs[0].(model.Project))
+	*prj = prjs[0].(model.Project)
 	return nil
 }
 
@@ -167,24 +168,46 @@ func (dao projectDao) findStageByName (prjId string, name string) model.Stage {
 	return stage
 }
 
+func changeStage (found *model.Stage, stage model.Stage) model.Stage {
+	emptyTime := time.Time{}
+	if stage.Name != "" {found.Name = stage.Name}
+	if stage.Status != "" {found.Status = stage.Status}
+	if stage.Description != "" {found.Description = stage.Description}
+	if stage.StartDate != emptyTime {found.StartDate = stage.StartDate}
+	if stage.EndDate != emptyTime {found.EndDate = stage.EndDate}
+	return *found
+}
+
 func (dao projectDao) AddStage (prj model.Project, stage model.Stage) error {
-	if prj.Id == "" || stage.Name == "" {
+	if prj.Id == "" || (stage.Key == "" && stage.Name == "") {
 		log.Panicf("Some identifiers are not set %v %v", prj.Key, stage.Name)
 	}
 
-	// First trying to find stage with this name
-	found := dao.findStageByName (prj.Id, stage.Name)
-	if found.Id != "" {
-		log.Panicf("Stage with the name '%v' already exists in project '%v'", stage.Name, prj.Number)
+	if stage.Key != "" {
+		// This is update
+		found := stage
+		err := dao.FindById (&found)
+		model.CheckErr(err)
+
+		// Change fields
+		changeStage (&found, stage)
+		_, err = dao.Save(&found)
+		return err
+	} else {
+		// First trying to find stage with this name
+		found := dao.findStageByName (prj.Id, stage.Name)
+		if found.Id != "" {
+			log.Panicf("Stage with the name '%v' already exists in project '%v'", stage.Name, prj.Number)
+		}
+
+		stage.Key = dao.createAndConnectObjTx(
+			stage,
+			prj,
+			PRJ_EDGES,
+			map[string]string {"label": "stage"})
+
+		return dao.FindById(&stage)
 	}
-
-	stage.Key = dao.createAndConnectObjTx(
-		stage,
-		prj,
-		PRJ_EDGES,
-		map[string]string {"label": "stage"})
-
-	return dao.FindById(&stage)
 }
 
 func (dao projectDao) RemoveStage (prj model.Project, stage model.Stage) error {
@@ -192,13 +215,11 @@ func (dao projectDao) RemoveStage (prj model.Project, stage model.Stage) error {
 		log.Panicf("Some identifiers are not set %v, %v", prj.Key)
 	}
 
-	found := dao.findStageByName (prj.Id, stage.Name)
-	if found.Id == "" {
-		log.Panicf("Stage '%v' not found", stage.Name)
-	}
+	err := dao.FindById(&stage) //.findStageByName (prj.Id, stage.Name)
+	model.CheckErr(err)
 
 	// remove edge between project and stage and remove stage
-	dao.removeConnectedTx (stage.GetCollection(), PRJ_EDGES, found.GetKey())
+	dao.removeConnectedTx (stage.GetCollection(), PRJ_EDGES, stage.GetKey())
 	return nil;
 }
 

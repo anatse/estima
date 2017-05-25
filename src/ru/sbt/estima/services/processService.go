@@ -20,7 +20,8 @@ func (ps ProcessService) getDao() processDao {
 }
 
 func (ps ProcessService) findByStage (w http.ResponseWriter, r *http.Request) {
-	stageId := mux.Vars(r)["id"]
+	stage := model.Stage{}
+	stageId := stage.GetCollection() + "/" + mux.Vars(r)["id"]
 	processList, err := ps.getDao().FindByStage(stageId)
 	model.CheckErr (err)
 	model.WriteArrayResponse(true, nil, processList, w)

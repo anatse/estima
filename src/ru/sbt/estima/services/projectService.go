@@ -152,8 +152,13 @@ func (ps ProjectService) getStages (w http.ResponseWriter, r *http.Request) {
 	stages, err := ps.getDao().Stages(prjEntity.(model.Project))
 	model.CheckErr (err)
 
+	var entities []interface{} = make([]interface{}, len(stages))
+	for index, entity := range stages {
+		entities[index] = entity.(model.Stage).PrjEntity(prjEntity.GetKey())
+	}
+
 	// Write response
-	model.WriteArrayResponse(true, nil, stages, w)
+	model.WriteAnyResponse(true, nil, entities, w)
 }
 
 func (ps ProjectService) addStage (w http.ResponseWriter, r *http.Request) {

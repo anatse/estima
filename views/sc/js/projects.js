@@ -2,6 +2,21 @@
 
 isc.ClassFactory.defineClass("ProjectEditor", isc.HLayout);
 
+function stringifyReplacer(key, value) {
+    if (value && typeof value === 'object') {
+        var replacement = {};
+        for (var k in value) {
+            if (Object.hasOwnProperty.call(value, k)) {
+                if (k === "_key")
+                    replacement["key"] = value[k];
+                else
+                    replacement[k] = value[k];
+            }
+        }
+        return replacement;
+    }
+}
+
 isc.ProjectEditor.addProperties({
     // Override initWidget to populate the editor with a resizeable ListGrid and editor pane
     initWidget : function () {

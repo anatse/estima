@@ -93,6 +93,26 @@ func (stage Stage) Entity() interface{} {
 	}
 }
 
+func (stage Stage) PrjEntity(prjKey string) interface{} {
+	return struct{
+		*Stage
+		ProjectKey string `json:"projectKey,omitempty"`
+
+		OmitId  omit `json:"_id,omitempty"`
+		OmitRev omit `json:"_rev,omitempty"`
+
+		OmitError   omit   `json:"error,omitempty"`
+		OmitMessage omit `json:"errorMessage,omitempty"`
+	} {
+		&stage,
+		prjKey,
+		nil,
+		nil,
+		nil,
+		nil,
+	}
+}
+
 func (stage Stage) AraDoc() (ara.Document) {
 	return stage.Document
 }
