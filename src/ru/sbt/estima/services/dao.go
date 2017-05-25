@@ -15,6 +15,8 @@ import (
 	"github.com/bradfitz/gomemcache/memcache"
 	"errors"
 	"os"
+	"reflect"
+	"log"
 )
 
 type FilterValue struct {
@@ -175,7 +177,7 @@ func (dao baseDao) findAll(daoFilter DaoFilter, colName string, offset int, page
 func (dao baseDao) FindById(entity model.Entity) (error) {
 	if entity.GetKey() != "" {
 		coll := dao.Database().Col(entity.GetCollection())
-		return coll.Get(entity.GetKey(), &entity)
+		return coll.Get(entity.GetKey(), entity)
 	} else {
 		return nil
 	}
@@ -276,11 +278,31 @@ func (dao baseDao) removeConnectedTx (outColName string, edgeColName string, out
 
 // Function save any entity in database if the entity has GetKey value then document will be updated otherwise create one
 func (dao baseDao) Save (userEntity model.Entity) (model.Entity, error) {
-	coll := dao.Database().Col(userEntity.GetCollection())
+	val := reflect.ValueOf(userEntity)
+	if val.Kind() != reflect.Ptr {
+		log.Panicf("Entity should be passed by pointer")
+	}
 
+	coll := dao.Database().Col(userEntity.GetCollection())
 	if userEntity.GetKey() != "" {
-		err := coll.Replace(userEntity.GetKey(), userEntity)
+		//  Create new object of gioven entity type
+		newEntityPtr := reflect.New(val.Elem().Type())
+		// Set value of given entity
+		newEntityPtr.Elem().Set(val.Elem())
+
+		// Find entity
+		newEntity := newEntityPtr.Interface().(model.Entity)
+		err := dao.FindById(newEntity)
 		model.CheckErr(err)
+
+		// Entity found, change all changed attributes, except _key
+		newEntity = newEntity.CopyChanged(val.Elem().Interface().(model.Entity))
+
+		err = coll.Replace(newEntity.GetKey(), newEntity)
+		model.CheckErr(err)
+		// Entity change set entity value
+		val.Elem().Set(reflect.ValueOf(newEntity))
+
 		return userEntity, nil
 	} else {
 		err := coll.Save(userEntity)

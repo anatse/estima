@@ -44,3 +44,8 @@ func (txt VersionedText) GetCollection() string {
 func (txt VersionedText) GetError()(string, bool) {
 	return txt.Message, txt.Error
 }
+
+func (txt VersionedText) CopyChanged (entity Entity) Entity {
+	// Can't be changed
+	return entity
+}

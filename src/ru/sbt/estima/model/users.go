@@ -12,7 +12,6 @@ import (
 	"github.com/gorilla/context"
 )
 
-
 type EstimaUser struct {
 	ara.Document `json:-`
 
@@ -79,6 +78,18 @@ func (user EstimaUser) GetError()(string, bool){
 	return user.Message, user.Error
 }
 
+func (user EstimaUser) CopyChanged (entity Entity) Entity {
+	newUser := entity.(EstimaUser)
+	if newUser.Name != "" {user.Name = newUser.Name}
+	if newUser.Email != "" {user.Email = newUser.Email}
+	if newUser.DisplayName != "" {user.DisplayName = newUser.DisplayName}
+	if newUser.Password != "" {user.Password = newUser.Password}
+	if newUser.Uid != "" {user.Uid = newUser.Uid}
+	if newUser.Roles != nil {user.Roles = newUser.Roles}
+
+	return user
+}
+
 func printLdapAttrs (sr *ldap.SearchResult) {
 	for i:=0;i<len(sr.Entries);i++ {
 		entry := sr.Entries[i]
@@ -91,7 +102,7 @@ func printLdapAttrs (sr *ldap.SearchResult) {
 }
 
 /**
- Function used to check user name and password through the LDAP.
+ Function used to check prc name and password through the LDAP.
  Additional documentation about LDAP library located here https://godoc.org/gopkg.in/ldap.v2
  This configuration only for ActiveDirectory installation
  */

@@ -14,6 +14,7 @@ type Entity interface {
 	Entity() interface{}
 	GetKey() string
 	GetCollection() string
+	CopyChanged (entity Entity) Entity
 }
 
 func byteToString (bts []byte) string {

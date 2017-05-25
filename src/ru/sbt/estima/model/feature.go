@@ -45,3 +45,11 @@ func (fea Feature) GetCollection() string {
 func (fea Feature) GetError()(string, bool) {
 	return fea.Message, fea.Error
 }
+
+func (fea Feature) CopyChanged (entity Entity) Entity {
+	newFea := entity.(Feature)
+	if newFea.Name != "" {fea.Name = newFea.Name}
+	if newFea.Status != "" {fea.Status = newFea.Status}
+	if newFea.Description != "" {fea.Description = newFea.Description}
+	return fea
+}

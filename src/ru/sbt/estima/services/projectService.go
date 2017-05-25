@@ -56,24 +56,33 @@ func (ps ProjectService) findAll (w http.ResponseWriter, r *http.Request) {
 }
 
 func (ps ProjectService) create (w http.ResponseWriter, r *http.Request) {
+	user := model.GetUserFromRequest (w, r)
+	userService := model.FindService("user").(UserService)
+	model.CheckErr(userService.getDao().FindOne(user))
+
 	var prj model.Project
 	model.ReadJsonBody(r, &prj)
 
-	found := prj
-	model.CheckErr(ps.getDao().FindOne(&found))
-	if found.Id == "" {
+	var entity model.Entity
+	var err error
+
+	// Check if it is creation
+	if prj.GetKey() == "" {
 		var emptyTime = time.Time{}
 		if prj.StartDate == emptyTime {
 			prj.StartDate = time.Now()
 		}
+
+		entity, err = ps.getDao().Save(&prj)
+		model.CheckErr (err)
+
+		// Add current user as Owner
+		model.CheckErr(ps.getDao().AddUser(prj, *user, "OWNER"))
 	} else {
-		// Set identifiers from found object
-		prj.Key = found.Key
-		prj.Id = found.Id
+		entity, err = ps.getDao().Save(&prj)
+		model.CheckErr (err)
 	}
 
-	entity, err := ps.getDao().Save(&prj)
-	model.CheckErr (err)
 	model.WriteResponse(true, nil, entity, w)
 }
 

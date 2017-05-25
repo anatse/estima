@@ -6,7 +6,6 @@ import (
 	"ru/sbt/estima/model"
 	"bytes"
 	"log"
-	"time"
 )
 
 type projectDao struct {
@@ -168,16 +167,6 @@ func (dao projectDao) findStageByName (prjId string, name string) model.Stage {
 	return stage
 }
 
-func changeStage (found *model.Stage, stage model.Stage) model.Stage {
-	emptyTime := time.Time{}
-	if stage.Name != "" {found.Name = stage.Name}
-	if stage.Status != "" {found.Status = stage.Status}
-	if stage.Description != "" {found.Description = stage.Description}
-	if stage.StartDate != emptyTime {found.StartDate = stage.StartDate}
-	if stage.EndDate != emptyTime {found.EndDate = stage.EndDate}
-	return *found
-}
-
 func (dao projectDao) AddStage (prj model.Project, stage model.Stage) error {
 	if prj.Id == "" || (stage.Key == "" && stage.Name == "") {
 		log.Panicf("Some identifiers are not set %v %v", prj.Key, stage.Name)
@@ -190,7 +179,7 @@ func (dao projectDao) AddStage (prj model.Project, stage model.Stage) error {
 		model.CheckErr(err)
 
 		// Change fields
-		changeStage (&found, stage)
+		found = found.CopyChanged (stage).(model.Stage)
 		_, err = dao.Save(&found)
 		return err
 	} else {

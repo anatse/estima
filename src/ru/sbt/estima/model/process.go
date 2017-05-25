@@ -46,3 +46,11 @@ func (prc Process) GetError()(string, bool) {
 	// default error bool and messages. Could be any kind of error
 	return prc.Message, prc.Error
 }
+
+func (prc Process) CopyChanged (entity Entity) Entity {
+	newPrc := entity.(Process)
+	if newPrc.Name != "" {prc.Name = newPrc.Name}
+	if newPrc.Description != "" {prc.Description = newPrc.Description}
+	if newPrc.Status != "" {prc.Status = newPrc.Status}
+	return prc
+}

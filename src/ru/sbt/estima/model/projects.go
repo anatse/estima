@@ -59,6 +59,17 @@ func (prj Project) GetError()(string, bool){
 	return prj.Message, prj.Error
 }
 
+func (prj Project) CopyChanged (entity Entity) Entity {
+	newPrj := entity.(Project)
+	emptyTime := time.Time{}
+	if newPrj.Name != "" {prj.Name = newPrj.Name}
+	if newPrj.Status != "" {prj.Status = newPrj.Status}
+	if newPrj.Description != "" {prj.Description = newPrj.Description}
+	if newPrj.StartDate != emptyTime {prj.StartDate = newPrj.StartDate}
+	if newPrj.EndDate != emptyTime {prj.EndDate = newPrj.EndDate}
+	return prj
+}
+
 type Stage struct {
 	ara.Document `json:-`
 	Name     string `json:"name,omitempty"`
@@ -128,4 +139,15 @@ func (stage Stage) GetCollection() string {
 func (stage Stage) GetError()(string, bool){
 	// default error bool and messages. Could be any kind of error
 	return stage.Message, stage.Error
+}
+
+func (stage Stage) CopyChanged (entity Entity) Entity {
+	newStage := entity.(Stage)
+	emptyTime := time.Time{}
+	if newStage.Name != "" {stage.Name = newStage.Name}
+	if newStage.Status != "" {stage.Status = newStage.Status}
+	if newStage.Description != "" {stage.Description = newStage.Description}
+	if newStage.StartDate != emptyTime {stage.StartDate = newStage.StartDate}
+	if newStage.EndDate != emptyTime {stage.EndDate = newStage.EndDate}
+	return stage
 }
