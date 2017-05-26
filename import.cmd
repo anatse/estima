@@ -17,5 +17,6 @@ git init
 git clone https://github.com/anatse/aranGO.git
 git clone https://github.com/diegogub/napping
 
+cd ../../../src-ui
 npm install
 npm run build
