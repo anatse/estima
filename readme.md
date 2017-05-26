@@ -134,23 +134,20 @@ npm run build
 
 ## Разработка Presentation Layer
 
-* Запуск сборки проекта с пересборкой при изменении файлов в директории
-  ../projects/estima/src/frontend
-    ```bash
-    > npm run start
-    ```
-* Запуск сборки проекта с production версией
-    ```bash
-    > npm run build
-    ```
-* Запуск тестов для проекта (используется [jest](https://facebook.github.io/jest/))
-    ```bash
-    > npm run test
-    ```
-* Запуск тестов для проекта в режиме постоянного отслеживания изменений в тестах
-    ```bash
-    > npm run test:watch
-    ```
+Подробная Информация в папке ../src-ui
+
+Сервер разработки [localhost:9081](http://localhost:9081/)
+
+Для запуска перейдите в каталог 
+```bash
+cd src-ui
+# Установка зависимостей
+npm install
+# Запуск стенда разработки
+npm run start
+# Сборка проекта
+npm run build
+```
 
 ## Unit тестирование
 
