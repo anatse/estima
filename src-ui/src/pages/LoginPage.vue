@@ -64,7 +64,7 @@
 </template>
 
 <script>
-  import pageName from '../router/pageName';
+  import constGlobal from '../constGlobal';
 
   export default {
     name: 'LoginPage',
@@ -78,7 +78,7 @@
       // Авторизация в системе.
       authenticate({ login, password }) {
         this.$store.dispatch('authenticate', { login, password }).then(() => {
-          this.$router.push({ name: pageName.MAIN_PAGE });
+          this.$router.push({ name: constGlobal.PAGE_NAME.MAIN_PAGE });
         });
       },
       // Выход из системы.

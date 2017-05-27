@@ -43,6 +43,12 @@ const actions = {
     cookie.del(constGlobal.cookieAuthName);
     commit(types.LOGOUT);
   },
+  checkAuth({ commit, state }) {
+    return userApi.check(cookie.get(constGlobal.cookieAuthName), state.details).then(
+      user => commit(types.LOGIN_SUCCESS, user),
+      error => commit(types.LOGIN_FAILURE, error),
+    );
+  },
 };
 
 /* eslint no-param-reassign: "off" */

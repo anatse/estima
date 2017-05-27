@@ -1,5 +1,0 @@
-export default {
-  MAIN_PAGE: 'MAIN_PAGE',
-  LOGIN_PAGE: 'LOGIN_PAGE',
-  PROJECT_PAGE: 'PROJECT_PAGE',
-};

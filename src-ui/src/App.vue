@@ -5,8 +5,15 @@
 </template>
 
 <script>
+import constGlobal from './constGlobal';
+
 export default {
-  name: 'app',
+  name: 'App',
+  created() {
+    this.$store.dispatch('checkAuth').catch(() => {
+      this.$router.push({ name: constGlobal.PAGE_NAME.LOGIN_PAGE });
+    });
+  },
 };
 </script>
 
