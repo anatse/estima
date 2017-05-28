@@ -1,7 +1,8 @@
 *.iml
 .idea
 /npm-debug.log
-/views/dist/
+/views/static
+/views/index.html
 bin
 github.com
 golang.org
