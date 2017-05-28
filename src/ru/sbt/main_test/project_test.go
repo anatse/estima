@@ -6,6 +6,7 @@ import (
 	"time"
 	"net/http"
 	"encoding/json"
+	"log"
 )
 
 type ProjectResponse struct {
@@ -59,7 +60,7 @@ func TestProjectCreate (t *testing.T) {
 		checkError(json.Unmarshal([]byte(body), &resp), t)
 
 		if resp.Body.Key == "" {
-			t.Errorf("Project key should not be empty")
+			t.Errorf("Project key should not be empty, body %v", body)
 			t.FailNow()
 		} else {
 			prjKey = resp.Body.Key
@@ -313,6 +314,9 @@ func TestRemoveStageFromProject (t *testing.T) {
 	stg.EndDate = stg.StartDate.AddDate(1, 0, 0)
 
 	body := CreateBody(stg)
+
+	log.Printf("PrjKey: %v", prjKey)
+
 	response := callSecured(http.NewRequest("DELETE", "/api/v.0.0.1/project/"+ prjKey + "/stage/remove", body))
 	checkResponseCode(t, http.StatusOK, response.Code)
 	if body := response.Body.String(); body != "" {
