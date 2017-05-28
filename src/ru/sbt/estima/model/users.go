@@ -9,7 +9,6 @@ import (
 	"ru/sbt/estima/conf"
 	"net/http"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/context"
 )
 
 type EstimaUser struct {
@@ -153,7 +152,7 @@ func FindUser (username string, password string) (retUser *EstimaUser, retErr er
 }
 
 func GetUserFromRequest (w http.ResponseWriter, r *http.Request) (*EstimaUser) {
-	user := context.Get(r, "user")
+	user := r.Context().Value("user")
 	claims := user.(*jwt.Token).Claims.(jwt.MapClaims)
 	var roles []string
 	rolesClaim := claims["roles"]
