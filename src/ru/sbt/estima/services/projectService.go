@@ -96,17 +96,31 @@ func (ps ProjectService) getPrjFromURL (r *http.Request) model.Entity {
 }
 
 func (ps ProjectService) getUsers (w http.ResponseWriter, r *http.Request) {
-	//start := time.Now().Nanosecond()
-
 	prjEntity := ps.getPrjFromURL(r)
 	roles := r.URL.Query()["roles"]
 	users, err := ps.getDao().Users(prjEntity.(model.Project), roles)
 	model.CheckErr (err)
 
-	//log.Printf ("Get Users: spent time (ms): %d", (time.Now().Nanosecond() - start) / 1000000)
+	var entities []interface{} = make([]interface{}, len(users))
+	type prjuser struct {
+		Name string `json:"name,omitempty"`
+		Role string `json:"role,omitempty"`
+		DisplayName string `json:"displayName,omitempty"`
+		ProjectKey string `json:"projectKey,omitempty"`
+	}
+
+	for index, entity := range users {
+		user := entity.(model.EstimaUser)
+		entities[index] = prjuser {
+			user.Name,
+			user.Roles[0],
+			user.DisplayName,
+			prjEntity.GetKey(),
+		}
+	}
 
 	// Write response
-	model.WriteArrayResponse(true, nil, users, w)
+	model.WriteAnyResponse(true, nil, entities, w)
 }
 
 func (ps ProjectService) addUser (w http.ResponseWriter, r *http.Request) {

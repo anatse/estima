@@ -13,6 +13,8 @@ type Ldap struct {
 	Host string
 	Port uint32
 	Dn string
+	BindDN string `json:"bindDN"`
+	BindPwd string `json:"bindPwd"`
 }
 
 type Database struct {

@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/context"
+	"log"
+	"sync"
 )
 
 type EstimaUser struct {
@@ -101,6 +103,147 @@ func printLdapAttrs (sr *ldap.SearchResult) {
 	}
 }
 
+// Global LDAP connections pool
+var ldapConnectionsPool []*ldap.Conn
+type chanUser struct  {
+	user string
+	password string
+}
+
+var ldapJobs chan chanUser
+type LockedUser struct {
+	sync.WaitGroup
+	user *EstimaUser
+	err error
+}
+
+type JobMap struct {
+	sync.RWMutex
+	jobMap map[string]*LockedUser
+}
+
+var jobMap JobMap = JobMap {
+	jobMap: make(map[string]*LockedUser),
+}
+
+func writeMap (key string, user *LockedUser) {
+	jobMap.Lock()
+	defer jobMap.Unlock()
+
+	jobMap.jobMap[key] = user
+}
+
+func readMap (key string) *LockedUser {
+	jobMap.Lock()
+	defer jobMap.Unlock()
+
+	return jobMap.jobMap[key]
+}
+
+func SendToAuth (username string, password string) {
+	ldapJobs <- chanUser{username, password}
+}
+
+// Function create and filled LDAP connection pool
+func InitLdapPool (poolSize int) {
+	if ldapConnectionsPool == nil {
+		config := conf.LoadConfig()
+		ldapConnectionsPool = make ([]*ldap.Conn, poolSize)
+		for index := range ldapConnectionsPool {
+			// Connect to LDAP catalog
+			conn, err := ldap.Dial(config.Ldap.Protocol, fmt.Sprintf("%s:%d", config.Ldap.Host, config.Ldap.Port))
+			CheckErr(err)
+
+			// Bind to main user
+			CheckErr(conn.Bind(config.Ldap.BindDN, config.Ldap.BindPwd))
+
+			// Store connections to LDAP connections pool
+			ldapConnectionsPool[index] = conn
+		}
+
+		// Make channels
+		ldapJobs = make(chan chanUser)
+
+		// Start worker routines
+		for i:=0; i< poolSize; i++ {
+			go worker(i, config.Ldap, ldapConnectionsPool[i], ldapJobs)
+		}
+	}
+}
+
+// Function close all LDAP Connections and clear connection pool
+func FinishLdapPool () {
+	if ldapConnectionsPool != nil {
+		for _, con := range ldapConnectionsPool {
+			defer con.Close()
+		}
+
+		ldapConnectionsPool = nil
+		close (ldapJobs)
+	}
+}
+
+func worker(id int, config conf.Ldap, conn *ldap.Conn, jobs chan chanUser) {
+	for job := range jobs {
+		fmt.Printf("+++ Start processing worker(%d) for job (%v)\n", id, job)
+
+		defer CheckErr(conn.Bind(config.BindDN, config.BindPwd))
+
+		user, err := auth (conn, config, job.user, job.password)
+		luser := readMap(job.user)
+		luser.user = user
+		luser.err = err
+		luser.Done()
+	}
+}
+
+func auth (conn *ldap.Conn, config conf.Ldap, username string, password string) (retUser *EstimaUser, retErr error) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in FindUser:", r)
+			retErr = fmt.Errorf ("%v", r)
+			fmt.Printf("Error is: %v\n", retErr)
+		}
+	}()
+
+	searchRequest := ldap.NewSearchRequest (
+		config.Dn,
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases,
+		10,
+		0,
+		false,
+		fmt.Sprintf("(&(objectClass=person)(sAMAccountName=%s))", username),
+		[]string{"dn", "uid", "givenName", "displayName", "sn", "cn", "name", "mail", "sAMAccountName"},
+		nil,
+	)
+
+	sr, err := conn.Search(searchRequest)
+	CheckErr (err)
+
+	if len(sr.Entries) == 0 {
+		log.Panicf("Authentication for user %v failed", username)
+	}
+
+	// Get user info
+	entry := sr.Entries[0]
+
+	// printLdapAttrs (sr)
+
+	// Trying to authenticate using found user
+	CheckErr(conn.Bind(entry.GetAttributeValue("cn"), password))
+
+	retUser = NewUser(
+		username,
+		entry.GetAttributeValue("mail"),
+		password,
+		entry.GetAttributeValue("displayName"),
+		entry.GetAttributeValue("uid"),
+		nil,
+		"")
+
+	return retUser, retErr
+}
+
 /**
  Function used to check prc name and password through the LDAP.
  Additional documentation about LDAP library located here https://godoc.org/gopkg.in/ldap.v2
@@ -114,42 +257,15 @@ func FindUser (username string, password string) (retUser *EstimaUser, retErr er
 		}
 	}()
 
-	config := conf.LoadConfig()
-	l, err := ldap.Dial(config.Ldap.Protocol, fmt.Sprintf("%s:%d", config.Ldap.Host, config.Ldap.Port))
-	CheckErr (err)
-	defer l.Close()
+	lu := LockedUser{}
+	lu.Add(1)
 
-	// cn := fmt.Sprintf("cn=%s,%s", username, config.Ldap.Dn)
-	// Authenticate using given username and password
-	err = l.Bind(username, password)
-	CheckErr (err)
+	writeMap(username, &lu)
+	SendToAuth(username, password)
 
-	// Search for the uswr details
-	searchRequest := ldap.NewSearchRequest (
-		config.Ldap.Dn,
-		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases,
-		10,
-		0,
-		false,
-		fmt.Sprintf("(&(objectClass=person)(cn=%s))", username),
-		[]string{"dn", "uid", "givenName", "displayName", "sn", "cn", "name", "mail", "sAMAccountName"},
-		nil,
-	)
+	lu.Wait()
 
-	sr, err := l.Search(searchRequest)
-	CheckErr (err)
-
-	entry := sr.Entries[0]
-	retUser = NewUser(
-		username,
-		entry.GetAttributeValue("mail"),
-		password,
-		entry.GetAttributeValue("sn"),
-		entry.GetAttributeValue("uid"),
-		nil,
-		"")
-
-	return retUser, retErr
+	return lu.user, lu.err
 }
 
 func GetUserFromRequest (w http.ResponseWriter, r *http.Request) (*EstimaUser) {

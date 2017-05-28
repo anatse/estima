@@ -77,10 +77,14 @@
                                                 credentials: 'same-origin',
                                             }).then((response) => {
                                                 response.json().then ((response) => {
-                                                    window.location = "projects.html"
-                                                    console.log ('response', response.body);
+                                                    if (!response.success) {
+                                                        alert (response.error);
+                                                    }
+                                                    else {
+                                                        window.location = "projects.html";
+                                                    }
                                                 }, (error) => {
-                                                    alert (error)
+                                                    alert (error);
                                                     console.log ('error json', error);
                                                 });
                                             }, (error) => {

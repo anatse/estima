@@ -89,6 +89,68 @@ isc.DataSource.create({
 });
 
 isc.DataSource.create({
+    dataFormat: "json",
+    allowAdvancedCriteria: true,
+    ID:"projectUserDS",
+    recordXPath: "body",
+    operationBindings:[
+        {operationType:"fetch", dataProtocol: "", dataURL:  "/api/v.0.0.1/project/{0}/user/list"},
+        {operationType:"add", dataProtocol:"postMessage", dataURL: "/api/v.0.0.1/project/{0}/user/add"},
+        {operationType:"remove", dataProtocol:"postMessage", requestProperties:{httpMethod:"POST"}, dataURL: "//api/v.0.0.1/project/{0}/user/remove"},
+        {operationType:"update", dataProtocol:"postMessage", requestProperties:{httpMethod:"POST"}, dataURL:"/api/v.0.0.1/project/{0}/user/add"}
+    ],
+    transformRequest: function (dsRequest) {
+        switch (dsRequest.operationType) {
+            case "add":
+            case "update":
+            case "remove":
+                return JSON.stringify(dsRequest.data, function(key, value) {
+                    return value;
+                });
+                break;
+
+            default:
+                return dsRequest.data;
+        }
+    },
+    getDataURL: function (dsRequest) {
+        var operationBinding = this.getOperationBinding(dsRequest);
+        var url = "";
+        switch (dsRequest.operationType) {
+            case "add":
+            case "fetch":
+                url = operationBinding.dataURL.format (dsRequest.originalData.projectKey);
+                break;
+
+            default:
+                url = operationBinding.dataURL.format (dsRequest.oldValues.projectKey);
+        }
+
+        return url;
+    },
+    fields:[{
+        name:"name",
+        title:"Логин",
+        validators:[
+        ]
+    }, {
+        name: "role",
+        title: "Роль"
+    }, {
+        name: "_key",
+        primaryKey: true,
+        hidden: true
+    }, {
+        name: "displayName",
+        title: "Имя пользователя"
+    }, {
+        name: "projectKey",
+        foreignKey: "userProjectListDS._key",
+        hidden: true
+    }]
+});
+
+isc.DataSource.create({
     cacheAllData: false,
     autoFetchData: false,
     dataFormat: "json",

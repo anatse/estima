@@ -5,10 +5,12 @@
       "name": "develop",
       "secret": "secret",
       "Ldap": {
-        "protocol": "fake",
-        "host": "",
-        "dn": "",
-        "port": 389
+        "protocol": "tcp",
+        "host": "10.21.25.74",
+        "dn": "DC=testportal,DC=sbrf,DC=ru",
+        "port": 389,
+        "bindDN": "wps8admin",
+        "bindPwd": "admin@8WPS"
       },
       "Database": {
         "url": "http://localhost:8529",

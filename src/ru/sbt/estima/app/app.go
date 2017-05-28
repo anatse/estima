@@ -111,11 +111,16 @@ func PrepareRoute () *mux.Router {
 }
 
 func AppRun () {
+	// Init LDAP
+	model.InitLdapPool(2)
+
 	r := PrepareRoute()
 	//err := http.ListenAndServeTLS(":9443", "server.crt", "server.key", handlers.LoggingHandler(os.Stdout, r))
 	err := http.ListenAndServe(":9080", handlers.LoggingHandler(os.Stdout, r))
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
+
+	model.FinishLdapPool()
 }
 

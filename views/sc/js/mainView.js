@@ -22,9 +22,25 @@ function createSplitPane () {
                 ]
             }, {
                 expanded: true,
-                title: "Детально",
+                title: "Дополнительно",
                 items: [
-                    detailPane
+                    isc.TabSet.create({
+                        ID: "projectDetailsTab",
+                        autoDraw: true,
+                        tabBarPosition: "top",
+                        tabs: [
+                            {
+                                title: "Детально",
+                                pane: detailPane
+                            },
+                            {
+                                title: "Пользователи",
+                                pane: createUsersGrid()
+                            }
+                        ]
+                    })
+
+
                 ]
             }
 
@@ -87,7 +103,38 @@ function createProjectGrid (detailPane) {
         selectionUpdated : function (data) {
             detailPane.setData(data);
             refreshRelatedGrid (data, this, stageList);
+            refreshRelatedGrid (data, this, userList);
         }
+    });
+}
+
+function createUsersGrid () {
+    return isc.ListGrid.create({
+        ID: "userList",
+        alternateRecordStyles:true,
+        showAllRecords:true,
+        dataSource: projectUserDS,
+        autoFetchData: false,
+        showResizeBar: true,
+        canEdit: true
+        // fields:[{
+        //     name: "name",
+        //     title: "Название",
+        //     width: 300
+        // }, {
+        //     name:"startDate",
+        //     title:"Начало",
+        //     type:"datetime",
+        //     width: 100
+        // }, {
+        //     name: "endDate",
+        //     title: "Окончание",
+        //     type: "datetime",
+        //     width: 100
+        // }],
+        // selectionUpdated : function (data) {
+        //     refreshRelatedGrid (data, this, processList);
+        // }
     });
 }
 
