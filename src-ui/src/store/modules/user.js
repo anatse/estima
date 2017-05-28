@@ -2,7 +2,8 @@ import userApi from '../../api/user';
 import cookie from '../../utils/cookie';
 import constGlobal from '../../constGlobal';
 
-import * as types from '../mutation-types';
+import * as TMutations from '../mutation-types';
+import * as TActions from '../action-types';
 import { RESPONSE_STATUSES } from '../const';
 
 // initial state
@@ -28,25 +29,25 @@ const getters = {
 
 // actions
 const actions = {
-  authenticate({ commit }, { login, password }) {
-    commit(types.LOGIN_REQUEST);
+  [TActions.USER_LOGIN]({ commit }, { uname, upass }) {
+    commit(TMutations.USER_LOGIN_REQUEST);
 
-    return userApi.auth(
-      login,
-      password,
+    return userApi.login(
+      uname,
+      upass,
     ).then(
-      user => commit(types.LOGIN_SUCCESS, user),
-      error => commit(types.LOGIN_FAILURE, error),
+      user => commit(TMutations.USER_LOGIN_SUCCESS, user),
+      error => commit(TMutations.USER_LOGIN_FAILURE, error),
     );
   },
-  logout({ commit }) {
+  [TActions.USER_LOGOUT]({ commit }) {
     cookie.del(constGlobal.cookieAuthName);
-    commit(types.LOGOUT);
+    commit(TMutations.USER_LOGOUT);
   },
-  checkAuth({ commit, state }) {
-    return userApi.check(cookie.get(constGlobal.cookieAuthName), state.details).then(
-      user => commit(types.LOGIN_SUCCESS, user),
-      error => commit(types.LOGIN_FAILURE, error),
+  [TActions.USER_CURRENT]({ commit, state }) {
+    return userApi.current(cookie.get(constGlobal.cookieAuthName), state.details).then(
+      user => commit(TMutations.USER_LOGIN_SUCCESS, user),
+      error => commit(TMutations.USER_LOGIN_FAILURE, error),
     );
   },
 };
@@ -55,25 +56,25 @@ const actions = {
 // mutations
 const mutations = {
 
-  [types.LOGIN_REQUEST](state) {
+  [TMutations.USER_LOGIN_REQUEST](state) {
     state.status = null;
   },
 
-  [types.LOGIN_SUCCESS](state, user) {
+  [TMutations.USER_LOGIN_SUCCESS](state, user) {
     state.details = user;
     state.error = null;
     state.status = RESPONSE_STATUSES.SUCCESSFUL;
   },
 
-  [types.LOGOUT](state) {
-    state.details = getStateInit().details;
-    state.status = null;
-  },
-
-  [types.LOGIN_FAILURE](state, error) {
+  [TMutations.USER_LOGIN_FAILURE](state, error) {
     state.details = getStateInit().details;
     state.error = error;
     state.status = RESPONSE_STATUSES.FAILURE;
+  },
+
+  [TMutations.USER_LOGOUT](state) {
+    state.details = getStateInit().details;
+    state.status = null;
   },
 };
 

@@ -6,11 +6,12 @@
 
 <script>
 import constGlobal from './constGlobal';
+import * as TActions from './store/action-types';
 
 export default {
   name: 'App',
   created() {
-    this.$store.dispatch('checkAuth').catch(() => {
+    this.$store.dispatch(TActions.USER_CURRENT).catch(() => {
       this.$router.push({ name: constGlobal.PAGE_NAME.LOGIN_PAGE });
     });
   },

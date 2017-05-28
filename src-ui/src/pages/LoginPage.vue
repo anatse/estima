@@ -22,7 +22,7 @@
           class="login_input"
           type="text"
           placeholder="Логин"
-          v-model="login"
+          v-model="uname"
         />
       </div>
       <div class="login_row login_row__align_center">
@@ -31,7 +31,7 @@
           class="login_input"
           type="password"
           placeholder="Пароль"
-          v-model="password"
+          v-model="upass"
         />
       </div>
       <div class="login_row login_row__align_center">
@@ -41,7 +41,7 @@
           class="login_action"
           :class="{ 'login_action__disabled': loginDisabled }"
           :disabled="loginDisabled"
-          @click="authenticate({login, password})"
+          @click="authenticate({uname, upass})"
         >
         Вход
         </button>
@@ -65,30 +65,31 @@
 
 <script>
   import constGlobal from '../constGlobal';
+  import * as TActions from '../store/action-types';
 
   export default {
     name: 'LoginPage',
     data() {
       return {
-        login: '',
-        password: '',
+        uname: '',
+        upass: '',
       };
     },
     methods: {
       // Авторизация в системе.
-      authenticate({ login, password }) {
-        this.$store.dispatch('authenticate', { login, password }).then(() => {
+      authenticate({ uname, upass }) {
+        this.$store.dispatch(TActions.USER_LOGIN, { uname, upass }).then(() => {
           this.$router.push({ name: constGlobal.PAGE_NAME.MAIN_PAGE });
         });
       },
       // Выход из системы.
       logout() {
-        this.$store.dispatch('logout');
+        this.$store.dispatch(TActions.USER_LOGOUT);
       },
     },
     computed: {
       loginDisabled() {
-        return !(this.login.length !== 0 && this.password.length !== 0);
+        return !(this.uname.length !== 0 && this.upass.length !== 0);
       },
       isUserAuth() {
         return this.$store.getters.isUserAuth;
