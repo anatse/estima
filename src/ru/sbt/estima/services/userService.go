@@ -4,6 +4,7 @@ import (
 	"ru/sbt/estima/model"
 	"net/http"
 	"github.com/gorilla/mux"
+	"github.com/diegogub/aranGO"
 )
 
 type UserService struct {
@@ -60,22 +61,41 @@ func (us *UserService) list (w http.ResponseWriter, r *http.Request) {
 // You can use % placeholder. By default service use % + name + % string to search users
 // Parameters: name
 func (us *UserService) search (w http.ResponseWriter, r *http.Request) {
-	user := model.GetUserFromRequest (w, r)
-
+	//user := model.GetUserFromRequest (w, r)
 	// Check user role in RTE or ARCHITECTOR
-	if !us.checkRoles(*user, func(role string) bool {
-		return role == ROLE_RTE || role == ROLE_ARCHITECTOR
-	}) {
-		panic ("Insufficient privilegies")
-	}
+	//if !us.checkRoles(*user, func(role string) bool {
+	//	return role == ROLE_RTE || role == ROLE_ARCHITECTOR
+	//}) {
+	//	panic ("Insufficient privilegies")
+	//}
 
+	key := r.URL.Query().Get("_key")
 	nameToFind := r.URL.Query().Get("name")
-	if nameToFind == "" {
-		panic("Parameter name not provided")
+	displayName := r.URL.Query().Get("displayName")
+	if key == "" && nameToFind == "" && displayName == "" {
+		panic("Required parameter name or displayName not provided")
 	}
 
-	nameToFind = "%" + nameToFind + "%"
-	users, err := us.getDao().FindAll (NewFilter().Filter("name", "like", nameToFind).Sort("name", true), 0, 0)
+	var filter DaoFilter
+	if key != "" {
+		user := model.EstimaUser{Document: aranGO.Document{Key: key}}
+		us.getDao().FindById(&user)
+		model.WriteResponse (true, nil, user, w)
+		return
+
+	} else if displayName != "" {
+		nameToFind = "%" + displayName + "%"
+		filter = NewFilter().
+			Filter("displayName", "like", nameToFind).
+			Sort("displayName", true)
+	} else {
+		nameToFind = "%" + nameToFind + "%"
+		filter = NewFilter().
+			Filter("name", "like", nameToFind).
+			Sort("displayName", true)
+	}
+
+	users, err := us.getDao().FindAll (filter, 0, 20)
 	model.CheckErr (err)
 
 	model.WriteArrayResponse (true, nil, users, w)

@@ -71,9 +71,9 @@ func (mem *Memcached) create () {
 			memHosts[i] = fmt.Sprintf("%s:%d", host.Host, host.Port)
 		}
 
-		log.Printf("hosts: %v", memHosts)
+		//log.Printf("hosts: %v", memHosts)
 		mem.cache = memcache.New (memHosts...)
-		log.Printf("client: %v", mem.cache)
+		//log.Printf("client: %v", mem.cache)
 	}
 }
 

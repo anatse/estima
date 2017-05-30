@@ -107,6 +107,7 @@ func (ps ProjectService) getUsers (w http.ResponseWriter, r *http.Request) {
 		Role string `json:"role,omitempty"`
 		DisplayName string `json:"displayName,omitempty"`
 		ProjectKey string `json:"projectKey,omitempty"`
+		Key string `json:"_key,omitempty"`
 	}
 
 	for index, entity := range users {
@@ -116,6 +117,7 @@ func (ps ProjectService) getUsers (w http.ResponseWriter, r *http.Request) {
 			user.Roles[0],
 			user.DisplayName,
 			prjEntity.GetKey(),
+			user.Key,
 		}
 	}
 
@@ -127,7 +129,7 @@ func (ps ProjectService) addUser (w http.ResponseWriter, r *http.Request) {
 	prjEntity := ps.getPrjFromURL(r)
 
 	var userInfo struct {
-		Name string `json:"name"`
+		Key string `json:"_key"`
 		Role string `json:"role"`
 	}
 
@@ -135,11 +137,13 @@ func (ps ProjectService) addUser (w http.ResponseWriter, r *http.Request) {
 	model.CheckErr (err)
 
 	var user model.EstimaUser
-	user.Name = userInfo.Name
+	user.SetKey(userInfo.Key)
 	userService := model.FindService("user").(UserService)
-	err = userService.getDao().FindOne(&user)
+	err = userService.getDao().FindById(&user)
 	model.CheckErr (err)
 
+	log.Printf("found user: %v\n", user)
+	log.Printf("Project: %v\n", prjEntity)
 	err = ps.getDao().AddUser(prjEntity.(model.Project), user, userInfo.Role)
 	model.CheckErr (err)
 
@@ -152,7 +156,7 @@ func (ps ProjectService) removeUser (w http.ResponseWriter, r *http.Request) {
 	var user model.EstimaUser
 	userService := model.FindService("user").(UserService)
 	model.ReadJsonBody(r, &user)
-	err := userService.getDao().FindOne(&user)
+	err := userService.getDao().FindById(&user)
 	model.CheckErr (err)
 
 	err = ps.getDao().RemoveUser(prjEntity.(model.Project), user)

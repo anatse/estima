@@ -96,7 +96,7 @@ isc.DataSource.create({
     operationBindings:[
         {operationType:"fetch", dataProtocol: "", dataURL:  "/api/v.0.0.1/project/{0}/user/list"},
         {operationType:"add", dataProtocol:"postMessage", dataURL: "/api/v.0.0.1/project/{0}/user/add"},
-        {operationType:"remove", dataProtocol:"postMessage", requestProperties:{httpMethod:"POST"}, dataURL: "//api/v.0.0.1/project/{0}/user/remove"},
+        {operationType:"remove", dataProtocol:"postMessage", requestProperties:{httpMethod:"POST"}, dataURL: "/api/v.0.0.1/project/{0}/user/remove"},
         {operationType:"update", dataProtocol:"postMessage", requestProperties:{httpMethod:"POST"}, dataURL:"/api/v.0.0.1/project/{0}/user/add"}
     ],
     transformRequest: function (dsRequest) {
@@ -123,7 +123,7 @@ isc.DataSource.create({
                 break;
 
             default:
-                url = operationBinding.dataURL.format (dsRequest.oldValues.projectKey);
+                url = operationBinding.dataURL.format ((dsRequest.oldValues || dsRequest.originalData).projectKey);
         }
 
         return url;
@@ -288,6 +288,28 @@ isc.DataSource.create({
     }, {
         name: "stageKey",
         foreignKey: "projectStageListDS._key",
+        hidden: true
+    }]
+});
+
+isc.DataSource.create({
+    dataFormat:"json",
+    allowAdvancedCriteria: true,
+    dataURL: "/api/v.0.0.1/users/search",
+    ID:"userSearch",
+    recordXPath: "body",
+    fields:[{
+        name:"name",
+        title:"Название",
+    },{
+        name:"displayName",
+        title:"Описание",
+    },  {
+        name:"roles",
+        title: "Роли"
+    }, {
+        name: "_key",
+        primaryKey: true,
         hidden: true
     }]
 });

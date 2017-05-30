@@ -109,6 +109,36 @@ function createProjectGrid (detailPane) {
 }
 
 function createUsersGrid () {
+    isc.ToolStrip.create({
+        ID: "usersEditControls",
+        width: "100%", height:24,
+        members: [
+            isc.LayoutSpacer.create({ width:"*" }),
+            isc.ToolStripButton.create({
+                icon: "[SKIN]/actions/add.png",
+                prompt: "Add record",
+                click: function() {
+                    if (!userProjectList.getSelectedRecord())
+                        return false;
+
+                    userEditWindow.show();
+                    return false;
+                }
+            }),
+            isc.ToolStripButton.create({
+                icon: "[SKIN]/actions/remove.png",
+                prompt: "Remove selected record",
+                click: function () {
+                    userList.removeSelectedData(function () {
+                        refreshRelatedGrid(userProjectList.getSelectedRecord(), userProjectList, userList);
+                    })
+                }
+            })
+        ]
+    });
+
+    createUserWindow ();
+
     return isc.ListGrid.create({
         ID: "userList",
         alternateRecordStyles:true,
@@ -116,25 +146,98 @@ function createUsersGrid () {
         dataSource: projectUserDS,
         autoFetchData: false,
         showResizeBar: true,
-        canEdit: true
-        // fields:[{
-        //     name: "name",
-        //     title: "Название",
-        //     width: 300
-        // }, {
-        //     name:"startDate",
-        //     title:"Начало",
-        //     type:"datetime",
-        //     width: 100
-        // }, {
-        //     name: "endDate",
-        //     title: "Окончание",
-        //     type: "datetime",
-        //     width: 100
-        // }],
-        // selectionUpdated : function (data) {
-        //     refreshRelatedGrid (data, this, processList);
-        // }
+        canEdit: false,
+        gridComponents:[usersEditControls, "header", "body"]
+    });
+}
+
+function createUserWindow () {
+    isc.Window.create({
+        ID: "userEditWindow",
+        title: "User Edit Window",
+        autoSize:true,
+        autoCenter: true,
+        isModal: true,
+        showModalMask: true,
+        autoDraw: false,
+        show: function (values) {
+            userEditForm.setValues (values);
+            this.Super("show", arguments)
+        },
+        items: [
+            isc.DynamicForm.create({
+                ID: "userEditForm",
+                autoFetchData: false,
+                autoDraw: false,
+                height: 48,
+                padding:4,
+                fields: [{
+                        type:"header",
+                        defaultValue:"User add or edit"
+                    }, {
+                        name: "_key",
+                        title: "Ф.И.О.",
+                        type: "comboBox",
+                        valueField: "_key",
+                        displayField: "displayName",
+                        addUnknownValues: false,
+                        pickListCellWidth: 350,
+                        optionDataSource: "userSearch",
+                        filterLocally: false,
+                        autoFetchData: true,
+                        useClientFiltering: false,
+                        length: 255,
+                        required: true
+                    },{
+                        name: "role",
+                        title: "Роль",
+                        type: "select",
+                        valueMap: {
+                            "OWNER" : "Владелец всего",
+                            "PO" : "Владелец продукта",
+                            "RTE" : "Сметчик",
+                            "ARCHITECT" : "Архитектор",
+                            "BA": "Бизнес аналитик",
+                            "SA": "Системный аналитик",
+                            "PM" : "ТехРук",
+                            "TM" : "Разработчик"
+                        },
+                        required: true
+                    }
+                ]
+            }), isc.HLayout.create ({
+                width: "100%",
+                height: 10,
+                members:[
+                    isc.Button.create({
+                        name: "validateBtn",
+                        title: "Сохранить",
+                        click: function () {
+                            if (userEditForm.validate()) {
+                                var values = userEditForm.getValues();
+                                values.projectKey = userProjectList.getSelectedRecord()._key;
+                                userList.dataSource.addData(values, function(dsResponse, data, dsRequest) {
+                                    var resp = JSON.parse(dsResponse.httpResponseText);
+                                    if (!resp.success) {
+                                        alert (dsResponse.error);
+                                    } else {
+                                        console.log(dsResponse);
+                                        refreshRelatedGrid(userProjectList.getSelectedRecord(), userProjectList, userList);
+                                        userEditWindow.close();
+                                    }
+                                });
+
+
+                            }
+                        }
+                    }), isc.Button.create({
+                        name: "hideBtn",
+                        title: "Отмена",
+                        click: "userEditWindow.hide()"
+                    })
+                ]
+            })
+        ]
     });
 }
 
