@@ -449,7 +449,7 @@ func (dao baseDao) GetTextByVersion (entity model.Entity, version int) (*model.V
 
 // Function retrieves comments for given object
 // To implements paging it use additional parameters pageSize and offset
-func (dao baseDao) GetComments (entity model.Entity, pageSize int, offset int) (*model.Comment, error) {
+func (dao baseDao) GetComments (entity model.Entity, pageSize int, offset int) ([]*model.Comment, error) {
 	if entity.GetKey() == "" {
 		return nil, errors.New("GetText: Key is not defined")
 	}
@@ -478,9 +478,7 @@ func (dao baseDao) GetComments (entity model.Entity, pageSize int, offset int) (
 	entities := dao.readComments(cursor)
 	if len(entities) == 0 {
 		return nil, nil
-	} else if len(entities) == 1 {
-		return entities[0], nil
 	} else {
-		return nil, errors.New ("Found more than one active text for one entity. Please, fix this problem manually")
+		return entities, nil
 	}
 }

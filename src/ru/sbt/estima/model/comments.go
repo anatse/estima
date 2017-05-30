@@ -28,6 +28,10 @@ func (com Comment) Entity() interface{} {
 	}
 }
 
+func (com Comment) CopyChanged (entity Entity) Entity {
+	panic("Comment cannot be changed")
+}
+
 func (com Comment) AraDoc() (ara.Document) {
 	return com.Document
 }

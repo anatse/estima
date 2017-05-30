@@ -83,10 +83,44 @@ func (fs FeatureService) setStatus (w http.ResponseWriter, r *http.Request) {
 	model.WriteResponse(true, nil, entity, w)
 }
 
+func (fs FeatureService) getComments (w http.ResponseWriter, r *http.Request) {
+	var feature model.Feature
+	feature.Key = mux.Vars(r)["id"]
+
+	values := r.URL.Query()
+	offset := model.GetInt(values, "offset", 0)
+	pageSize := model.GetInt(values, "pageSize", 0)
+
+	comments, err := fs.getDao().GetComments(feature, pageSize, offset)
+	model.CheckErr(err)
+
+	comEntities := make ([]model.Entity, len(comments))
+	for idx, com := range comments {
+		comEntities[idx] = *com
+	}
+
+	model.WriteArrayResponse(true, nil, comEntities, w)
+}
+
+func (fs FeatureService) addComment (w http.ResponseWriter, r *http.Request) {
+	var feature model.Feature
+	feature.Key = mux.Vars(r)["id"]
+
+	var com model.Comment
+	model.ReadJsonBody(r, &com)
+
+	user := model.GetUserFromRequest (w, r)
+	comment := fs.getDao().AddComment(feature, com.Title, com.Text, user.Id)
+
+	model.WriteResponse(true, nil, comment, w)
+}
+
 func (fs *FeatureService) ConfigRoutes (router *mux.Router, handler HandlerOfHandlerFunc) {
 	router.Handle("/api/v.0.0.1/process/{id}/feature/list", handler(http.HandlerFunc(fs.findByProcess))).Methods("POST", "GET").Name("Features list for specified process")
 	router.Handle("/api/v.0.0.1/feature/{id}", handler(http.HandlerFunc(fs.findById))).Methods("GET").Name("Get feature by id")
 	router.Handle("/api/v.0.0.1/feature/{id}/text", handler(http.HandlerFunc(fs.getText))).Methods("POST", "GET").Name("Get text for feature. If version parameter is provided then return specified version of text")
 	router.Handle("/api/v.0.0.1/feature/{id}/addtext", handler(http.HandlerFunc(fs.addText))).Methods("POST").Name("Add text for feature")
 	router.Handle("/api/v.0.0.1/feature/{id}/status", handler(http.HandlerFunc(fs.setStatus))).Methods("POST").Name("Set feature status")
+	router.Handle("/api/v.0.0.1/feature/{id}/comments", handler(http.HandlerFunc(fs.getComments))).Methods("GET", "POST").Name("Get feature comments (use paging pageSize and offset URL parameters)")
+	router.Handle("/api/v.0.0.1/feature/{id}/addcomment", handler(http.HandlerFunc(fs.addComment))).Methods("POST").Name("Add comment to feature")
 }

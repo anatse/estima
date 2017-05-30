@@ -9,6 +9,9 @@ type UserStory struct {
 	ara.Document `json:-`
 	Name string `json:"name,omitempty,required"`
 	Description string `json:"description,omitempty"`
+	Who string `json:"who,omitempty"`
+	What string `json:"what,omitempty"`
+	Why string `json:"why,omitempty"`
 }
 
 func (us UserStory) Entity() interface{} {

@@ -10,6 +10,8 @@ type Feature struct {
 	Name string `json:"name,omitempty,required"`
 	Description string `json:"description,omitempty"`
 	Status string `json:"status,omitempty"`
+	// Важность - величина обратная приоритету, используется для формирования последовательности фич бэклога
+	Importance int  `json:"importance,omitempty"`
 }
 
 func (fea Feature) Entity() interface{} {

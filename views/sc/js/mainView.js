@@ -28,19 +28,15 @@ function createSplitPane () {
                         ID: "projectDetailsTab",
                         autoDraw: true,
                         tabBarPosition: "top",
-                        tabs: [
-                            {
+                        tabs: [{
                                 title: "Детально",
                                 pane: detailPane
-                            },
-                            {
+                            }, {
                                 title: "Пользователи",
                                 pane: createUsersGrid()
                             }
                         ]
                     })
-
-
                 ]
             }
 
@@ -56,8 +52,12 @@ function createTabs () {
         autoDraw: false,
         tabBarPosition: "top",
         tabs: [
-            {title: "Blue"},
-            {title: "Green"}
+            {
+                title: "Features/stories"
+            },
+            {
+                title: "Components"
+            }
         ]
     });
 }
@@ -346,6 +346,7 @@ isc.HLayout.create({
     members: [
         createSplitPane(),
         isc.SectionStack.create ({
+            showResizeBar: true,
             width: "20%",
             visibilityMode: "multiple",
             sections: [{
