@@ -2,13 +2,15 @@ package model
 
 import (
 	ara "github.com/diegogub/aranGO"
+	"time"
 )
 
 type VersionedText struct {
 	ara.Document `json:-`
 	Text string `json:"text,omitempty,required"`
 	Version int `json:"version,required"`
-	Active bool `json:"isActive,required"`
+	CreateDate time.Time `json:"createDate,omitempty"`
+	Active bool `json:"active,required"`
 }
 
 func (txt VersionedText) Entity() interface{} {

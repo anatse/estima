@@ -17,6 +17,7 @@ import (
 	"os"
 	"reflect"
 	"log"
+	"time"
 )
 
 type FilterValue struct {
@@ -319,14 +320,15 @@ func (dao baseDao) AddText (entity model.Entity, text string) *model.VersionedTe
 	versionedText := new (model.VersionedText)
 	versionedText.Text = text
 	versionedText.Active = true
+	versionedText.CreateDate = time.Now()
 
 	// Defines collections which will be changed during transaction
-	write := []string { versionedText.GetCollection() }
+	write := []string { versionedText.GetCollection(), PRJ_EDGES }
 	// Define transaction text (javascript)
 	q := dao.LoadJsFromCache("addText.js", conf.LoadConfig().Cache())
 
 	t := ara.NewTransaction(q, write, nil)
-	t.Params = map[string]interface{}{ "fKey" : entity.GetKey(), "fromColName": entity.GetCollection(), "toColName": versionedText.GetCollection(), "text": versionedText}
+	t.Params = map[string]interface{}{ "fKey" : entity.GetKey(), "fromColName": entity.GetCollection(), "edgeColName": PRJ_EDGES, "toColName": versionedText.GetCollection(), "text": versionedText}
 
 	err := t.Execute(dao.Database())
 	model.CheckErr(err)
@@ -344,14 +346,20 @@ func (dao baseDao) AddComment (entity model.Entity, title string, text string, u
 	comment := new (model.Comment)
 	comment.Text = text
 	comment.Title = title
+	comment.CreateDate = time.Now()
 
 	// Defines collections which will be changed during transaction
-	write := []string {comment.GetCollection() }
+	write := []string {comment.GetCollection(), PRJ_EDGES }
 	// Define transaction text (javascript)
 	q := dao.LoadJsFromCache("addComment.js", conf.LoadConfig().Cache())
 
 	t := ara.NewTransaction(q, write, nil)
-	t.Params = map[string]interface{}{ "fKey" : entity.GetKey(), "fromColName": entity.GetCollection(), "toColName": comment.GetCollection(), "comment": comment, "userId": userId}
+	t.Params = map[string]interface{}{
+		"fKey" : entity.GetKey(),
+		"fromColName": entity.GetCollection(),
+		"edgeColName": PRJ_EDGES,
+		"toColName": comment.GetCollection(),
+		"comment": comment, "userId": userId}
 
 	err := t.Execute(dao.Database())
 	model.CheckErr(err)
@@ -377,12 +385,12 @@ func (dao baseDao) readVersionedText(cursor *ara.Cursor)[]*model.VersionedText {
 }
 
 // Function read cursor into array of versioned text entities
-func (dao baseDao) readComments(cursor *ara.Cursor)[]*model.Comment {
-	var comment *model.Comment = new(model.Comment)
-	var comments []*model.Comment
+func (dao baseDao) readComments(cursor *ara.Cursor)[]*model.CommentWithUser {
+	var comment *model.CommentWithUser = new(model.CommentWithUser)
+	var comments []*model.CommentWithUser
 	for cursor.FetchOne(comment) {
 		comments = append (comments, comment)
-		comment = new(model.Comment)
+		comment = new(model.CommentWithUser)
 	}
 	return comments;
 }
@@ -395,7 +403,7 @@ func (dao baseDao) GetActiveText (entity model.Entity) (*model.VersionedText, er
 	}
 
 	id := entity.GetCollection() + "/" + entity.GetKey()
-	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label = 'text' && v.active RETURN v`
+	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'text' && v.active RETURN v`
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = id
@@ -417,6 +425,37 @@ func (dao baseDao) GetActiveText (entity model.Entity) (*model.VersionedText, er
 	}
 }
 
+// Function retrieves all versions for objects text
+func (dao baseDao) GetTextVersionList (entity model.Entity)([]model.Entity, error) {
+	if entity.GetKey() == "" {
+		return nil, errors.New("GetText: Key is not defined")
+	}
+
+	id := entity.GetCollection() + "/" + entity.GetKey()
+	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'text' RETURN v`
+
+	filterMap := make(map[string]interface{})
+	filterMap["startId"] = id
+	filterMap["@edgeCollection"] = PRJ_EDGES
+
+	var query ara.Query
+	query.Aql = sql
+	query.BindVars = filterMap
+
+	cursor, err := dao.Database().Execute(&query)
+	model.CheckErr(err)
+
+	viv := new(model.VersionedText)
+	var viList []model.Entity
+
+	for cursor.FetchOne(viv) {
+		viList = append (viList, viv)
+		viv = new(model.VersionedText)
+	}
+
+	return viList, nil
+}
+
 // Function retrieves text connected to the goiven object with specified text version
 func (dao baseDao) GetTextByVersion (entity model.Entity, version int) (*model.VersionedText, error) {
 	if entity.GetKey() == "" {
@@ -424,12 +463,12 @@ func (dao baseDao) GetTextByVersion (entity model.Entity, version int) (*model.V
 	}
 
 	id := entity.GetCollection() + "/" + entity.GetKey()
-	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label = 'text' && v.version == @version RETURN v`
+	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'text' && v.version == @version RETURN v`
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = id
 	filterMap["@edgeCollection"] = PRJ_EDGES
-	filterMap["startId"] = version
+	filterMap["version"] = version
 
 	var query ara.Query
 	query.Aql = sql
@@ -449,7 +488,7 @@ func (dao baseDao) GetTextByVersion (entity model.Entity, version int) (*model.V
 
 // Function retrieves comments for given object
 // To implements paging it use additional parameters pageSize and offset
-func (dao baseDao) GetComments (entity model.Entity, pageSize int, offset int) ([]*model.Comment, error) {
+func (dao baseDao) GetComments (entity model.Entity, pageSize int, offset int) ([]*model.CommentWithUser, error) {
 	if entity.GetKey() == "" {
 		return nil, errors.New("GetText: Key is not defined")
 	}
@@ -463,7 +502,18 @@ func (dao baseDao) GetComments (entity model.Entity, pageSize int, offset int) (
 		limit = "\nLIMIT " + strconv.Itoa(pageSize)
 	}
 
-	sql := fmt.Sprintf("FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label = 'comment' %s RETURN v", limit)
+	sql := fmt.Sprintf(`FOR v, e IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'comment' %s SORT v._key
+	    FOR f,i IN 1..1 INBOUND v._id prjedges FILTER i.label == 'userComment'
+	    RETURN {
+		comment: v,
+		user: {
+		    _key: f._key,
+		    name: f.name,
+		    displayName: f.displayName
+		}
+	    }`, limit)
+
+	//sql := fmt.Sprintf("FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'comment' %s SORT v._key RETURN v", limit)
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = id

@@ -39,7 +39,7 @@ func (dao featureDao) readCursor (cursor *ara.Cursor)[]model.Entity {
 func (dao featureDao) FindByProcess (processId string)([]model.Entity, error) {
 	log.Printf("find by process: %v", processId)
 	
-	sql := `FOR v, e, p IN 1..1 INBOUND @startId @@edgeCollection FILTER e.label = 'feature' SORT BY v.importance RETURN v`
+	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'feature' SORT v.importance RETURN v`
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = processId

@@ -2,12 +2,19 @@ package model
 
 import (
 	ara "github.com/diegogub/aranGO"
+	"time"
 )
 
 type Comment struct {
 	ara.Document `json:-`
 	Title string `json:"name,omitempty"`
 	Text string `json:"text,omitempty,required"`
+	CreateDate time.Time `json:"createDate,omitempty"`
+}
+
+type CommentWithUser struct {
+	Comment Comment `json:"comment"`
+	User EstimaUser `json:"user"`
 }
 
 func (com Comment) Entity() interface{} {
