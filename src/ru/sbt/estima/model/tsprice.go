@@ -41,7 +41,7 @@ func (us TechStoryPrice)GetKey() string {
 }
 
 func (us TechStoryPrice) GetCollection() string {
-	return "ustories"
+	return "tsprices"
 }
 
 func (us TechStoryPrice) GetError()(string, bool) {

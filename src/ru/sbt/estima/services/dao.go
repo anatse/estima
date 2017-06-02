@@ -110,6 +110,16 @@ func (dao baseDao) Col(colName string) *ara.Collection {
 	return dao.Database().Col(colName)
 }
 
+func (dao baseDao) EdgeCol(colName string) *ara.Collection {
+	if !dao.database.ColExist(colName) {
+		colOpts := ara.CollectionOptions{Name: colName, Sync:true}
+		colOpts.IsEdge()
+		dao.Database().CreateCollection(&colOpts)
+	}
+
+	return dao.Database().Col(colName)
+}
+
 func (dao baseDao) RemoveColl (colName string) {
 	dao.Database().DropCollection(colName)
 }

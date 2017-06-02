@@ -76,6 +76,32 @@ func getRoutes (router *mux.Router) []routeInfo {
 	return ris
 }
 
+func instService (w http.ResponseWriter, req *http.Request) {
+	collections := []string {
+		"users",
+		"projects",
+		"stages",
+		"processes",
+		"features",
+		"ustories",
+		"verstext",
+		"comments",
+		"components",
+		"cuprices",
+		"calcunits",
+		"tstories",
+		"tsprices",
+	}
+
+	dao := services.NewUserDao ()
+	for _, col := range collections {
+		dao.Col(col)
+	}
+
+	// create edge collection
+	dao.EdgeCol(services.PRJ_EDGES)
+}
+
 func PrepareRoute () *mux.Router {
 	var us services.UserService
 	var ps services.ProjectService
@@ -90,6 +116,7 @@ func PrepareRoute () *mux.Router {
 	r := model.GetRouter()
 	r.Handle("/api/v.0.0.1/get-token", services.GetTokenHandler).Methods("GET").Name("Login router (GET). Query parameters uname & upass")
 	r.Handle("/api/v.0.0.1/login", services.Login).Methods("POST").Name("Login router (POST). Body: uname & upass")
+	r.Handle("/api/v.0.0.1/init", http.HandlerFunc(instService)).Methods("POST", "GET").Name("Create database collections")
 
 	us.ConfigRoutes(r, JwtHandler)
 	ps.ConfigRoutes(r, JwtHandler)
