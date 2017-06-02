@@ -53,7 +53,8 @@ function createTabs () {
         tabBarPosition: "top",
         tabs: [
             {
-                title: "Features/stories"
+                title: "Features/stories",
+                pane: createFeatureGrid()
             },
             {
                 title: "Components"
@@ -280,6 +281,7 @@ function createProcessGrid () {
         autoFetchData: false,
         canEdit: true,
         selectionUpdated : function (data) {
+            refreshRelatedGrid (data, this, featureList);
             console.log (data);
         }
     });
