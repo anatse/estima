@@ -105,6 +105,9 @@ function createProjectGrid (detailPane) {
             detailPane.setData(data);
             refreshRelatedGrid (data, this, stageList);
             refreshRelatedGrid (data, this, userList);
+        },
+        editComplete: function() {
+            this.fetchData()
         }
     });
 }
@@ -268,6 +271,9 @@ function createStagesGrid () {
         }],
         selectionUpdated : function (data) {
             refreshRelatedGrid (data, this, processList);
+        },
+        editComplete: function() {
+            refreshRelatedGrid(userProjectList.getSelectedRecord(), userProjectList, stageList);
         }
     });
 }
@@ -282,7 +288,9 @@ function createProcessGrid () {
         canEdit: true,
         selectionUpdated : function (data) {
             refreshRelatedGrid (data, this, featureList);
-            console.log (data);
+        },
+        editComplete: function() {
+            refreshRelatedGrid(stageList.getSelectedRecord(), stageList, processList);
         }
     });
 }
