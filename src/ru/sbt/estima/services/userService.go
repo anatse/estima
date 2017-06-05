@@ -44,9 +44,9 @@ func (us *UserService) checkRoles (user model.EstimaUser, cmp compare)bool {
 func (us *UserService) list (w http.ResponseWriter, r *http.Request) {
 	user := model.GetUserFromRequest (w, r)
 
-	// Check user role in RTE or ARCHITECTOR
+	// Check user role in RTE or ARCHITECT
 	if !us.checkRoles(*user, func(role string) bool {
-		return role == ROLE_RTE || role == ROLE_ARCHITECTOR
+		return role == model.ROLE_RTE || role == model.ROLE_ARCHITECT
 	}) {
 		panic ("Insufficient privilegies")
 	}

@@ -333,12 +333,12 @@ func (dao baseDao) AddText (entity model.Entity, text string) *model.VersionedTe
 	versionedText.CreateDate = time.Now()
 
 	// Defines collections which will be changed during transaction
-	write := []string { versionedText.GetCollection(), PRJ_EDGES }
+	write := []string { versionedText.GetCollection(), model.PRJ_EDGES }
 	// Define transaction text (javascript)
 	q := dao.LoadJsFromCache("addText.js", conf.LoadConfig().Cache())
 
 	t := ara.NewTransaction(q, write, nil)
-	t.Params = map[string]interface{}{ "fKey" : entity.GetKey(), "fromColName": entity.GetCollection(), "edgeColName": PRJ_EDGES, "toColName": versionedText.GetCollection(), "text": versionedText}
+	t.Params = map[string]interface{}{ "fKey" : entity.GetKey(), "fromColName": entity.GetCollection(), "edgeColName": model.PRJ_EDGES, "toColName": versionedText.GetCollection(), "text": versionedText}
 
 	err := t.Execute(dao.Database())
 	model.CheckErr(err)
@@ -359,7 +359,7 @@ func (dao baseDao) AddComment (entity model.Entity, title string, text string, u
 	comment.CreateDate = time.Now()
 
 	// Defines collections which will be changed during transaction
-	write := []string {comment.GetCollection(), PRJ_EDGES }
+	write := []string {comment.GetCollection(), model.PRJ_EDGES }
 	// Define transaction text (javascript)
 	q := dao.LoadJsFromCache("addComment.js", conf.LoadConfig().Cache())
 
@@ -367,7 +367,7 @@ func (dao baseDao) AddComment (entity model.Entity, title string, text string, u
 	t.Params = map[string]interface{}{
 		"fKey" : entity.GetKey(),
 		"fromColName": entity.GetCollection(),
-		"edgeColName": PRJ_EDGES,
+		"edgeColName": model.PRJ_EDGES,
 		"toColName": comment.GetCollection(),
 		"comment": comment, "userId": userId}
 
@@ -417,7 +417,7 @@ func (dao baseDao) GetActiveText (entity model.Entity) (*model.VersionedText, er
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = id
-	filterMap["@edgeCollection"] = PRJ_EDGES
+	filterMap["@edgeCollection"] = model.PRJ_EDGES
 
 	var query ara.Query
 	query.Aql = sql
@@ -446,7 +446,7 @@ func (dao baseDao) GetTextVersionList (entity model.Entity)([]model.Entity, erro
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = id
-	filterMap["@edgeCollection"] = PRJ_EDGES
+	filterMap["@edgeCollection"] = model.PRJ_EDGES
 
 	var query ara.Query
 	query.Aql = sql
@@ -477,7 +477,7 @@ func (dao baseDao) GetTextByVersion (entity model.Entity, version int) (*model.V
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = id
-	filterMap["@edgeCollection"] = PRJ_EDGES
+	filterMap["@edgeCollection"] = model.PRJ_EDGES
 	filterMap["version"] = version
 
 	var query ara.Query
@@ -527,7 +527,7 @@ func (dao baseDao) GetComments (entity model.Entity, pageSize int, offset int) (
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = id
-	filterMap["@edgeCollection"] = PRJ_EDGES
+	filterMap["@edgeCollection"] = model.PRJ_EDGES
 
 	var query ara.Query
 	query.Aql = sql

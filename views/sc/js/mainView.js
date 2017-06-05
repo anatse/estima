@@ -48,7 +48,7 @@ function createSplitPane () {
 
 function createTabs () {
     return isc.TabSet.create({
-        ID: "topTabSet",
+        //ID: "topTabSet",
         autoDraw: false,
         tabBarPosition: "top",
         tabs: [

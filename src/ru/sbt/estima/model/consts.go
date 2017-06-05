@@ -1,4 +1,4 @@
-package services
+package model
 
 //
 // ArangoDB Documentation
@@ -18,7 +18,7 @@ const (
 	// Roles
 	ROLE_PO = "PO" 			// Product Owner
 	ROLE_RTE = "RTE" 		// Release Train Engineer
-	ROLE_ARCHITECTOR = "ARCHITECT" 	// Architect
+	ROLE_ARCHITECT = "ARCHITECT" 	// Architect
 	ROLE_BA = "BA"			// Business Analyst
 	ROLE_SA = "SA"			// System Analyst
 	ROLE_SM = "SM"			// Scram Master
@@ -27,7 +27,4 @@ const (
 	ROLE_TPM = "TPM"		// Technical Project Manager
 	ROLE_PM = "PM"			// Project Manager
 	ROLE_VSE = "VSE"		// Something else
-
-	// Statuses
-	DISABLED_STATUS = "DISABLED"
 )

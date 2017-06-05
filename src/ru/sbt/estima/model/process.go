@@ -8,7 +8,7 @@ type Process struct {
 	ara.Document
 	Name string `json:"name,omitempty"`
 	Description string `json:"description,omitempty"`
-	Status string `json:"status,omitempty"`
+	Status Status `json:"status,omitempty"`
 }
 
 func (prc Process) Entity() interface{} {
@@ -51,6 +51,6 @@ func (prc Process) CopyChanged (entity Entity) Entity {
 	newPrc := entity.(Process)
 	if newPrc.Name != "" {prc.Name = newPrc.Name}
 	if newPrc.Description != "" {prc.Description = newPrc.Description}
-	if newPrc.Status != "" {prc.Status = newPrc.Status}
+	if newPrc.Status != -1 {prc.Status = newPrc.Status}
 	return prc
 }

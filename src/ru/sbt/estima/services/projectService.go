@@ -211,6 +211,7 @@ func (ps ProjectService) findByUser (w http.ResponseWriter, r *http.Request) {
 	offset := model.GetInt (r.URL.Query(), "offset", 0)
 	pageSize := model.GetInt (r.URL.Query(), "pageSize", 0)
 
+	log.Printf("find by user: %v %d %d", user, offset, pageSize)
 	projects, _ := ps.getDao().FindByUser(*user, offset, pageSize)
 
 	// Write array response
@@ -220,7 +221,7 @@ func (ps ProjectService) findByUser (w http.ResponseWriter, r *http.Request) {
 func (ps ProjectService) setStatus (w http.ResponseWriter, r *http.Request) {
 	prjEntity := ps.getPrjFromURL(r)
 	var status struct {
-		Status string
+		Status model.Status
 	}
 
 	model.ReadJsonBodyAny(r, &status)

@@ -99,7 +99,25 @@ func instService (w http.ResponseWriter, req *http.Request) {
 	}
 
 	// create edge collection
-	dao.EdgeCol(services.PRJ_EDGES)
+	dao.EdgeCol(model.PRJ_EDGES)
+}
+
+func nextStatuses (w http.ResponseWriter, r *http.Request) {
+	user := model.GetUserFromRequest (w, r)
+	values := r.URL.Query()
+	status := model.GetStatus(values, "status", model.STATUS_NEW)
+
+	var ret []model.Status
+	curStatus := model.FromStatus(status)
+	nextStatuses := curStatus.NextStatuses()
+
+	for _, nextStatus := range nextStatuses {
+		if curStatus.CanMoveTo(nextStatus, user.Roles) {
+			ret = append(ret, nextStatus)
+		}
+	}
+
+	model.WriteAnyResponse(true, nil, ret, w)
 }
 
 func PrepareRoute () *mux.Router {
@@ -117,6 +135,7 @@ func PrepareRoute () *mux.Router {
 	r.Handle("/api/v.0.0.1/get-token", services.GetTokenHandler).Methods("GET").Name("Login router (GET). Query parameters uname & upass")
 	r.Handle("/api/v.0.0.1/login", services.Login).Methods("POST").Name("Login router (POST). Body: uname & upass")
 	r.Handle("/api/v.0.0.1/init", http.HandlerFunc(instService)).Methods("POST", "GET").Name("Create database collections")
+	r.Handle("/api/v.0.0.1/nextStatuses", JwtHandler(http.HandlerFunc(nextStatuses))).Methods("POST", "GET").Name("Get next statuses for current status and user")
 
 	us.ConfigRoutes(r, JwtHandler)
 	ps.ConfigRoutes(r, JwtHandler)

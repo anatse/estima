@@ -10,7 +10,7 @@ type Project struct {
 	Number      string `json:"number,omitempty", unique:"projects"`
 	Name string `json:"name",omitempty`
 	Description string `json:"description,omitempty"`
-	Status      string `json:"status"`
+	Status      Status `json:"status"`
 	Flag string `json:"flag" enum:"G,Y,R,B"`
 	StartDate   time.Time `json:"startDate,omitempty"`
 	EndDate	time.Time `json:"endDate"`
@@ -63,7 +63,7 @@ func (prj Project) CopyChanged (entity Entity) Entity {
 	newPrj := entity.(Project)
 	emptyTime := time.Time{}
 	if newPrj.Name != "" {prj.Name = newPrj.Name}
-	if newPrj.Status != "" {prj.Status = newPrj.Status}
+	if newPrj.Status != -1 {prj.Status = newPrj.Status}
 	if newPrj.Description != "" {prj.Description = newPrj.Description}
 	if newPrj.StartDate != emptyTime {prj.StartDate = newPrj.StartDate}
 	if newPrj.EndDate != emptyTime {prj.EndDate = newPrj.EndDate}

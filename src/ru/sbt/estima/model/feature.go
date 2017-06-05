@@ -9,7 +9,7 @@ type Feature struct {
 	ara.Document `json:-`
 	Name string `json:"name,omitempty,required"`
 	Description string `json:"description,omitempty"`
-	Status string `json:"status,omitempty"`
+	Status Status `json:"status,omitempty"`
 	// Важность - величина обратная приоритету, используется для формирования последовательности фич бэклога
 	Importance int  `json:"importance,omitempty"`
 }
@@ -51,7 +51,8 @@ func (fea Feature) GetError()(string, bool) {
 func (fea Feature) CopyChanged (entity Entity) Entity {
 	newFea := entity.(Feature)
 	if newFea.Name != "" {fea.Name = newFea.Name}
-	if newFea.Status != "" {fea.Status = newFea.Status}
+	// Status cannot be changed by saving all object, it needs to use separate function setStatus
+	//if newFea.Status != -1 {fea.Status = newFea.Status}
 	if newFea.Description != "" {fea.Description = newFea.Description}
 	return fea
 }

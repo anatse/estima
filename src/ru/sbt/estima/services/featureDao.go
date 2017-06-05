@@ -43,7 +43,7 @@ func (dao featureDao) FindByProcess (processId string)([]model.Entity, error) {
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = processId
-	filterMap["@edgeCollection"] = PRJ_EDGES
+	filterMap["@edgeCollection"] = model.PRJ_EDGES
 
 	var query ara.Query
 	query.Aql = sql
@@ -86,11 +86,15 @@ func (dao featureDao) FindOne (entity model.Entity) error {
 }
 
 // Function set feature status
-func (dao featureDao) SetStatus (feaEntity model.Entity, status string) (model.Entity, error) {
+func (dao featureDao) SetStatus (feaEntity model.Entity, status model.Status, user *model.EstimaUser) (model.Entity, error) {
 	var feature *model.Feature
 	feature = feaEntity.(*model.Feature)
 	err := dao.FindById(feature)
 	model.CheckErr (err)
+
+	// Get current status
+	curStatus := model.FromStatus(feature.Status)
+	curStatus.MoveTo(status, user.Roles)
 
 	feature.Status = status
 

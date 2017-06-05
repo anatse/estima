@@ -36,7 +36,7 @@ func (dao projectDao) FindOne (prjEntity model.Entity) error {
 	return nil
 }
 
-func (dao projectDao) SetStatus (prjEntity model.Entity, status string) (model.Entity, error) {
+func (dao projectDao) SetStatus (prjEntity model.Entity, status model.Status) (model.Entity, error) {
 	// If Id o fthe entity is not set tring to find entity in database
 	if prjEntity.AraDoc().Id == "" {
 		err := dao.FindById(prjEntity)
@@ -66,11 +66,13 @@ func (dao projectDao) FindByUser (user model.EstimaUser, offset int, pageSize in
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = user.Id
-	filterMap["@edgeCollection"] = PRJ_EDGES
+	filterMap["@edgeCollection"] = model.PRJ_EDGES
 
 	var query ara.Query
 	query.Aql = sql
 	query.BindVars = filterMap
+
+	log.Printf("query: %v", query)
 
 	var prj *model.Project = new(model.Project)
 	var projects []model.Entity
@@ -87,7 +89,7 @@ func (dao projectDao) Users (prj model.Project, roles []string) ([]model.Entity,
 	var filter bytes.Buffer
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = prj.Id
-	filterMap["@edgeCollection"] = PRJ_EDGES
+	filterMap["@edgeCollection"] = model.PRJ_EDGES
 
 	filter.WriteString(`FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'user' `)
 	if roles != nil {
@@ -123,7 +125,7 @@ func (dao projectDao) AddUser (prj model.Project, user model.EstimaUser, role st
 		panic("Some identifiers are not set")
 	}
 
-	return dao.Database().Col(PRJ_EDGES).SaveEdge(map[string]interface{} {"role": role, "label": "user"}, prj.Id, user.Id)
+	return dao.Database().Col(model.PRJ_EDGES).SaveEdge(map[string]interface{} {"role": role, "label": "user"}, prj.Id, user.Id)
 }
 
 func (dao projectDao) RemoveUser (prj model.Project, user model.EstimaUser) error {
@@ -135,7 +137,7 @@ func (dao projectDao) RemoveUser (prj model.Project, user model.EstimaUser) erro
 	filterMap := make(map[string]interface{})
 	filterMap["prj"] = prj.Id
 	filterMap["user"] = user.Id
-	filterMap["@edgeCollection"] = PRJ_EDGES
+	filterMap["@edgeCollection"] = model.PRJ_EDGES
 
 	var query ara.Query
 	query.Aql = sql
@@ -153,7 +155,7 @@ func (dao projectDao) findStageByName (prjId string, name string) model.Stage {
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = prjId
 	filterMap["stageName"] = name
-	filterMap["@edgeCollection"] = PRJ_EDGES
+	filterMap["@edgeCollection"] = model.PRJ_EDGES
 
 	var query ara.Query
 	query.Aql = sql
@@ -192,7 +194,7 @@ func (dao projectDao) AddStage (prj model.Project, stage model.Stage) error {
 		stage.Key = dao.createAndConnectObjTx(
 			stage,
 			prj,
-			PRJ_EDGES,
+			model.PRJ_EDGES,
 			map[string]string {"label": "stage"})
 
 		return dao.FindById(&stage)
@@ -208,7 +210,7 @@ func (dao projectDao) RemoveStage (prj model.Project, stage model.Stage) error {
 	model.CheckErr(err)
 
 	// remove edge between project and stage and remove stage
-	dao.removeConnectedTx (stage.GetCollection(), PRJ_EDGES, stage.GetKey())
+	dao.removeConnectedTx (stage.GetCollection(), model.PRJ_EDGES, stage.GetKey())
 	return nil;
 }
 
@@ -217,7 +219,7 @@ func (dao projectDao) Stages (prj model.Project) ([]model.Entity, error) {
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = prj.Id
-	filterMap["@edgeCollection"] = PRJ_EDGES
+	filterMap["@edgeCollection"] = model.PRJ_EDGES
 
 	var query ara.Query
 	query.Aql = sql

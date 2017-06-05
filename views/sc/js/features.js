@@ -68,8 +68,6 @@ function createFeatureGrid () {
     createFeatureDS ();
 
     var editControls = isc.ToolStrip.create({
-        // width: "100%",
-        // height:24,
         members: [
             isc.LayoutSpacer.create({ width:"*" }),
             isc.ToolStripButton.create({
@@ -95,8 +93,23 @@ function createFeatureGrid () {
         ]
     });
 
-    return isc.ListGrid.create({
+    var tabSet = isc.TabSet.create({
+        autoDraw: false,
+        tabBarPosition: "top",
+        tabs: [
+            {
+                title: "User Stories",
+                // pane: createFeatureGrid()
+            },
+            {
+                title: "Feature components"
+            }
+        ]
+    });
+
+    isc.ListGrid.create({
         ID: "featureList",
+        showResizeBar: true,
         alternateRecordStyles:true,
         showAllRecords:true,
         dataSource: featureListDS,
@@ -110,5 +123,14 @@ function createFeatureGrid () {
             console.log ('editComplete: ' + arguments);
             refreshRelatedGrid(processList.getSelectedRecord(), processList, featureList);
         }
+    });
+
+    return isc.HLayout.create({
+        // width: "100%",
+        // height: "100%",
+        members: [
+            featureList,
+            tabSet
+        ]
     });
 }

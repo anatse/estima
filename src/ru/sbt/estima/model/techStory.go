@@ -8,7 +8,7 @@ type TechStory struct {
 	ara.Document `json:-`
 	Name string `json:"name,omitempty,required"`
 	Description string `json:"description,omitempty"`
-	Status string `json:"status,omitempty"`
+	Status Status `json:"status,omitempty"`
 }
 
 func (cmp TechStory) Entity() interface{} {

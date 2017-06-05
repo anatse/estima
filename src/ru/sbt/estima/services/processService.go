@@ -45,7 +45,7 @@ func (ps ProcessService) setStatus (w http.ResponseWriter, r *http.Request) {
 	prc.Name = mux.Vars(r)["id"]
 	var status struct {
 		Name string `json:"name"`
-		Status string `json:"status"`
+		Status model.Status `json:"status"`
 	}
 
 	model.ReadJsonBodyAny(r, &status)
@@ -64,7 +64,7 @@ func (ps ProcessService) disable (w http.ResponseWriter, r *http.Request) {
 func (ps ProcessService) remove (w http.ResponseWriter, r *http.Request) {
 	var prc model.Process
 	prc.Key = mux.Vars(r)["id"]
-	ps.getDao().removeConnectedTx (prc.GetCollection(), PRJ_EDGES, prc.GetKey())
+	ps.getDao().removeConnectedTx (prc.GetCollection(), model.PRJ_EDGES, prc.GetKey())
 	model.WriteResponse(true, nil, prc, w)
 }
 

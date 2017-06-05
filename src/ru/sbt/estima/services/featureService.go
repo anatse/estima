@@ -79,7 +79,8 @@ func (fs FeatureService) setStatus (w http.ResponseWriter, r *http.Request) {
 	model.ReadJsonBody(r, &feature)
 	feature.Key = mux.Vars(r)["id"]
 
-	entity, err := fs.getDao().SetStatus (&feature, feature.Status)
+	user := model.GetUserFromRequest (w, r)
+	entity, err := fs.getDao().SetStatus (&feature, feature.Status, user)
 	model.CheckErr(err)
 	model.WriteResponse(true, nil, entity, w)
 }
@@ -99,7 +100,6 @@ func (fs FeatureService) getComments (w http.ResponseWriter, r *http.Request) {
 
 	comments, err := fs.getDao().GetComments(feature, pageSize, offset)
 	model.CheckErr(err)
-
 
 	iComments := make ([]interface{}, len(comments))
 	for idx, com := range comments {
@@ -147,7 +147,7 @@ func (fs FeatureService) addFeature (w http.ResponseWriter, r *http.Request) {
 	var feature model.Feature
 	model.ReadJsonBody(r, &feature)
 
-	featureId := fs.getDao().createAndConnectObjTx(feature, process, PRJ_EDGES, map[string]string{"label": "feature"})
+	featureId := fs.getDao().createAndConnectObjTx(feature, process, model.PRJ_EDGES, map[string]string{"label": "feature"})
 	feature.Id = featureId
 
 	model.WriteResponse(true, nil, feature, w)
@@ -156,7 +156,7 @@ func (fs FeatureService) addFeature (w http.ResponseWriter, r *http.Request) {
 func (fs FeatureService) removeFeature (w http.ResponseWriter, r *http.Request) {
 	var feature model.Feature
 	feature.Key = mux.Vars(r)["id"]
-	fs.getDao().removeConnectedTx (feature.GetCollection(), PRJ_EDGES, feature.GetKey())
+	fs.getDao().removeConnectedTx (feature.GetCollection(), model.PRJ_EDGES, feature.GetKey())
 	model.WriteResponse(true, nil, feature, w)
 }
 

@@ -76,6 +76,16 @@ func GetInt (values url.Values, name string,  def int) int {
 	return def
 }
 
+func GetStatus (values url.Values, name string,  def Status) Status {
+	val := values.Get(name)
+	if val != "" {
+		iVal, _ := strconv.Atoi(val)
+		return Status(iVal)
+	}
+
+	return def
+}
+
 func NotImplemented(w http.ResponseWriter, r *http.Request) {
 	WriteResponse(true, "Not implemented yet", nil, w)
 }
