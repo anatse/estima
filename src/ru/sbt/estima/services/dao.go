@@ -478,7 +478,7 @@ func (dao BaseDao) GetTextVersionList (entity model.Entity)([]model.Entity, erro
 	}
 
 	id := entity.GetCollection() + "/" + entity.GetKey()
-	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'text' RETURN v`
+	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'text' SORT v.version DESC RETURN v`
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = id
@@ -549,7 +549,7 @@ func (dao BaseDao) GetComments (entity model.Entity, pageSize int, offset int) (
 	}
 
 	sql := fmt.Sprintf(`FOR v, e IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'comment' %s SORT v._key
-	    FOR f,i IN 1..1 INBOUND v._id prjedges FILTER i.label == 'userComment'
+	    FOR f,i IN 1..1 INBOUND v._id @@edgeCollection FILTER i.label == 'userComment'
 	    RETURN {
 		comment: v,
 		user: {

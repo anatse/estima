@@ -57,6 +57,36 @@ func (us UserStory) GetError()(string, bool) {
 }
 
 func (us UserStory) CopyChanged (entity Entity) Entity {
-	// Status cannot be changed by saving all object, it needs to use separate function setStatus
-	panic("Not allowed to change user story")
+	story := entity.(UserStory)
+	if story.Name != "" {us.Name = story.Name}
+	if story.Description != "" {us.Description = story.Description}
+	if story.What != "" {us.What = story.What}
+	if story.Who != "" {us.Who = story.Who}
+	if story.Why != "" {us.Why = story.Why}
+	if story.Serial != -1 {us.Serial = story.Serial}
+	return us
+}
+
+type UserStoryWithText struct {
+	UserStory
+	Text string `json:"text"`
+	Version int `json:"version"`
+}
+
+func (us UserStoryWithText) Entity() interface{} {
+	return struct{
+		*UserStoryWithText
+
+		OmitId  omit `json:"_id,omitempty"`
+		OmitRev omit `json:"_rev,omitempty"`
+
+		OmitError   omit   `json:"error,omitempty"`
+		OmitMessage omit `json:"errorMessage,omitempty"`
+	} {
+		&us,
+		nil,
+		nil,
+		nil,
+		nil,
+	}
 }
