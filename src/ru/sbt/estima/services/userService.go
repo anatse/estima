@@ -8,18 +8,17 @@ import (
 )
 
 type UserService struct {
-	dao *userDao
 }
 
 type HandlerOfHandlerFunc func(http.Handler) http.Handler
 
-func (us *UserService)getDao()userDao {
-	if us.dao == nil {
-		us.dao = NewUserDao()
-	}
-
-	return *us.dao
-}
+//func (us *UserService)getDao() UserDao {
+//	if us.dao == nil {
+//		us.dao = NewUserDao()
+//	}
+//
+//	return *us.dao
+//}
 
 func (us *UserService) currentUser (w http.ResponseWriter, r *http.Request) {
 	user := model.GetUserFromRequest (w, r)
@@ -51,10 +50,11 @@ func (us *UserService) list (w http.ResponseWriter, r *http.Request) {
 		panic ("Insufficient privilegies")
 	}
 
-	users, err := us.getDao().FindAll (NewFilter(), 0, 0)
-	model.CheckErr (err)
-
-	model.WriteArrayResponse (true, nil, users, w)
+	WithUserDao(func(dao UserDao) {
+		users, err := dao.FindAll (NewFilter(), 0, 0)
+		model.CheckErr (err)
+		model.WriteArrayResponse (true, nil, users, w)
+	})
 }
 
 // Service using to search users by name. Searches using like comparison operator in users database collection
@@ -76,41 +76,45 @@ func (us *UserService) search (w http.ResponseWriter, r *http.Request) {
 		panic("Required parameter name or displayName not provided")
 	}
 
-	var filter DaoFilter
-	if key != "" {
-		user := model.EstimaUser{Document: aranGO.Document{Key: key}}
-		us.getDao().FindById(&user)
-		model.WriteResponse (true, nil, user, w)
-		return
+	WithUserDao(func(dao UserDao) {
+		var filter DaoFilter
+		if key != "" {
+			user := model.EstimaUser{Document: aranGO.Document{Key: key}}
+			dao.FindById(&user)
+			model.WriteResponse(true, nil, user, w)
+			return
 
-	} else if displayName != "" {
-		nameToFind = "%" + displayName + "%"
-		filter = NewFilter().
-			Filter("displayName", "like", nameToFind).
-			Sort("displayName", true)
-	} else {
-		nameToFind = "%" + nameToFind + "%"
-		filter = NewFilter().
-			Filter("name", "like", nameToFind).
-			Sort("displayName", true)
-	}
+		} else if displayName != "" {
+			nameToFind = "%" + displayName + "%"
+			filter = NewFilter().
+				Filter("displayName", "like", nameToFind).
+				Sort("displayName", true)
+		} else {
+			nameToFind = "%" + nameToFind + "%"
+			filter = NewFilter().
+				Filter("name", "like", nameToFind).
+				Sort("displayName", true)
+		}
 
-	users, err := us.getDao().FindAll (filter, 0, 20)
-	model.CheckErr (err)
+		users, err := dao.FindAll(filter, 0, 20)
+		model.CheckErr(err)
 
-	model.WriteArrayResponse (true, nil, users, w)
+		model.WriteArrayResponse(true, nil, users, w)
+	})
 }
 
 func (us *UserService) create (w http.ResponseWriter, r *http.Request) {
 	var user model.EstimaUser
 	model.ReadJsonBody (r, &user)
 
-	// Trying to find user
-	model.CheckErr (us.getDao().FindOne(&user))
+	WithUserDao(func(dao UserDao) {
+		// Trying to find user
+		model.CheckErr(dao.FindOne(&user))
 
-	entity, err := us.getDao().Save(&user)
-	model.CheckErr (err)
-	model.WriteResponse(true, nil, entity, w)
+		entity, err := dao.Save(&user)
+		model.CheckErr(err)
+		model.WriteResponse(true, nil, entity, w)
+	})
 }
 
 func (us *UserService) ConfigRoutes (router *mux.Router, handler HandlerOfHandlerFunc) {

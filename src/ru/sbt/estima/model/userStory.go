@@ -19,6 +19,7 @@ type UserStory struct {
 	// Status of the story
 	Status Status `json:"status,omitempty"`
 	CreateDate time.Time `json:"createDate,omitempty"`
+	Serial int `json:"serial"`
 }
 
 func (us UserStory) Entity() interface{} {

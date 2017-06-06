@@ -133,8 +133,8 @@ func writeMap (key string, user *LockedUser) {
 }
 
 func readMap (key string) *LockedUser {
-	jobMap.Lock()
-	defer jobMap.Unlock()
+	jobMap.RLock()
+	defer jobMap.RUnlock()
 
 	return jobMap.jobMap[key]
 }

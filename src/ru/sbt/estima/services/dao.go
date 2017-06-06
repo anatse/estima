@@ -87,21 +87,57 @@ type Dao interface {
 	RemoveColl(string)
 }
 
-// Struct imlplements base dao functions
-type baseDao struct {
+// Struct implements base dao functions
+type BaseDao struct {
 	session *ara.Session	// arangoDb http session
 	database *ara.Database  // arangoDb database object
 }
 
-func (dao baseDao) Session() *ara.Session {
+var daoPool *model.Pool = nil
+
+func GetPool() *model.Pool {
+	if daoPool == nil {
+		config := conf.LoadConfig()
+		daoPool = model.NewPool(
+			config.Database.PoolSize,
+			func ()(interface{}, error) {
+				s, err := ara.Connect(config.Database.Url, config.Database.User, config.Database.Password, config.Database.Log)
+				if err != nil {
+					return nil, err
+				}
+
+				dao := BaseDao{
+					session: s,
+					database: s.DB(config.Database.Name),
+				}
+
+				return &dao, nil
+			},
+			func(iDao interface{}) error {
+				return nil
+			})
+	}
+
+	return daoPool
+}
+
+func (dao BaseDao) FindAll(DaoFilter, int, int) ([]model.Entity, error) {
+	return nil, fmt.Errorf("Not implemented")
+}
+
+func (dao BaseDao) FindOne (entity model.Entity) error {
+	return fmt.Errorf("Not implemented")
+}
+
+func (dao BaseDao) Session() *ara.Session {
 	return dao.session
 }
 
-func (dao baseDao) Database() *ara.Database {
+func (dao BaseDao) Database() *ara.Database {
 	return dao.database
 }
 
-func (dao baseDao) Col(colName string) *ara.Collection {
+func (dao BaseDao) Col(colName string) *ara.Collection {
 	if !dao.database.ColExist(colName) {
 		newColl := ara.NewCollectionOptions(colName, true)
 		dao.Database().CreateCollection(newColl)
@@ -110,7 +146,7 @@ func (dao baseDao) Col(colName string) *ara.Collection {
 	return dao.Database().Col(colName)
 }
 
-func (dao baseDao) EdgeCol(colName string) *ara.Collection {
+func (dao BaseDao) EdgeCol(colName string) *ara.Collection {
 	if !dao.database.ColExist(colName) {
 		colOpts := ara.CollectionOptions{Name: colName, Sync:true}
 		colOpts.IsEdge()
@@ -120,12 +156,12 @@ func (dao baseDao) EdgeCol(colName string) *ara.Collection {
 	return dao.Database().Col(colName)
 }
 
-func (dao baseDao) RemoveColl (colName string) {
+func (dao BaseDao) RemoveColl (colName string) {
 	dao.Database().DropCollection(colName)
 }
 
 // Private function to build query based on filter parameters
-func (dao baseDao) buildQuery (daoFilter DaoFilter)(string, map[string]interface{}) {
+func (dao BaseDao) buildQuery (daoFilter DaoFilter)(string, map[string]interface{}) {
 	var filter bytes.Buffer
 	filterMap := make(map[string]interface{})
 
@@ -168,7 +204,7 @@ func (dao baseDao) buildQuery (daoFilter DaoFilter)(string, map[string]interface
 }
 
 // Function used to get list of entities using filters, limits and sorts
-func (dao baseDao) findAll(daoFilter DaoFilter, colName string, offset int, pageSize int)(*ara.Cursor, error) {
+func (dao BaseDao) findAll(daoFilter DaoFilter, colName string, offset int, pageSize int)(*ara.Cursor, error) {
 	filter, filterMap := dao.buildQuery (daoFilter)
 	var limit string
 	if offset > 0 {
@@ -185,7 +221,7 @@ func (dao baseDao) findAll(daoFilter DaoFilter, colName string, offset int, page
 }
 
 // Function used to find entity by its key. ArangoDb identifier equals 'collectionName/Key'
-func (dao baseDao) FindById(entity model.Entity) (error) {
+func (dao BaseDao) FindById(entity model.Entity) (error) {
 	if entity.GetKey() != "" {
 		coll := dao.Database().Col(entity.GetCollection())
 		return coll.Get(entity.GetKey(), entity)
@@ -196,7 +232,7 @@ func (dao baseDao) FindById(entity model.Entity) (error) {
 
 // Function used to create and connect one document to another in one transaction
 // Calls createAndConnectTx function
-func (dao baseDao) createAndConnectObjTx (toEntity model.Entity, fromEntity model.Entity, edgeColName string, props map[string]string) string {
+func (dao BaseDao) createAndConnectObjTx (toEntity model.Entity, fromEntity model.Entity, edgeColName string, props map[string]string) string {
 	return dao.createAndConnectTx (
 		toEntity.GetCollection(),   // to
 		fromEntity.GetCollection(), // from
@@ -213,7 +249,7 @@ func loadJsScript (name string)string {
 }
 
 // Support for Es6 in ArangoDB https://jsteemann.github.io/blog/2014/12/19/using-es6-features-in-arangodb/
-func (dao baseDao) LoadJsFromCache(name string, cache *memcache.Client)string {
+func (dao BaseDao) LoadJsFromCache(name string, cache *memcache.Client)string {
 	prefix := os.Getenv("DBJS_PATH")
 	if prefix == "" {
 		prefix = "./dbjs/"
@@ -237,7 +273,7 @@ func (dao baseDao) LoadJsFromCache(name string, cache *memcache.Client)string {
 }
 
 // Function used to create and connect one document to another in one transaction
-func (dao baseDao) createAndConnectTx (toColName string, fromColName string, edgeColName string, fromKey string, toObj model.Entity, props map[string]string) string {
+func (dao BaseDao) createAndConnectTx (toColName string, fromColName string, edgeColName string, fromKey string, toObj model.Entity, props map[string]string) string {
 	//log.Printf("createAndConnectTx: %v, %v, %v, %v, %v", toColName, fromColName, edgeColName, fromKey, toObj)
 	write := []string {toColName, edgeColName }
 	q := dao.LoadJsFromCache("addConnectedTx.js", conf.LoadConfig().Cache())
@@ -263,7 +299,7 @@ func (dao baseDao) createAndConnectTx (toColName string, fromColName string, edg
 
 // Function removes connected document. If document has outgoing edges this document should not be deleted
 // Function removes document and all incoming edges in one transaction
-func (dao baseDao) removeConnectedTx (outColName string, edgeColName string, outKey string) string {
+func (dao BaseDao) removeConnectedTx (outColName string, edgeColName string, outKey string) string {
 	//log.Printf("removeConnectedTx: %i, %i, %i", outColName, edgeColName, outKey)
 	write := []string { outColName, edgeColName }
 	q := dao.LoadJsFromCache("removeConnectedTx.js", conf.LoadConfig().Cache())
@@ -288,7 +324,7 @@ func (dao baseDao) removeConnectedTx (outColName string, edgeColName string, out
 }
 
 // Function save any entity in database if the entity has GetKey value then document will be updated otherwise create one
-func (dao baseDao) Save (userEntity model.Entity) (model.Entity, error) {
+func (dao BaseDao) Save (userEntity model.Entity) (model.Entity, error) {
 	val := reflect.ValueOf(userEntity)
 	if val.Kind() != reflect.Ptr {
 		log.Panicf("Entity should be passed by pointer")
@@ -326,7 +362,7 @@ func (dao baseDao) Save (userEntity model.Entity) (model.Entity, error) {
 // Function add text version to the feature. During this process currently active text should be stays inactive but new one stays active
 // Version for the new added text should be oldVersion + 1. Two active versions is not acceptable.
 // All changes will process in one transaction
-func (dao baseDao) AddText (entity model.Entity, text string) *model.VersionedText {
+func (dao BaseDao) AddText (entity model.Entity, text string) *model.VersionedText {
 	versionedText := new (model.VersionedText)
 	versionedText.Text = text
 	versionedText.Active = true
@@ -352,7 +388,7 @@ func (dao baseDao) AddText (entity model.Entity, text string) *model.VersionedTe
 	return versionedText
 }
 
-func (dao baseDao) AddComment (entity model.Entity, title string, text string, userId string) *model.Comment {
+func (dao BaseDao) AddComment (entity model.Entity, title string, text string, userId string) *model.Comment {
 	comment := new (model.Comment)
 	comment.Text = text
 	comment.Title = title
@@ -384,7 +420,7 @@ func (dao baseDao) AddComment (entity model.Entity, title string, text string, u
 }
 
 // Function read cursor into array of versioned text entities
-func (dao baseDao) readVersionedText(cursor *ara.Cursor)[]*model.VersionedText {
+func (dao BaseDao) readVersionedText(cursor *ara.Cursor)[]*model.VersionedText {
 	var text *model.VersionedText = new(model.VersionedText)
 	var versionedTexts []*model.VersionedText
 	for cursor.FetchOne(text) {
@@ -395,7 +431,7 @@ func (dao baseDao) readVersionedText(cursor *ara.Cursor)[]*model.VersionedText {
 }
 
 // Function read cursor into array of versioned text entities
-func (dao baseDao) readComments(cursor *ara.Cursor)[]*model.CommentWithUser {
+func (dao BaseDao) readComments(cursor *ara.Cursor)[]*model.CommentWithUser {
 	var comment *model.CommentWithUser = new(model.CommentWithUser)
 	var comments []*model.CommentWithUser
 	for cursor.FetchOne(comment) {
@@ -407,7 +443,7 @@ func (dao baseDao) readComments(cursor *ara.Cursor)[]*model.CommentWithUser {
 
 // Function retrieves active text for any given object
 // Text retrieved by outgoing edge with label = text and active field of versioned text equals to true
-func (dao baseDao) GetActiveText (entity model.Entity) (*model.VersionedText, error) {
+func (dao BaseDao) GetActiveText (entity model.Entity) (*model.VersionedText, error) {
 	if entity.GetKey() == "" {
 		return nil, errors.New("GetText: Key is not defined")
 	}
@@ -436,7 +472,7 @@ func (dao baseDao) GetActiveText (entity model.Entity) (*model.VersionedText, er
 }
 
 // Function retrieves all versions for objects text
-func (dao baseDao) GetTextVersionList (entity model.Entity)([]model.Entity, error) {
+func (dao BaseDao) GetTextVersionList (entity model.Entity)([]model.Entity, error) {
 	if entity.GetKey() == "" {
 		return nil, errors.New("GetText: Key is not defined")
 	}
@@ -467,7 +503,7 @@ func (dao baseDao) GetTextVersionList (entity model.Entity)([]model.Entity, erro
 }
 
 // Function retrieves text connected to the goiven object with specified text version
-func (dao baseDao) GetTextByVersion (entity model.Entity, version int) (*model.VersionedText, error) {
+func (dao BaseDao) GetTextByVersion (entity model.Entity, version int) (*model.VersionedText, error) {
 	if entity.GetKey() == "" {
 		return nil, errors.New("GetText: Key is not defined")
 	}
@@ -498,7 +534,7 @@ func (dao baseDao) GetTextByVersion (entity model.Entity, version int) (*model.V
 
 // Function retrieves comments for given object
 // To implements paging it use additional parameters pageSize and offset
-func (dao baseDao) GetComments (entity model.Entity, pageSize int, offset int) ([]*model.CommentWithUser, error) {
+func (dao BaseDao) GetComments (entity model.Entity, pageSize int, offset int) ([]*model.CommentWithUser, error) {
 	if entity.GetKey() == "" {
 		return nil, errors.New("GetText: Key is not defined")
 	}
@@ -522,8 +558,6 @@ func (dao baseDao) GetComments (entity model.Entity, pageSize int, offset int) (
 		    displayName: f.displayName
 		}
 	    }`, limit)
-
-	//sql := fmt.Sprintf("FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'comment' %s SORT v._key RETURN v", limit)
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = id

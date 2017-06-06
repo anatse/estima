@@ -9,7 +9,7 @@ import (
 )
 
 type processDao struct {
-	baseDao
+	BaseDao
 }
 
 func NewProcessDao () *processDao {
@@ -43,7 +43,7 @@ func (dao processDao) FindAll(daoFilter DaoFilter, offset int, pageSize int)([]m
 	var prj *model.Process = new(model.Process)
 	// Add filter for disabled (deleted) processes
 	daoFilter.Filter("status", "!=", model.STATUS_DISABLED)
-	cursor, err := dao.baseDao.findAll(daoFilter, prj.GetCollection(), offset, pageSize)
+	cursor, err := dao.BaseDao.findAll(daoFilter, prj.GetCollection(), offset, pageSize)
 	var processes []model.Entity
 	for cursor.FetchOne(prj) {
 		processes = append (processes, *prj)

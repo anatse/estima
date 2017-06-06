@@ -1,29 +1,26 @@
 package services
 
 import (
-	ara "github.com/diegogub/aranGO"
 	"ru/sbt/estima/model"
-	"ru/sbt/estima/conf"
 )
 
-type userDao struct {
-	baseDao
+type UserDao struct {
+	BaseDao
 }
 
-func NewUserDao () *userDao {
-	config := conf.LoadConfig()
+type userComputePF func (dao UserDao)
+func WithUserDao (cpf userComputePF) (error) {
+	err := GetPool().Use(func(iDao interface{}) {
+		dao := *iDao.(*BaseDao)
+		cpf (UserDao{dao})
+	})
 
-	var dao = userDao{}
-	s, err := ara.Connect(config.Database.Url, config.Database.User, config.Database.Password, config.Database.Log)
-	model.CheckErr (err)
-
-	dao.session = s
-	dao.database = s.DB(config.Database.Name)
-	return &dao
+	//model.CheckErr(err)
+	return err
 }
 
 // Function used to find user by user name
-func (dao userDao) FindOne (entity model.Entity) error {
+func (dao UserDao) FindOne (entity model.Entity) error {
 	user := entity.(*model.EstimaUser)
 	users, err := dao.FindAll (NewFilter().Filter("name", "==", user.Name), 0, 0)
 	model.CheckErr (err)
@@ -36,9 +33,9 @@ func (dao userDao) FindOne (entity model.Entity) error {
 }
 
 // Function search all users using parameters in filter
-func (dao userDao) FindAll(daoFilter DaoFilter, offset int, pageSize int)([]model.Entity, error) {
+func (dao UserDao) FindAll(daoFilter DaoFilter, offset int, pageSize int)([]model.Entity, error) {
 	var user *model.EstimaUser = new(model.EstimaUser)
-	cursor, err := dao.baseDao.findAll(daoFilter, user.GetCollection(), offset, pageSize)
+	cursor, err := dao.BaseDao.findAll(daoFilter, user.GetCollection(), offset, pageSize)
 	model.CheckErr(err)
 
 	var users []model.Entity
@@ -50,7 +47,7 @@ func (dao userDao) FindAll(daoFilter DaoFilter, offset int, pageSize int)([]mode
 	return users, err
 }
 
-func (dao userDao) CreateIndexes (colName string) error {
+func (dao UserDao) CreateIndexes (colName string) error {
 	col := dao.Database().Col(colName)
 	return col.CreatePersistent(true, "name")
 }

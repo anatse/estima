@@ -93,13 +93,15 @@ func instService (w http.ResponseWriter, req *http.Request) {
 		"tsprices",
 	}
 
-	dao := services.NewUserDao ()
-	for _, col := range collections {
-		dao.Col(col)
-	}
+	services.GetPool().Use(func(iDao interface{}) {
+		dao := iDao.(services.BaseDao)
+		for _, col := range collections {
+			dao.Col(col)
+		}
 
-	// create edge collection
-	dao.EdgeCol(model.PRJ_EDGES)
+		// create edge collection
+		dao.EdgeCol(model.PRJ_EDGES)
+	})
 }
 
 func nextStatuses (w http.ResponseWriter, r *http.Request) {
@@ -125,11 +127,13 @@ func PrepareRoute () *mux.Router {
 	var ps services.ProjectService
 	var pcs services.ProcessService
 	var fs services.FeatureService
+	var uss services.UserStoryService
 
 	model.RegisterService("user", us)
 	model.RegisterService("project", ps)
 	model.RegisterService("process", pcs)
 	model.RegisterService("feature", fs)
+	model.RegisterService("userStory", uss)
 
 	r := model.GetRouter()
 	r.Handle("/api/v.0.0.1/get-token", services.GetTokenHandler).Methods("GET").Name("Login router (GET). Query parameters uname & upass")
@@ -141,6 +145,7 @@ func PrepareRoute () *mux.Router {
 	ps.ConfigRoutes(r, JwtHandler)
 	pcs.ConfigRoutes(r, JwtHandler)
 	fs.ConfigRoutes(r, JwtHandler)
+	uss.ConfigRoutes(r, JwtHandler)
 
 	// Function build router for get router information
 	var routesInformation = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

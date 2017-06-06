@@ -9,7 +9,7 @@ import (
 )
 
 type projectDao struct {
-	baseDao
+	BaseDao
 }
 
 func NewProjectDao () *projectDao {
@@ -51,7 +51,7 @@ func (dao projectDao) SetStatus (prjEntity model.Entity, status model.Status) (m
 
 func (dao projectDao) FindAll(daoFilter DaoFilter, offset int, pageSize int)([]model.Entity, error) {
 	var prj *model.Project = new(model.Project)
-	cursor, err := dao.baseDao.findAll(daoFilter, prj.GetCollection(), offset, pageSize)
+	cursor, err := dao.BaseDao.findAll(daoFilter, prj.GetCollection(), offset, pageSize)
 	var projects []model.Entity
 	for cursor.FetchOne(prj) {
 		projects = append (projects, *prj)
@@ -71,8 +71,6 @@ func (dao projectDao) FindByUser (user model.EstimaUser, offset int, pageSize in
 	var query ara.Query
 	query.Aql = sql
 	query.BindVars = filterMap
-
-	log.Printf("query: %v", query)
 
 	var prj *model.Project = new(model.Project)
 	var projects []model.Entity

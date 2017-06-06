@@ -8,7 +8,7 @@ import (
 )
 
 type featureDao struct {
-	baseDao
+	BaseDao
 }
 
 func NewFeatureDao () *featureDao {
@@ -61,7 +61,7 @@ func (dao featureDao) FindByProcess (processId string)([]model.Entity, error) {
 // Offset and pageSize may be used for paging if no paging needed user zero values for both
 func (dao featureDao) FindAll(daoFilter DaoFilter, offset int, pageSize int)([]model.Entity, error) {
 	var feature *model.Feature = new(model.Feature)
-	cursor, err := dao.baseDao.findAll(daoFilter, feature.GetCollection(), offset, pageSize)
+	cursor, err := dao.BaseDao.findAll(daoFilter, feature.GetCollection(), offset, pageSize)
 	var features []model.Entity
 	for cursor.FetchOne(feature) {
 		features = append (features, *feature)

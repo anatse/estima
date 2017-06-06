@@ -8,14 +8,16 @@
         "protocol": "fake",
         "host": "",
         "dn": "",
-        "port": 389
+        "port": 389,
+        "poolSize": 2
       },
       "Database": {
         "url": "http://localhost:8529",
         "user": "root",
         "password": "root",
         "log": false,
-        "name": "estima"
+        "name": "estima",
+        "poolSize": 2
       },
       "Auth": {
         "cookieName": "Estima",

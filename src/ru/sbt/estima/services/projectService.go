@@ -57,8 +57,7 @@ func (ps ProjectService) findAll (w http.ResponseWriter, r *http.Request) {
 
 func (ps ProjectService) create (w http.ResponseWriter, r *http.Request) {
 	user := model.GetUserFromRequest (w, r)
-	userService := model.FindService("user").(UserService)
-	model.CheckErr(userService.getDao().FindOne(user))
+	model.CheckErr(WithUserDao(func(dao UserDao) {dao.FindOne(user)}))
 
 	var prj model.Project
 	model.ReadJsonBody(r, &prj)
@@ -138,8 +137,9 @@ func (ps ProjectService) addUser (w http.ResponseWriter, r *http.Request) {
 
 	var user model.EstimaUser
 	user.SetKey(userInfo.Key)
-	userService := model.FindService("user").(UserService)
-	err = userService.getDao().FindById(&user)
+	WithUserDao(func(dao UserDao) {
+		err = dao.FindById(&user)
+	})
 	model.CheckErr (err)
 
 	log.Printf("found user: %v\n", user)
@@ -154,12 +154,13 @@ func (ps ProjectService) removeUser (w http.ResponseWriter, r *http.Request) {
 	prjEntity := ps.getPrjFromURL(r)
 
 	var user model.EstimaUser
-	userService := model.FindService("user").(UserService)
-	model.ReadJsonBody(r, &user)
-	err := userService.getDao().FindById(&user)
-	model.CheckErr (err)
+	WithUserDao(func(dao UserDao) {
+		model.ReadJsonBody(r, &user)
+		err := dao.FindById(&user)
+		model.CheckErr(err)
+	})
 
-	err = ps.getDao().RemoveUser(prjEntity.(model.Project), user)
+	err := ps.getDao().RemoveUser(prjEntity.(model.Project), user)
 	model.CheckErr (err)
 
 	model.WriteResponse(true, nil, nil, w)
@@ -206,12 +207,11 @@ func (ps ProjectService) removeStage (w http.ResponseWriter, r *http.Request) {
 
 func (ps ProjectService) findByUser (w http.ResponseWriter, r *http.Request) {
 	user := model.GetUserFromRequest (w, r)
-	userSrv := model.FindService("user").(UserService)
-	model.CheckErr(userSrv.getDao().FindOne(user))
+	WithUserDao(func(dao UserDao) {
+		model.CheckErr(dao.FindOne(user))
+	})
 	offset := model.GetInt (r.URL.Query(), "offset", 0)
 	pageSize := model.GetInt (r.URL.Query(), "pageSize", 0)
-
-	log.Printf("find by user: %v %d %d", user, offset, pageSize)
 	projects, _ := ps.getDao().FindByUser(*user, offset, pageSize)
 
 	// Write array response

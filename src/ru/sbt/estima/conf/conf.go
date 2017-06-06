@@ -15,6 +15,7 @@ type Ldap struct {
 	Dn string
 	BindDN string `json:"bindDN"`
 	BindPwd string `json:"bindPwd"`
+	PoolSize uint `json:"poolSize"`
 }
 
 type Database struct {
@@ -23,6 +24,7 @@ type Database struct {
 	Password string
 	Log bool
 	Name string
+	PoolSize uint `json:"poolSize"`
 }
 
 type Auth struct {
