@@ -3,7 +3,6 @@ package services
 import (
 	ara "github.com/diegogub/aranGO"
 	"ru/sbt/estima/model"
-	"log"
 )
 
 type userStoryDao struct {
@@ -26,8 +25,6 @@ func (dao userStoryDao) readCursorWithText (cursor *ara.Cursor)[]model.Entity {
 	var userStory *model.UserStoryWithText = new(model.UserStoryWithText)
 	var entities []model.Entity
 	for cursor.FetchOne(userStory) {
-		log.Printf("Us: %v\n", userStory)
-
 		entities = append (entities, *userStory)
 		userStory = new(model.UserStoryWithText)
 	}
@@ -35,7 +32,6 @@ func (dao userStoryDao) readCursorWithText (cursor *ara.Cursor)[]model.Entity {
 }
 
 func (dao userStoryDao) FindByFeature (featureId string)([]model.Entity, error) {
-	//sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'userStory' SORT v.serial RETURN v`
 	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'userStory' SORT v.serial
 		LET texts = (
 		    FOR t, te IN 1..1 outBOUND v._id @@edgeCollection FILTER te.label == 'text' && t.active RETURN t
@@ -53,8 +49,6 @@ func (dao userStoryDao) FindByFeature (featureId string)([]model.Entity, error) 
 	var query ara.Query
 	query.Aql = sql
 	query.BindVars = filterMap
-
-	log.Printf("Query: %v", query)
 
 	cursor, err := dao.Database().Execute(&query)
 	model.CheckErr(err)

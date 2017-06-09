@@ -127,7 +127,7 @@ func (fs UserStoryService) getComments (w http.ResponseWriter, r *http.Request) 
 		for idx, com := range comments {
 			iComments[idx] = map[string]interface{}{
 				"text":       com.Comment.Text,
-				"changeDate": com.Comment.CreateDate,
+				"createDate": com.Comment.CreateDate,
 				"title":      com.Comment.Title,
 				"user":       com.User,
 			}

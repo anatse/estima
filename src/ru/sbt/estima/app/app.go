@@ -12,6 +12,7 @@ import (
 	"os"
 	"log"
 	"fmt"
+	"compress/gzip"
 )
 
 func JwtHandler(h http.Handler) http.Handler {
@@ -166,8 +167,8 @@ func AppRun () {
 	model.InitLdapPool(2)
 
 	r := PrepareRoute()
-	//err := http.ListenAndServeTLS(":9443", "server.crt", "server.key", handlers.LoggingHandler(os.Stdout, r))
-	err := http.ListenAndServe(":9080", handlers.LoggingHandler(os.Stdout, r))
+	//err := http.ListenAndServeTLS(":9443", "server.crt", "server.key", handlers.CompressHandler(handlers.LoggingHandler(os.Stdout, r)))
+	err := http.ListenAndServe(":9080", handlers.CompressHandlerLevel(handlers.LoggingHandler(os.Stdout, r), gzip.BestCompression))
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}

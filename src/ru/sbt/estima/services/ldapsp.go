@@ -101,14 +101,16 @@ func login (w http.ResponseWriter, username string, password string) {
 	}
 
 	// Try to find information from database. Search user by name
-	WithUserDao (func(dao UserDao) {
-		dao.FindOne (user)
+	model.CheckErr (WithUserDao (func(dao UserDao) {
+		err = dao.FindOne (user)
+		model.CheckErr (err)
+
 		if user.Id == "" {
 			// Update user information in database
 			_, err = dao.Save(user)
 			model.CheckErr (err)
 		}
-	})
+	}))
 
 	createCookie(*user, w)
 

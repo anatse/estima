@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"sync"
+	"log"
 )
 
 type poolElement struct {
@@ -36,13 +37,22 @@ func NewPool (size uint, crf CRF, rrf RRF) *Pool {
 	return &pool
 }
 
-func (pool *Pool) Use (cpf ComputePF) error {
+func (pool *Pool) Use (cpf ComputePF) (err error) {
+	log.Printf("Allocating pool for: %v, current size: %d\n", cpf, pool.currentSize)
+
 	pobj, err := pool.Get()
 	if err != nil {
 		return err
 	}
+	defer (func() {
+		err = pool.Release(pobj)
+		log.Printf("Processed. Released pool for: %v, current size: %d\n", cpf, pool.currentSize)
+	})()
+
+	log.Printf("Allocated pool for: %v, current size: %d, processing...\n", cpf, pool.currentSize)
 	cpf (pobj)
-	return pool.Release(pobj)
+	log.Printf("Processed call. Pool for: %v, current size: %d\n", cpf, pool.currentSize)
+	return err
 }
 
 func (pool *Pool) Close () {

@@ -142,8 +142,6 @@ func (ps ProjectService) addUser (w http.ResponseWriter, r *http.Request) {
 	})
 	model.CheckErr (err)
 
-	log.Printf("found user: %v\n", user)
-	log.Printf("Project: %v\n", prjEntity)
 	err = ps.getDao().AddUser(prjEntity.(model.Project), user, userInfo.Role)
 	model.CheckErr (err)
 

@@ -152,6 +152,123 @@ function createUSDS () {
     });
 }
 
+function createUsCommentDS () {
+    isc.DataSource.create({
+        dataFormat: "json",
+        allowAdvancedCriteria: true,
+        ID: "usCommentListDS",
+        recordXPath: "body",
+        operationBindings: [
+            {operationType: "fetch", dataProtocol: "", requestProperties: {httpMethod: "GET"}, dataURL: "/api/v.0.0.1/userstory/{0}/comment"},
+            {operationType: "add", dataProtocol: "postMessage", requestProperties: {httpMethod: "POST"}, dataURL: "/api/v.0.0.1/userstory/{0}/addcomment"},
+        ],
+        transformRequest: function (dsRequest) {
+            switch (dsRequest.operationType) {
+                case "add":
+                    return JSON.stringify(dsRequest.data, function (key, value) {
+                        return value;
+                    });
+                    break;
+
+                default:
+                    return dsRequest.data;
+            }
+        },
+        getDataURL: function (dsRequest) {
+            var operationBinding = this.getOperationBinding(dsRequest);
+            var url = "";
+            switch (dsRequest.operationType) {
+                case "add":
+                case "fetch":
+                    url = operationBinding.dataURL.format(dsRequest.originalData.usKey);
+                    break;
+
+                default:
+                    url = operationBinding.dataURL.format(dsRequest.originalData._key);
+            }
+
+            return url;
+        },
+        fields: [{
+            name: "title",
+            validators: []
+        }, {
+            name: "text",
+            validators: []
+        }, {
+            name: "createDate",
+            type: 'datetime',
+            validators: []
+        }, {
+            name: "_key",
+            primaryKey: true,
+            hidden: true
+        }, {
+            name: "user.displayName"
+        }, {
+            name: "usKey",
+            foreignKey: "usListDS._key",
+            hidden: true
+        }]
+    });
+}
+
+function createUSCommentGrid () {
+    createUsCommentDS();
+
+    var editControls = isc.ToolStrip.create({
+        members: [
+            isc.LayoutSpacer.create({ width:"*" }),
+            isc.ToolStripButton.create({
+                icon: "[SKIN]/actions/add.png",
+                prompt: "Add record",
+                click: function() {
+                    if (!usList.getSelectedRecord())
+                        return false;
+
+                    usCommentList.startEditingNew({usKey: usList.getSelectedRecord()._key});
+                    return false;
+                }
+            })
+        ]
+    });
+
+    return isc.ListGrid.create({
+        ID: "usCommentList",
+        showResizeBar: true,
+        alternateRecordStyles:true,
+        showAllRecords:true,
+        dataSource: usCommentListDS,
+        autoFetchData: false,
+        canEdit: false,
+        wrapCells: true,
+        cellHeight: 60,
+        gridComponents:[editControls, "header", "body"],
+        fields:[{
+            name: "title",
+            title: "Заголовок",
+            width: 100
+        }, {
+            name: "text",
+            title: "Текст",
+            wrap: true,
+            width: 300
+        }, {
+            name: "createDate",
+            title: "Создан",
+            width: 100,
+            type: 'datetime'
+        }, {
+            name: "user.displayName",
+            title: "Создал",
+            width: 200
+        }],
+        editComplete: function() {
+            refreshRelatedGrid(usList.getSelectedRecord(), usList, usCommentList);
+        }
+    });
+}
+
 function createWindowText () {
     isc.Window.create({
         ID: "textEditWindow",
@@ -161,14 +278,16 @@ function createWindowText () {
         isModal: true,
         showModalMask: true,
         autoDraw: false,
+        titleOrientation: "top",
         show: function (values) {
-            userEditForm.setValues(values);
+            textEditForm.setValues(values);
+            textEditForm.setTitleOrientation("top");
             this.Super("show", arguments)
         },
         items: [isc.DynamicForm.create ({
             ID: "textEditForm",
             fields: [
-                {name:"text", type:"textArea"},
+                {name:"text", type:"textArea", width: 300, height: 200},
                 {
                     title:"OK",
                     type:"button",
@@ -176,7 +295,6 @@ function createWindowText () {
                         var values = textEditForm.getValues()
                         var url = "/api/v.0.0.1/userstory/" + usList.getSelectedRecord()._key + "/addtext";
                         isc.RPCManager.sendRequest({ data: JSON.stringify(values), callback: function (data) {
-                            console.log(arguments)
                             refreshRelatedGrid(featureList.getSelectedRecord(), featureList, usList);
                             textEditWindow.close();
                         }, actionURL: url, httpMethod: 'POST', contentType: "application/json",
@@ -222,13 +340,13 @@ function createUsGrid () {
                     if (!usList.getSelectedRecord())
                         return false;
 
-                    textEditWindow.show();
+                    textEditWindow.show({text: usList.getSelectedRecord().text});
                 }
             })
         ]
     });
 
-    return isc.ListGrid.create({
+    var usGrid = isc.ListGrid.create({
         ID: "usList",
         showResizeBar: true,
         alternateRecordStyles:true,
@@ -241,12 +359,19 @@ function createUsGrid () {
         expansionMode: "detailField",
         detailField: "text",
         selectionUpdated : function (data) {
-            console.log (data);
+            refreshRelatedGrid(usList.getSelectedRecord(), usList, usCommentList);
         },
         editComplete: function() {
             refreshRelatedGrid(featureList.getSelectedRecord(), featureList, usList);
         }
     });
+
+    return isc.VLayout.create ({
+        members: [
+            usGrid,
+            createUSCommentGrid()
+        ]
+    })
 }
 
 function createFeatureGrid () {
@@ -310,8 +435,6 @@ function createFeatureGrid () {
     });
 
     return isc.HLayout.create({
-        // width: "100%",
-        // height: "100%",
         members: [
             featureList,
             tabSet

@@ -7,7 +7,7 @@ import (
 
 type Comment struct {
 	ara.Document `json:-`
-	Title string `json:"name,omitempty"`
+	Title string `json:"title,omitempty"`
 	Text string `json:"text,omitempty,required"`
 	CreateDate time.Time `json:"createDate,omitempty"`
 }

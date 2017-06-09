@@ -4,7 +4,6 @@ import (
 	ara "github.com/diegogub/aranGO"
 	"ru/sbt/estima/model"
 	"ru/sbt/estima/conf"
-	"log"
 )
 
 type featureDao struct {
@@ -37,8 +36,6 @@ func (dao featureDao) readCursor (cursor *ara.Cursor)[]model.Entity {
 // Function find all processes related to specified by processId process
 // processId parameter should be arangodb document identifier in format 'collection/key'
 func (dao featureDao) FindByProcess (processId string)([]model.Entity, error) {
-	log.Printf("find by process: %v", processId)
-	
 	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'feature' SORT v.importance RETURN v`
 
 	filterMap := make(map[string]interface{})

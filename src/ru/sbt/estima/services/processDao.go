@@ -4,7 +4,6 @@ import (
 	ara "github.com/diegogub/aranGO"
 	"ru/sbt/estima/model"
 	"ru/sbt/estima/conf"
-	"log"
 	"fmt"
 )
 
@@ -35,7 +34,6 @@ func (dao processDao) SetStatus (prjEntity model.Entity, status model.Status) (m
 	// Entity found
 	prjEntity, err = dao.Save(*prc)
 	*prc = prjEntity.(model.Process)
-	log.Println(prc)
 	return *prc, err
 }
 

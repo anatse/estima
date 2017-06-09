@@ -274,7 +274,6 @@ func (dao BaseDao) LoadJsFromCache(name string, cache *memcache.Client)string {
 
 // Function used to create and connect one document to another in one transaction
 func (dao BaseDao) createAndConnectTx (toColName string, fromColName string, edgeColName string, fromKey string, toObj model.Entity, props map[string]string) string {
-	//log.Printf("createAndConnectTx: %v, %v, %v, %v, %v", toColName, fromColName, edgeColName, fromKey, toObj)
 	write := []string {toColName, edgeColName }
 	q := dao.LoadJsFromCache("addConnectedTx.js", conf.LoadConfig().Cache())
 
@@ -300,7 +299,6 @@ func (dao BaseDao) createAndConnectTx (toColName string, fromColName string, edg
 // Function removes connected document. If document has outgoing edges this document should not be deleted
 // Function removes document and all incoming edges in one transaction
 func (dao BaseDao) removeConnectedTx (outColName string, edgeColName string, outKey string) string {
-	//log.Printf("removeConnectedTx: %i, %i, %i", outColName, edgeColName, outKey)
 	write := []string { outColName, edgeColName }
 	q := dao.LoadJsFromCache("removeConnectedTx.js", conf.LoadConfig().Cache())
 
@@ -405,7 +403,8 @@ func (dao BaseDao) AddComment (entity model.Entity, title string, text string, u
 		"fromColName": entity.GetCollection(),
 		"edgeColName": model.PRJ_EDGES,
 		"toColName": comment.GetCollection(),
-		"comment": comment, "userId": userId}
+		"comment": comment,
+		"userId": userId}
 
 	err := t.Execute(dao.Database())
 	model.CheckErr(err)
@@ -548,7 +547,7 @@ func (dao BaseDao) GetComments (entity model.Entity, pageSize int, offset int) (
 		limit = "\nLIMIT " + strconv.Itoa(pageSize)
 	}
 
-	sql := fmt.Sprintf(`FOR v, e IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'comment' %s SORT v._key
+	sql := fmt.Sprintf(`FOR v, e IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'comment' %s SORT v._key DESC
 	    FOR f,i IN 1..1 INBOUND v._id @@edgeCollection FILTER i.label == 'userComment'
 	    RETURN {
 		comment: v,
