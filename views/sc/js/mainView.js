@@ -8,7 +8,6 @@ function createSplitPane () {
     });
 
     var splitPane = isc.SectionStack.create ({
-        width: "30%",
         showResizeBar: true,
         visibilityMode: "multiple",
         sections: [{
@@ -47,20 +46,7 @@ function createSplitPane () {
 }
 
 function createTabs () {
-    return isc.TabSet.create({
-        //ID: "topTabSet",
-        autoDraw: false,
-        tabBarPosition: "top",
-        tabs: [
-            {
-                title: "Features/stories",
-                pane: createFeatureGrid()
-            },
-            {
-                title: "Components"
-            }
-        ]
-    });
+    return createFeatureGrid();
 }
 
 function refreshRelatedGrid (data, parent, child) {
@@ -357,7 +343,7 @@ isc.HLayout.create({
         createSplitPane(),
         isc.SectionStack.create ({
             showResizeBar: true,
-            width: "20%",
+            width: "15%",
             visibilityMode: "multiple",
             sections: [{
                 expanded: true,
@@ -371,7 +357,7 @@ isc.HLayout.create({
                 ]
             }, {
                 expanded: true,
-                title: "Процессы",
+                title: "E2E Процессы",
                 items: [
                     createProcessGrid()
                 ],
@@ -381,6 +367,7 @@ isc.HLayout.create({
                 ]
             }]
         }),
-        createTabs()
+        createTabs(),
+        createTslayput()
     ]
 });

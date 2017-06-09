@@ -33,6 +33,13 @@ func (cmp TechStory) AraDoc() (ara.Document) {
 	return cmp.Document
 }
 
+func (ts TechStory) CopyChanged (entity Entity) Entity {
+	story := entity.(UserStory)
+	if story.Name != "" {ts.Name = story.Name}
+	if story.Description != "" {ts.Description = story.Description}
+	return ts
+}
+
 func (cmp TechStory)GetKey() string {
 	return cmp.Key
 }
@@ -43,4 +50,28 @@ func (cmp TechStory) GetCollection() string {
 
 func (cmp TechStory) GetError()(string, bool) {
 	return cmp.Message, cmp.Error
+}
+
+type TechStoryWithText struct {
+	UserStory
+	Text string `json:"text"`
+	Version int `json:"version"`
+}
+
+func (ts TechStoryWithText) Entity() interface{} {
+	return struct{
+		*TechStoryWithText
+
+		OmitId  omit `json:"_id,omitempty"`
+		OmitRev omit `json:"_rev,omitempty"`
+
+		OmitError   omit   `json:"error,omitempty"`
+		OmitMessage omit `json:"errorMessage,omitempty"`
+	} {
+		&ts,
+		nil,
+		nil,
+		nil,
+		nil,
+	}
 }

@@ -95,7 +95,7 @@ func instService (w http.ResponseWriter, req *http.Request) {
 	}
 
 	services.GetPool().Use(func(iDao interface{}) {
-		dao := iDao.(services.BaseDao)
+		dao := iDao.(*services.BaseDao)
 		for _, col := range collections {
 			dao.Col(col)
 		}
@@ -129,15 +129,17 @@ func PrepareRoute () *mux.Router {
 	var pcs services.ProcessService
 	var fs services.FeatureService
 	var uss services.UserStoryService
+	var tss services.TechStoryService
 
 	model.RegisterService("user", us)
 	model.RegisterService("project", ps)
 	model.RegisterService("process", pcs)
 	model.RegisterService("feature", fs)
 	model.RegisterService("userStory", uss)
+	model.RegisterService("techStory", tss)
 
 	r := model.GetRouter()
-	r.Handle("/api/v.0.0.1/get-token", services.GetTokenHandler).Methods("GET").Name("Login router (GET). Query parameters uname & upass")
+	r.Handle("/api/v.0.0.1/get-token", services.GetTokenHandler).Methods("GET").Name("Login router (GET). Query parameters uname & upass. This router is deprecated and will be removed in next release")
 	r.Handle("/api/v.0.0.1/login", services.Login).Methods("POST").Name("Login router (POST). Body: uname & upass")
 	r.Handle("/api/v.0.0.1/init", http.HandlerFunc(instService)).Methods("POST", "GET").Name("Create database collections")
 	r.Handle("/api/v.0.0.1/nextStatuses", JwtHandler(http.HandlerFunc(nextStatuses))).Methods("POST", "GET").Name("Get next statuses for current status and user")
@@ -147,6 +149,7 @@ func PrepareRoute () *mux.Router {
 	pcs.ConfigRoutes(r, JwtHandler)
 	fs.ConfigRoutes(r, JwtHandler)
 	uss.ConfigRoutes(r, JwtHandler)
+	tss.ConfigRoutes(r, JwtHandler)
 
 	// Function build router for get router information
 	var routesInformation = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

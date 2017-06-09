@@ -216,23 +216,6 @@ function createUsCommentDS () {
 function createUSCommentGrid () {
     createUsCommentDS();
 
-    var editControls = isc.ToolStrip.create({
-        members: [
-            isc.LayoutSpacer.create({ width:"*" }),
-            isc.ToolStripButton.create({
-                icon: "[SKIN]/actions/add.png",
-                prompt: "Add record",
-                click: function() {
-                    if (!usList.getSelectedRecord())
-                        return false;
-
-                    usCommentList.startEditingNew({usKey: usList.getSelectedRecord()._key});
-                    return false;
-                }
-            })
-        ]
-    });
-
     return isc.ListGrid.create({
         ID: "usCommentList",
         showResizeBar: true,
@@ -243,7 +226,6 @@ function createUSCommentGrid () {
         canEdit: false,
         wrapCells: true,
         cellHeight: 60,
-        gridComponents:[editControls, "header", "body"],
         fields:[{
             name: "title",
             title: "Заголовок",
@@ -310,43 +292,7 @@ function createUsGrid () {
     createUSDS();
     createWindowText ();
 
-    var editControls = isc.ToolStrip.create({
-        members: [
-            isc.LayoutSpacer.create({ width:"*" }),
-            isc.ToolStripButton.create({
-                icon: "[SKIN]/actions/add.png",
-                prompt: "Add record",
-                click: function() {
-                    if (!featureList.getSelectedRecord())
-                        return false;
-
-                    usList.startEditingNew({featureKey: featureList.getSelectedRecord()._key, serial: usList.getData().totalRows + 1});
-                    return false;
-                }
-            }),
-            isc.ToolStripButton.create({
-                icon: "[SKIN]/actions/remove.png",
-                prompt: "Remove selected record",
-                click: function () {
-                    usList.removeSelectedData(function () {
-                        refreshRelatedGrid(featureList.getSelectedRecord(), featureList, usList);
-                    })
-                }
-            }),
-            isc.ToolStripButton.create({
-                icon: "[SKIN]/actions/edit.png",
-                prompt: "Add text to the selected record",
-                click: function () {
-                    if (!usList.getSelectedRecord())
-                        return false;
-
-                    textEditWindow.show({text: usList.getSelectedRecord().text});
-                }
-            })
-        ]
-    });
-
-    var usGrid = isc.ListGrid.create({
+    return isc.ListGrid.create({
         ID: "usList",
         showResizeBar: true,
         alternateRecordStyles:true,
@@ -354,78 +300,32 @@ function createUsGrid () {
         dataSource: usListDS,
         autoFetchData: false,
         canEdit: true,
-        gridComponents:[editControls, "header", "body"],
         canExpandRecords: true,
         expansionMode: "detailField",
         detailField: "text",
         selectionUpdated : function (data) {
             refreshRelatedGrid(usList.getSelectedRecord(), usList, usCommentList);
+            refreshRelatedGrid(usList.getSelectedRecord(), usList, tsList);
         },
         editComplete: function() {
             refreshRelatedGrid(featureList.getSelectedRecord(), featureList, usList);
         }
     });
-
-    return isc.VLayout.create ({
-        members: [
-            usGrid,
-            createUSCommentGrid()
-        ]
-    })
 }
 
 function createFeatureGrid () {
     createFeatureDS ();
 
-    var editControls = isc.ToolStrip.create({
-        members: [
-            isc.LayoutSpacer.create({ width:"*" }),
-            isc.ToolStripButton.create({
-                icon: "[SKIN]/actions/add.png",
-                prompt: "Add record",
-                click: function() {
-                    if (!processList.getSelectedRecord())
-                        return false;
-
-                    featureList.startEditingNew({processKey: processList.getSelectedRecord()._key});
-                    return false;
-                }
-            }),
-            isc.ToolStripButton.create({
-                icon: "[SKIN]/actions/remove.png",
-                prompt: "Remove selected record",
-                click: function () {
-                    featureList.removeSelectedData(function () {
-                        refreshRelatedGrid(processList.getSelectedRecord(), processList, featureList);
-                    })
-                }
-            })
-        ]
-    });
-
-    var tabSet = isc.TabSet.create({
-        autoDraw: false,
-        tabBarPosition: "top",
-        tabs: [
-            {
-                title: "User Stories",
-                pane: createUsGrid()
-            },
-            {
-                title: "Feature components"
-            }
-        ]
-    });
-
     isc.ListGrid.create({
         ID: "featureList",
+        height: "25%",
         showResizeBar: true,
         alternateRecordStyles:true,
         showAllRecords:true,
         dataSource: featureListDS,
         autoFetchData: false,
         canEdit: true,
-        gridComponents:[editControls, "header", "body"],
+        title: "Фичи",
         selectionUpdated : function (data) {
             refreshRelatedGrid(featureList.getSelectedRecord(), featureList, usList);
         },
@@ -434,10 +334,120 @@ function createFeatureGrid () {
         }
     });
 
-    return isc.HLayout.create({
-        members: [
-            featureList,
-            tabSet
-        ]
+    var splitPane = isc.SectionStack.create ({
+        width: "30%",
+        showResizeBar: true,
+        visibilityMode: "multiple",
+        sections: [{
+            expanded: true,
+            title: "Feature",
+            items: [
+                featureList
+            ],
+            controls: [
+                isc.ImgButton.create({
+                    src: "[SKIN]/actions/add.png",
+                    size: 16,
+                    showFocused: false,
+                    showRollOver: false,
+                    showDown: false,
+                    prompt: "Добавить",
+                    click: function() {
+                        if (!processList.getSelectedRecord())
+                            return false;
+
+                        featureList.startEditingNew({processKey: processList.getSelectedRecord()._key});
+                        return false;
+                    }
+                }),
+                isc.ImgButton.create({
+                    autoDraw: false,
+                    src: "[SKIN]actions/remove.png",
+                    size: 16,
+                    showFocused: false, showRollOver: false, showDown: false,
+                    prompt: "Удалить",
+                    click: function () {
+                        featureList.removeSelectedData(function () {
+                            refreshRelatedGrid(processList.getSelectedRecord(), processList, featureList);
+                        })
+                    }
+                })
+            ]
+        }, {
+            expanded: true,
+            title: "User Story",
+            items: [
+                createUsGrid()
+            ],
+            controls: [
+                isc.ImgButton.create({
+                    src: "[SKIN]/actions/add.png",
+                    size: 16,
+                    showFocused: false,
+                    showRollOver: false,
+                    showDown: false,
+                    prompt: "Добавить стори",
+                    click: function() {
+                        if (!featureList.getSelectedRecord())
+                            return false;
+
+                        usList.startEditingNew({featureKey: featureList.getSelectedRecord()._key, serial: usList.getData().totalRows + 1});
+                        return false;
+                    }
+                }),
+                isc.ImgButton.create({
+                    src: "[SKIN]/actions/remove.png",
+                    size: 16,
+                    showFocused: false,
+                    showRollOver: false,
+                    showDown: false,
+                    prompt: "Удалить стори",
+                    click: function () {
+                        usList.removeSelectedData(function () {
+                            refreshRelatedGrid(featureList.getSelectedRecord(), featureList, usList);
+                        })
+                    }
+                }),
+                isc.ImgButton.create({
+                    src: "[SKIN]/actions/edit.png",
+                    size: 16,
+                    showFocused: false,
+                    showRollOver: false,
+                    showDown: false,
+                    prompt: "Добавить текст к сторе",
+                    click: function () {
+                        if (!usList.getSelectedRecord())
+                            return false;
+
+                        textEditWindow.show({text: usList.getSelectedRecord().text});
+                    }
+                })
+            ]
+        }, {
+            expanded: true,
+            title: "Комментарии",
+            items: [
+                createUSCommentGrid()
+            ],
+            controls: [
+                isc.ImgButton.create({
+                    src: "[SKIN]/actions/add.png",
+                    size: 16,
+                    showFocused: false,
+                    showRollOver: false,
+                    showDown: false,
+                    prompt: "Добавить комментарий",
+                    click: function() {
+                        if (!usList.getSelectedRecord())
+                            return false;
+
+                        usCommentList.startEditingNew({usKey: usList.getSelectedRecord()._key});
+                        return false;
+                    }
+                })
+            ]
+        }]
     });
+
+    return splitPane;
 }
