@@ -149,6 +149,11 @@ npm run start
 npm run build
 ```
 
+Для запуска сервера, БД и сборки UI
+```
+./startDev.sh
+```
+
 ## Unit тестирование
 
 * Установить переменную окружения CONFIG_PATH = полный путь до файла config.json
