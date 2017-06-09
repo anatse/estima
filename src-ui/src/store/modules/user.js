@@ -26,7 +26,6 @@ const getters = {
   error: state => state.error,
 };
 
-
 // actions
 const actions = {
   [TActions.USER_LOGIN]({ commit }, { uname, upass }) {
@@ -41,8 +40,11 @@ const actions = {
     );
   },
   [TActions.USER_LOGOUT]({ commit }) {
-    cookie.del(constGlobal.cookieAuthName);
-    commit(TMutations.USER_LOGOUT);
+    return new Promise((resolve) => {
+      cookie.del(constGlobal.cookieAuthName);
+      commit(TMutations.USER_LOGOUT);
+      resolve();
+    });
   },
   [TActions.USER_CURRENT]({ commit, state }) {
     return userApi.current(cookie.get(constGlobal.cookieAuthName), state.details).then(

@@ -11,7 +11,6 @@ const PAGE_NAME = {
   PROJECT_PAGE: 'PROJECT_PAGE',
 };
 
-
 export default {
   cookieAuthName,
   REST,
