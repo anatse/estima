@@ -116,7 +116,7 @@ func executeQuery(query string, schema graphql.Schema) *graphql.Result {
 	return result
 }
 
-func main() {
+func main1() {
 	obj := CreateUserType (model.EstimaUser{})
 	log.Printf("Object: %v", obj)
 

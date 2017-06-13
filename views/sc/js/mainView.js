@@ -50,6 +50,7 @@ function createTabs () {
 }
 
 function refreshRelatedGrid (data, parent, child) {
+    child.deselectRecords (child.getSelectedRecords());
     child.invalidateCache();
     if (!data) {
         child.fetchData({"key": "-1"})
