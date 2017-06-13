@@ -1,5 +1,7 @@
+
 <template>
   <div id="app" class="app">
+    <Navbar v-if="shouldShowNavbar"/>
     <router-view></router-view>
   </div>
 </template>
@@ -8,12 +10,22 @@
 import constGlobal from './constGlobal';
 import * as TActions from './store/action-types';
 
+import Navbar from './components/Navbar';
+
 export default {
   name: 'App',
+  components: {
+    Navbar,
+  },
   created() {
     this.$store.dispatch(TActions.USER_CURRENT).catch(() => {
       this.$router.push({ name: constGlobal.PAGE_NAME.LOGIN_PAGE });
     });
+  },
+  computed: {
+    shouldShowNavbar() {
+      return [constGlobal.PAGE_NAME.LOGIN_PAGE].indexOf(this.$route.name) < 0;
+    },
   },
 };
 </script>

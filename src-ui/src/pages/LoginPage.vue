@@ -174,10 +174,10 @@
   .login_action__disabled {
     cursor: default;
   }
+
   .login_action__disabled:hover {
     background-color: lightgray;
   }
-
 
   .login_row__auth {
     color: green;
