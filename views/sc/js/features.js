@@ -51,6 +51,7 @@ function createFeatureDS () {
             validators: []
         }, {
             name: "status",
+            type: "integer",
             title: "Статус"
         }, {
             name: "_key",
@@ -132,6 +133,7 @@ function createUSDS () {
             validators: []
         }, {
             name: "status",
+            type: "integer",
             title: "Статус"
         }, {
             name: "_key",
@@ -269,7 +271,7 @@ function createWindowText () {
         items: [isc.DynamicForm.create ({
             ID: "textEditForm",
             fields: [
-                {name:"text", type:"textArea", width: 300, height: 200},
+                {name:"text", title: "Текст", type:"textArea", width: 300, height: 200},
                 {
                     title:"OK",
                     type:"button",

@@ -67,6 +67,16 @@ function createUSTextDS () {
             validators: []
         }, {
             name: "status",
+            type: "integer",
+            valueMap: {
+                "0" : "Новый",
+                "1" : "В работе",
+                "2" : "Отвергнут",
+                "3" : "Принят",
+                "4": "В оценке",
+                "5": "Оценен",
+                "6" : "Оценка принята"
+            },
             title: "Статус"
         }, {
             name: "_key",

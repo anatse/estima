@@ -68,6 +68,7 @@ isc.DataSource.create({
         ]
     }, {
         name:"status",
+        type: "integer",
         title: "Статус"
     }, {
         name:"startDate",
@@ -204,6 +205,7 @@ isc.DataSource.create({
         ]
     }, {
         name:"status",
+        type: "integer",
         title: "Статус"
     }, {
         name:"startDate",
@@ -280,6 +282,7 @@ isc.DataSource.create({
         ]
     },  {
         name:"status",
+        type: "integer",
         title: "Статус"
     }, {
         name: "_key",

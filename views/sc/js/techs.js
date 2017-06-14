@@ -51,6 +51,7 @@ function createTSDS () {
             validators: []
         }, {
             name: "status",
+            type: "integer",
             title: "Статус"
         }, {
             name: "_key",
@@ -184,7 +185,7 @@ function createTsWindowText () {
         items: [isc.DynamicForm.create ({
             ID: "tsTextEditForm",
             fields: [
-                {name:"text", type:"textArea", width: 300, height: 200},
+                {name:"text", title: "Текст", type:"textArea", width: 300, height: 200},
                 {
                     title:"OK",
                     type:"button",

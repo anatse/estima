@@ -331,27 +331,24 @@ func (dao BaseDao) Save (userEntity model.Entity) (model.Entity, error) {
 	coll := dao.Database().Col(userEntity.GetCollection())
 	if userEntity.GetKey() != "" {
 		//  Create new object of gioven entity type
-		newEntityPtr := reflect.New(val.Elem().Type())
+		foundEntityPtr := reflect.New(val.Elem().Type())
 		// Set value of given entity
-		newEntityPtr.Elem().Set(val.Elem())
+		//foundEntityPtr.Elem().Set(val.Elem())
 
 		// Find entity
-		newEntity := newEntityPtr.Interface().(model.Entity)
-		err := dao.FindById(newEntity)
-		model.CheckErr(err)
+		foundEntity := foundEntityPtr.Interface().(model.Entity)
+		model.CheckErr(coll.Get(userEntity.GetKey(), foundEntity))
 
 		// Entity found, change all changed attributes, except _key
-		newEntity = newEntity.CopyChanged(val.Elem().Interface().(model.Entity))
+		foundEntity = foundEntity.CopyChanged(val.Elem().Interface().(model.Entity))
 
-		err = coll.Replace(newEntity.GetKey(), newEntity)
-		model.CheckErr(err)
+		model.CheckErr(coll.Replace(foundEntity.GetKey(), foundEntity))
 		// Entity change set entity value
-		val.Elem().Set(reflect.ValueOf(newEntity))
+		val.Elem().Set(reflect.ValueOf(foundEntity))
 
 		return userEntity, nil
 	} else {
-		err := coll.Save(userEntity)
-		model.CheckErr(err)
+		model.CheckErr(coll.Save(userEntity))
 	}
 
 	return userEntity, nil

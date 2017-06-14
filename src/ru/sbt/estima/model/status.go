@@ -1,6 +1,9 @@
 package model
 
-import "log"
+import (
+	"log"
+	"strconv"
+)
 
 type Status int
 
@@ -123,4 +126,11 @@ func (fsm StatusFSM) CanMoveTo (status Status, roles []string) bool {
 	}
 
 	return false
+}
+
+func (status *Status) UnmarshalJSON(b []byte) error {
+	stringVal := string(b)
+	iVal, err := strconv.Atoi(stringVal)
+	*status = Status(iVal)
+	return err
 }
