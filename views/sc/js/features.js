@@ -1,3 +1,5 @@
+'use strict';
+
 function createFeatureDS () {
     isc.DataSource.create({
         dataFormat: "json",
@@ -8,7 +10,7 @@ function createFeatureDS () {
             {operationType: "fetch", dataProtocol: "", requestProperties: {httpMethod: "GET"}, dataURL: "/api/v.0.0.1/process/{0}/feature/list"},
             {operationType: "add", dataProtocol: "postMessage", requestProperties: {httpMethod: "POST"}, dataURL: "/api/v.0.0.1/process/{0}/feature/add"},
             {operationType: "update", dataProtocol: "postMessage", requestProperties: {httpMethod: "POST"}, dataURL: "/api/v.0.0.1/feature/{0}/update"},
-            {operationType: "remove", dataProtocol: "postMessage", requestProperties: {httpMethod: "POST"}, dataURL: "/api/v.0.0.1/feature/{0}/remove"},
+            {operationType: "remove", dataProtocol: "postMessage", requestProperties: {httpMethod: "POST"}, dataURL: "/api/v.0.0.1/feature/{0}/remove"}
         ],
         transformRequest: function (dsRequest) {
             switch (dsRequest.operationType) {
@@ -18,7 +20,6 @@ function createFeatureDS () {
                     return JSON.stringify(dsRequest.data, function (key, value) {
                         return value;
                     });
-                    break;
 
                 default:
                     return dsRequest.data;
@@ -85,7 +86,6 @@ function createUSDS () {
                     return JSON.stringify(dsRequest.data, function (key, value) {
                         return value;
                     });
-                    break;
 
                 default:
                     return dsRequest.data;
@@ -170,7 +170,6 @@ function createUsCommentDS () {
                     return JSON.stringify(dsRequest.data, function (key, value) {
                         return value;
                     });
-                    break;
 
                 default:
                     return dsRequest.data;
@@ -199,7 +198,7 @@ function createUsCommentDS () {
             validators: []
         }, {
             name: "createDate",
-            type: 'datetime',
+            type: "datetime",
             validators: []
         }, {
             name: "_key",
@@ -276,9 +275,9 @@ function createWindowText () {
                     title:"OK",
                     type:"button",
                     click: function () {
-                        var values = textEditForm.getValues()
+                        var values = textEditForm.getValues();
                         var url = "/api/v.0.0.1/userstory/" + usList.getSelectedRecord()._key + "/addtext";
-                        isc.RPCManager.sendRequest({ data: JSON.stringify(values), callback: function (data) {
+                        isc.RPCManager.sendRequest({ data: JSON.stringify(values), callback: function () {
                             refreshRelatedGrid(featureList.getSelectedRecord(), featureList, usList);
                             textEditWindow.close();
                         }, actionURL: url, httpMethod: 'POST', contentType: "application/json",
@@ -305,7 +304,7 @@ function createUsGrid () {
         canExpandRecords: true,
         expansionMode: "detailField",
         detailField: "text",
-        selectionUpdated : function (data) {
+        selectionUpdated : function () {
             refreshRelatedGrid(usList.getSelectedRecord(), usList, usCommentList);
             refreshRelatedGrid(usList.getSelectedRecord(), usList, tsList);
         },
@@ -328,7 +327,7 @@ function createFeatureGrid () {
         autoFetchData: false,
         canEdit: true,
         title: "Фичи",
-        selectionUpdated : function (data) {
+        selectionUpdated : function () {
             refreshRelatedGrid(featureList.getSelectedRecord(), featureList, usList);
         },
         editComplete: function() {
@@ -336,7 +335,7 @@ function createFeatureGrid () {
         }
     });
 
-    var splitPane = isc.SectionStack.create ({
+    return isc.SectionStack.create ({
         width: "30%",
         showResizeBar: true,
         visibilityMode: "multiple",
@@ -450,6 +449,4 @@ function createFeatureGrid () {
             ]
         }]
     });
-
-    return splitPane;
 }

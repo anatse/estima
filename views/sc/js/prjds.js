@@ -5,11 +5,9 @@ isc.Log.logDebug ('test messge');
 
 String.prototype.format = String.prototype.f = function(){
     var args = arguments;
-    var str = this.replace(/\{(\d+)\}/g, function(m,n) {
+    return this.replace(/\{(\d+)\}/g, function(m,n) {
         return args[n] ? args[n] : m;
     });
-
-    return str;
 };
 
 isc.DataSource.create({

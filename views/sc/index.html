@@ -6,7 +6,7 @@
     <SCRIPT SRC=/sc/runtime/system/modules/ISC_Grids.js></SCRIPT>
     <SCRIPT SRC=/sc/runtime/system/modules/ISC_Forms.js></SCRIPT>
     <SCRIPT SRC=/sc/runtime/system/modules/ISC_DataBinding.js></SCRIPT>
-    <SCRIPT SRC=/sc/runtime/skins/Enterprise/load_skin.js></SCRIPT>
+    <SCRIPT SRC=/sc/runtime/skins/Cupertino/load_skin.js></SCRIPT>
 </HEAD><BODY>
 
 <SCRIPT>
@@ -29,7 +29,6 @@
                         height: 150,
                         align: "center",
                         members: [
-
                             isc.DynamicForm.create({
                                 ID: "exampleForm",
                                 layoutMargin: 6,
@@ -62,39 +61,38 @@
                                 members: [
                                     isc.Button.create({
                                         title:" Войти",
-                                        click : () => {
-                                            let form = isc.DynamicForm.getById("exampleForm");
-                                            let login = form.getValue('username');
-                                            let password = form.getValue ('password');
-                                            const url = '/api/v.0.0.1/login';
-                                            fetch(url, {
-                                                method: 'post',
-                                                body: JSON.stringify({uname: login, upass: password}),
+                                        click : function() {
+                                            var form = isc.DynamicForm.getById("exampleForm");
+                                            var login = form.getValue('username');
+                                            var password = form.getValue ('password');
+                                            var url = '/api/v.0.0.1/login';
+                                            isc.RPCManager.sendRequest({
+                                                data: JSON.stringify({uname: login, upass: password}),
+                                                callback: function (response) {
+                                                    if (response.status === 0) {
+                                                        if (response.data.success) {
+                                                            window.location = "projects.html";
+                                                        } else {
+                                                            isc.warn (response.data.error, {icon: '[SKIN]/Dialog/error.png'});
+                                                        }
+                                                    }
+                                                },
+                                                actionURL: url,
+                                                httpMethod: 'POST',
+                                                contentType: "application/json",
+                                                useSimpleHttp: true,
                                                 headers: {
                                                     Accept: 'application/json',
                                                     Cache: 'no-cache',
                                                 },
-                                                credentials: 'same-origin',
-                                            }).then((response) => {
-                                                response.json().then ((response) => {
-                                                    if (!response.success) {
-                                                        alert (response.error);
-                                                    }
-                                                    else {
-                                                        window.location = "projects.html";
-                                                    }
-                                                }, (error) => {
-                                                    alert (error);
-                                                    console.log ('error json', error);
-                                                });
-                                            }, (error) => {
-                                                console.log ('error connect', error);
+                                                withCredentials: true,
+                                                evalResult: true
                                             });
                                         }
                                     }),
                                     isc.Button.create({
                                         title:"Отмена",
-                                        click : () => {
+                                        click : function() {
                                             window.location = "/";
                                         }
                                     })
@@ -106,6 +104,5 @@
             })
         ]
     })
-
 </SCRIPT>
 </BODY></HTML>

@@ -1,13 +1,13 @@
 // Create layout
 function createSplitPane () {
-    let detailPane = isc.DetailViewer.create({
+    var detailPane = isc.DetailViewer.create({
         height: "25%",
         showHeader: true,
         dataSource: "userProjectListDS",
         autoDraw: false
     });
 
-    var splitPane = isc.SectionStack.create ({
+    return isc.SectionStack.create ({
         showResizeBar: true,
         visibilityMode: "multiple",
         sections: [{
@@ -41,8 +41,6 @@ function createSplitPane () {
 
         ]
     });
-
-    return splitPane;
 }
 
 function createTabs () {
