@@ -102,6 +102,12 @@ func instService (w http.ResponseWriter, req *http.Request) {
 
 		// create edge collection
 		dao.EdgeCol(model.PRJ_EDGES)
+
+		// Create unique index for edge collection
+		dao.Database().Col(model.PRJ_EDGES).CreatePersistent(true, "_from", "_to", "label");
+
+		// Write success flag
+		model.WriteAnyResponse(true, nil, nil, w)
 	})
 }
 
@@ -130,6 +136,7 @@ func PrepareRoute () *mux.Router {
 	var fs services.FeatureService
 	var uss services.UserStoryService
 	var tss services.TechStoryService
+	var cs services.ComponentService
 
 	model.RegisterService("user", us)
 	model.RegisterService("project", ps)
@@ -137,6 +144,7 @@ func PrepareRoute () *mux.Router {
 	model.RegisterService("feature", fs)
 	model.RegisterService("userStory", uss)
 	model.RegisterService("techStory", tss)
+	model.RegisterService("component", cs)
 
 	r := model.GetRouter()
 	r.Handle("/api/v.0.0.1/get-token", services.GetTokenHandler).Methods("GET").Name("Login router (GET). Query parameters uname & upass. This router is deprecated and will be removed in next release")
@@ -150,6 +158,7 @@ func PrepareRoute () *mux.Router {
 	fs.ConfigRoutes(r, JwtHandler)
 	uss.ConfigRoutes(r, JwtHandler)
 	tss.ConfigRoutes(r, JwtHandler)
+	cs.ConfigRoutes(r, JwtHandler)
 
 	// Function build router for get router information
 	var routesInformation = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

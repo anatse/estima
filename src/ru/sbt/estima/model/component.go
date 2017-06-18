@@ -47,3 +47,12 @@ func (cmp Component) GetCollection() string {
 func (cmp Component) GetError()(string, bool) {
 	return cmp.Message, cmp.Error
 }
+
+func (cmp Component) CopyChanged (entity Entity) Entity {
+	emptyTime := time.Time{}
+	component := entity.(Component)
+	if component.Name != "" {cmp.Name = component.Name}
+	if component.Description != "" {cmp.Description = component.Description}
+	if component.DueDate != emptyTime {cmp.DueDate = component.DueDate}
+	return cmp
+}

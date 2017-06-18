@@ -62,7 +62,7 @@ func (dao projectDao) FindAll(daoFilter DaoFilter, offset int, pageSize int)([]m
 }
 
 func (dao projectDao) FindByUser (user model.EstimaUser, offset int, pageSize int)([]model.Entity, error) {
-	sql := `FOR v, e, p IN 1..1 INBOUND @startId @@edgeCollection FILTER e.label == 'user' RETURN v`
+	sql := `FOR v, e IN 1..1 INBOUND @startId @@edgeCollection FILTER e.label == 'user' RETURN v`
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = user.Id
@@ -148,7 +148,7 @@ func (dao projectDao) RemoveUser (prj model.Project, user model.EstimaUser) erro
 }
 
 func (dao projectDao) findStageByName (prjId string, name string) model.Stage {
-	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'stage' && v.name == @stageName RETURN v`
+	sql := `FOR v, e IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'stage' && v.name == @stageName SORT DATE_ISO8601(v.startDate) RETURN v`
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = prjId
@@ -213,7 +213,7 @@ func (dao projectDao) RemoveStage (prj model.Project, stage model.Stage) error {
 }
 
 func (dao projectDao) Stages (prj model.Project) ([]model.Entity, error) {
-	sql := `FOR v, e, p IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'stage' RETURN v`
+	sql := `FOR v, e IN 1..1 OUTBOUND @startId @@edgeCollection FILTER e.label == 'stage' SORT DATE_ISO8601(v.startDate) RETURN v`
 
 	filterMap := make(map[string]interface{})
 	filterMap["startId"] = prj.Id

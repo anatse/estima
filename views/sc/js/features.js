@@ -372,6 +372,18 @@ function createFeatureGrid () {
                             refreshRelatedGrid(processList.getSelectedRecord(), processList, featureList);
                         })
                     }
+                }),
+                isc.ImgButton.create({
+                    src: "[SKIN]/headerIcons/settings.png",
+                    size: 16,
+                    showFocused: false,
+                    showRollOver: false,
+                    showDown: false,
+                    prompt: "Компоненты",
+                    click: function() {
+                        cmpSelectWindow.show();
+                        return false;
+                    }
                 })
             ]
         }, {
