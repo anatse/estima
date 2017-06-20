@@ -137,6 +137,7 @@ func PrepareRoute () *mux.Router {
 	var uss services.UserStoryService
 	var tss services.TechStoryService
 	var cs services.ComponentService
+	var cus services.CuService
 
 	model.RegisterService("user", us)
 	model.RegisterService("project", ps)
@@ -145,6 +146,7 @@ func PrepareRoute () *mux.Router {
 	model.RegisterService("userStory", uss)
 	model.RegisterService("techStory", tss)
 	model.RegisterService("component", cs)
+	model.RegisterService("calculate", cus)
 
 	r := model.GetRouter()
 	r.Handle("/api/v.0.0.1/get-token", services.GetTokenHandler).Methods("GET").Name("Login router (GET). Query parameters uname & upass. This router is deprecated and will be removed in next release")
@@ -159,6 +161,7 @@ func PrepareRoute () *mux.Router {
 	uss.ConfigRoutes(r, JwtHandler)
 	tss.ConfigRoutes(r, JwtHandler)
 	cs.ConfigRoutes(r, JwtHandler)
+	cus.ConfigRoutes(r, JwtHandler)
 
 	// Function build router for get router information
 	var routesInformation = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

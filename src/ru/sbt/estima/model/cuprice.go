@@ -2,7 +2,6 @@ package model
 
 import (
 	ara "github.com/diegogub/aranGO"
-	"math/big"
 	"time"
 )
 
@@ -10,7 +9,7 @@ type CalcUnitPrice struct {
 	ara.Document `json:-`
 	Name string `json:"name,omitempty,required"`
 	Description string `json:"description,omitempty"`
-	StoryPoints big.Float `json:"storyPoins,omitempty"`
+	StoryPoints float32 `json:"storyPoints,omitempty"`
 	Group string `json:"group,omitempty"`
 	Changed time.Time `json:"changed,omitempty"`
 }
@@ -47,4 +46,15 @@ func (cmp CalcUnitPrice) GetCollection() string {
 
 func (cmp CalcUnitPrice) GetError()(string, bool) {
 	return cmp.Message, cmp.Error
+}
+
+func (cmp CalcUnitPrice) CopyChanged (entity Entity) Entity {
+	emptyTime := time.Time{}
+	unit := entity.(CalcUnitPrice)
+	if unit.Name != "" {cmp.Name = unit.Name}
+	if unit.Description != "" {cmp.Description = unit.Description}
+	if unit.Group != "" {cmp.Group = unit.Group}
+	if unit.StoryPoints != 0 {cmp.StoryPoints = unit.StoryPoints}
+	if unit.Changed != emptyTime {cmp.Changed = unit.Changed}
+	return cmp
 }

@@ -10,7 +10,7 @@ type CalcUnit struct {
 	Name string `json:"name,omitempty,required"`
 	Description string `json:"description,omitempty"`
 	Version string `json:"version,omitempty"`
-	Status string `json:"status,omitempty"`
+	Status int `json:"status,omitempty"`
 	Changed time.Time `json:"changed,omitempty"`
 }
 
@@ -46,4 +46,14 @@ func (cmp CalcUnit) GetCollection() string {
 
 func (cmp CalcUnit) GetError()(string, bool) {
 	return cmp.Message, cmp.Error
+}
+
+func (cmp CalcUnit) CopyChanged (entity Entity) Entity {
+	emptyTime := time.Time{}
+	unit := entity.(CalcUnit)
+	if unit.Name != "" {cmp.Name = unit.Name}
+	if unit.Description != "" {cmp.Description = unit.Description}
+	if unit.Version != "" {cmp.Version = unit.Version}
+	if unit.Changed != emptyTime {cmp.Changed = unit.Changed}
+	return cmp
 }

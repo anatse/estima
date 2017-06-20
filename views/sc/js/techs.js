@@ -281,6 +281,17 @@ function createTslayput () {
 
                         tsTextEditWindow.show({text: tsList.getSelectedRecord().text});
                     }
+                }),
+                isc.ImgButton.create({
+                    src: "[SKIN]/iOS/more.png",
+                    size: 16,
+                    showFocused: false,
+                    showRollOver: false,
+                    showDown: false,
+                    prompt: "Перейти к расчету",
+                    click: function () {
+                        window.location = "calc.html";
+                    }
                 })
             ]
         }, {
