@@ -43,8 +43,7 @@
                                         hint: "username",
                                         showHintInField: true,
                                         required: true,
-                                        width:"100%",
-                                        defaultValue: "wps8admin"
+                                        width:"100%"
                                     }, {
                                         name: "password",
                                         title: "Пароль",
@@ -71,7 +70,7 @@
                                                 callback: function (response) {
                                                     if (response.status === 0) {
                                                         if (response.data.success) {
-                                                            window.location = "projects.html";
+                                                            window.location = "list.html";
                                                         } else {
                                                             isc.warn (response.data.error, {icon: '[SKIN]/Dialog/error.png'});
                                                         }

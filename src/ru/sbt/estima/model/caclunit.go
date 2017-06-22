@@ -57,3 +57,30 @@ func (cmp CalcUnit) CopyChanged (entity Entity) Entity {
 	if unit.Changed != emptyTime {cmp.Changed = unit.Changed}
 	return cmp
 }
+
+// Information will be copied to edge and participated after in calculation process
+type CalcUnitEdge struct {
+	CalcUnit
+	Weight float64 `json:"weight,omitempty,required"`
+	Complexity float64 `json:"complexity,omitempty,required"`
+	NewFlag float64 `json:"newFlag,omitempty,required"`
+	ExtCoef float64 `json:"extCoef,omitempty,required"`
+}
+
+func (cmp CalcUnitEdge) Entity() interface{} {
+	return struct{
+		*CalcUnitEdge
+
+		OmitId  omit `json:"_id,omitempty"`
+		OmitRev omit `json:"_rev,omitempty"`
+
+		OmitError   omit   `json:"error,omitempty"`
+		OmitMessage omit `json:"errorMessage,omitempty"`
+	} {
+		&cmp,
+		nil,
+		nil,
+		nil,
+		nil,
+	}
+}

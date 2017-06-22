@@ -335,38 +335,57 @@ function createButtons () {
 
 createButtons ();
 
-isc.HLayout.create({
+isc.VLayout.create ({
     width: "100%",
     height: "100%",
     members: [
-        createSplitPane(),
-        isc.SectionStack.create ({
-            showResizeBar: true,
-            width: "15%",
-            visibilityMode: "multiple",
-            sections: [{
-                expanded: true,
-                title: "Этапы",
-                items: [
-                    createStagesGrid()
-                ],
-                controls:[
-                    addStageButton,
-                    removeStageButton
-                ]
-            }, {
-                expanded: true,
-                title: "E2E Процессы",
-                items: [
-                    createProcessGrid()
-                ],
-                controls:[
-                    addProcessButton,
-                    removeProcessButton
-                ]
-            }]
+        isc.ToolStrip.create({
+            width: "100%",
+            height: 24,
+            members: [
+                isc.ToolStripButton.create({
+                    icon: "[SKIN]/actions/configure.png",
+                    title: "Рассчитать стоимость проекта"
+                }),
+                isc.ToolStripButton.create({
+                    icon: "[SKIN]/actions/download.png",
+                    title: "Експорт в CSV"
+                })
+            ]
         }),
-        createTabs(),
-        createTslayput()
+        isc.HLayout.create({
+            members: [
+                createSplitPane(),
+                isc.SectionStack.create ({
+                    showResizeBar: true,
+                    width: "15%",
+                    visibilityMode: "multiple",
+                    sections: [{
+                        expanded: true,
+                        title: "Этапы",
+                        items: [
+                            createStagesGrid()
+                        ],
+                        controls:[
+                            addStageButton,
+                            removeStageButton
+                        ]
+                    }, {
+                        expanded: true,
+                        title: "E2E Процессы",
+                        items: [
+                            createProcessGrid()
+                        ],
+                        controls:[
+                            addProcessButton,
+                            removeProcessButton
+                        ]
+                    }]
+                }),
+                createTabs(),
+                createTslayput()
+            ]
+        })
     ]
 });
+

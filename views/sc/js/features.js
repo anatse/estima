@@ -327,6 +327,9 @@ function createFeatureGrid () {
         autoFetchData: false,
         canEdit: true,
         title: "Фичи",
+        canExpandRecords: true,
+        expansionMode: "related",
+        detailDS:"featureComponentListDS",
         selectionUpdated : function () {
             refreshRelatedGrid(featureList.getSelectedRecord(), featureList, usList);
         },

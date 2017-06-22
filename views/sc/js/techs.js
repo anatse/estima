@@ -283,14 +283,17 @@ function createTslayput () {
                     }
                 }),
                 isc.ImgButton.create({
-                    src: "[SKIN]/iOS/more.png",
+                    src: "[SKIN]/headerIcons/settings.png",
                     size: 16,
                     showFocused: false,
                     showRollOver: false,
                     showDown: false,
                     prompt: "Перейти к расчету",
                     click: function () {
-                        window.location = "calc.html";
+                        if (!tsList.getSelectedRecord())
+                            return false;
+
+                        cuSelectWindow.show();
                     }
                 })
             ]
