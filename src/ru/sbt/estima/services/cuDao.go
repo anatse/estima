@@ -255,6 +255,7 @@ func (dao cuDao) calculateProjectPricePlain (projectKey string) interface{} {
 
 	for cursor.FetchOne(value) {
 		buffer = append (buffer, *value)
+		value = new (map[string]interface{})
 	}
 
 	return buffer

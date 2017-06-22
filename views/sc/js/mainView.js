@@ -345,7 +345,13 @@ isc.VLayout.create ({
             members: [
                 isc.ToolStripButton.create({
                     icon: "[SKIN]/actions/configure.png",
-                    title: "Рассчитать стоимость проекта"
+                    title: "Рассчитать стоимость проекта",
+                    click: function () {
+                        if (!userProjectList.getSelectedRecord())
+                            return false;
+
+                        projectPriceWindow.show();
+                    }
                 }),
                 isc.ToolStripButton.create({
                     icon: "[SKIN]/actions/download.png",

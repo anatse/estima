@@ -6,7 +6,6 @@ import (
 	"github.com/gorilla/mux"
 	ara "github.com/diegogub/aranGO"
 	"time"
-	"log"
 )
 
 type CuService struct {}
@@ -177,7 +176,6 @@ func (ca CuService) calculateProjectPrice(w http.ResponseWriter, r *http.Request
 
 	WithCuDao(func(dao cuDao) {
 		res := dao.calculateProjectPricePlain(projectKey)
-		log.Printf("res: %v\n", res)
 		model.WriteAnyResponse(true, nil, res, w)
 	})
 }
