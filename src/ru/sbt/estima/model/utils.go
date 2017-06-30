@@ -10,8 +10,8 @@ import (
 	"reflect"
 	"regexp"
 	"fmt"
-	"log"
 	"github.com/gorilla/mux"
+	"ru/sbt/estima/conf"
 )
 
 var router *mux.Router
@@ -127,7 +127,7 @@ func GetAraError (err interface{}) interface{} {
 		errorString = errorStrings[0][0]
 		var ae AraError
 		json.Unmarshal([]byte(errorString), &ae)
-		log.Printf (`Parsed error:
+		conf.GetLog().Printf (`Parsed error:
 	exception: %v
 	code: %v
 	errorNum: %v

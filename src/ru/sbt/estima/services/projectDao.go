@@ -5,7 +5,6 @@ import (
 	"ru/sbt/estima/conf"
 	"ru/sbt/estima/model"
 	"bytes"
-	"log"
 )
 
 type projectDao struct {
@@ -169,7 +168,7 @@ func (dao projectDao) findStageByName (prjId string, name string) model.Stage {
 
 func (dao projectDao) AddStage (prj model.Project, stage model.Stage) error {
 	if prj.Id == "" || (stage.Key == "" && stage.Name == "") {
-		log.Panicf("Some identifiers are not set %v %v", prj.Key, stage.Name)
+		conf.GetLog().Panicf("Some identifiers are not set %v %v", prj.Key, stage.Name)
 	}
 
 	if stage.Key != "" {
@@ -186,7 +185,7 @@ func (dao projectDao) AddStage (prj model.Project, stage model.Stage) error {
 		// First trying to find stage with this name
 		found := dao.findStageByName (prj.Id, stage.Name)
 		if found.Id != "" {
-			log.Panicf("Stage with the name '%v' already exists in project '%v'", stage.Name, prj.Number)
+			conf.GetLog().Panicf("Stage with the name '%v' already exists in project '%v'", stage.Name, prj.Number)
 		}
 
 		stage.Key = dao.createAndConnectObjTx(
@@ -201,7 +200,7 @@ func (dao projectDao) AddStage (prj model.Project, stage model.Stage) error {
 
 func (dao projectDao) RemoveStage (prj model.Project, stage model.Stage) error {
 	if  prj.Key == "" {
-		log.Panicf("Some identifiers are not set %v, %v", prj.Key)
+		conf.GetLog().Panicf("Some identifiers are not set %v, %v", prj.Key)
 	}
 
 	err := dao.FindById(&stage) //.findStageByName (prj.Id, stage.Name)

@@ -9,7 +9,6 @@ import (
 	"ru/sbt/estima/conf"
 	"net/http"
 	"github.com/dgrijalva/jwt-go"
-	"log"
 	"sync"
 )
 
@@ -224,7 +223,7 @@ func auth (conn *ldap.Conn, config conf.Ldap, username string, password string) 
 	CheckErr (err)
 
 	if len(sr.Entries) == 0 {
-		log.Panicf("Authentication for user %v failed", username)
+		conf.GetLog().Panicf("Authentication for user %v failed", username)
 	}
 
 	// Get user info

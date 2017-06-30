@@ -4,6 +4,7 @@
   "profiles": [{
       "name": "develop",
       "secret": "secret",
+      "port": 9080,
       "Ldap": {
         "protocol": "fake",
         "host": "",
@@ -32,6 +33,7 @@
     }, {
       "name": "test",
       "secret": "secret",
+      "port": 9080,
       "Ldap": {
         "protocol": "tcp",
         "host": "ldap.forumsys.com",

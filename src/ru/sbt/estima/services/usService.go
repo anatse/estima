@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"ru/sbt/estima/model"
 	"github.com/gorilla/mux"
-	"log"
+	"ru/sbt/estima/conf"
 )
 
 // Function for REST services
@@ -170,7 +170,7 @@ func (fs UserStoryService) getTextVersionList(w http.ResponseWriter, r *http.Req
 func (fs UserStoryService) updateUserStory (w http.ResponseWriter, r *http.Request) {
 	var userStory model.UserStory
 	model.ReadJsonBody(r, &userStory)
-	log.Printf("Trying to change US.status = %v", userStory.Status)
+	conf.GetLog().Printf("Trying to change US.status = %v", userStory.Status)
 
 	WithUserStoryDao(func(dao userStoryDao) {
 		userStory.Key = mux.Vars(r)["id"]

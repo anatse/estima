@@ -19,11 +19,19 @@ func (p *Program) run () {
 }
 
 func (p *Program) Stop (s service.Service) error {
-	go p.run()
 	return nil
 }
 
 func main() {
+	f, err := os.OpenFile("estima.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	defer f.Close()
+
+	log.SetOutput(f)
+	log.Println("Starting estima")
+
 	if len(os.Args) == 1 {
 		app.AppRun()
 	} else {
@@ -52,10 +60,10 @@ func main() {
 			logger.Error(err)
 		}
 
-		//err = srv.Run()
-		//if err != nil {
-		//	logger.Error(err)
-		//}
+		err = srv.Start()
+		if err != nil {
+			logger.Error(err)
+		}
 
 		log.Printf("Installed service with name: %v\n", serviceName)
 	}

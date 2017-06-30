@@ -37,7 +37,7 @@ func NewPool (size uint, crf CRF, rrf RRF) *Pool {
 }
 
 func (pool *Pool) Use (cpf ComputePF) (err error) {
-	//log.Printf("Allocating pool for: %v, current size: %d\n", cpf, pool.currentSize)
+	//GetLog().Printf("Allocating pool for: %v, current size: %d\n", cpf, pool.currentSize)
 
 	pobj, err := pool.Get()
 	if err != nil {
@@ -45,12 +45,12 @@ func (pool *Pool) Use (cpf ComputePF) (err error) {
 	}
 	defer (func() {
 		err = pool.Release(pobj)
-		//log.Printf("Processed. Released pool for: %v, current size: %d\n", cpf, pool.currentSize)
+		//GetLog().Printf("Processed. Released pool for: %v, current size: %d\n", cpf, pool.currentSize)
 	})()
 
-	//log.Printf("Allocated pool for: %v, current size: %d, processing...\n", cpf, pool.currentSize)
+	//GetLog().Printf("Allocated pool for: %v, current size: %d, processing...\n", cpf, pool.currentSize)
 	cpf (pobj)
-	//log.Printf("Processed call. Pool for: %v, current size: %d\n", cpf, pool.currentSize)
+	//GetLog().Printf("Processed call. Pool for: %v, current size: %d\n", cpf, pool.currentSize)
 	return err
 }
 

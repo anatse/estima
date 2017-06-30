@@ -3,9 +3,9 @@ package conf
 import (
 	"encoding/json"
 	"os"
-	"fmt"
 	"log"
 	"github.com/bradfitz/gomemcache/memcache"
+	"fmt"
 )
 
 type Ldap struct {
@@ -44,6 +44,7 @@ type Memcached struct {
 type Profile struct {
 	Name string
 	Secret string
+	Port int
 	Ldap	Ldap
 	Database Database
 	Auth Auth
@@ -73,15 +74,13 @@ func (mem *Memcached) create () {
 			memHosts[i] = fmt.Sprintf("%s:%d", host.Host, host.Port)
 		}
 
-		//log.Printf("hosts: %v", memHosts)
 		mem.cache = memcache.New (memHosts...)
-		//log.Printf("client: %v", mem.cache)
 	}
 }
 
 
 func (profile Profile) Cache () *memcache.Client {
-	log.Println(profile.Memcached)
+	GetLog().Println(profile.Memcached)
 
 	if profile.Memcached.cache == nil {
 		profile.Memcached.create()
@@ -101,7 +100,7 @@ func LoadConfig() (Profile) {
 		cfgPath = "config.json"
 	}
 
-	log.Printf("Config loaded from %s", cfgPath)
+	GetLog().Printf("Config loaded from %s", cfgPath)
 
 	file, _ := os.Open(cfgPath)
 	decoder := json.NewDecoder(file)
@@ -110,6 +109,26 @@ func LoadConfig() (Profile) {
 		panic(err)
 	}
 
-	fmt.Println(config.ActiveProfile())
+	GetLog().Println(config.ActiveProfile())
 	return config.ActiveProfile()
+}
+
+var fileLog *log.Logger
+var f *os.File
+func GetLog () *log.Logger {
+	if fileLog  == nil {
+		f, err := os.OpenFile("estima.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+		if err != nil {
+			GetLog().Fatalf("error opening file: %v", err)
+		}
+
+		fileLog = log.New(f, "", log.LstdFlags)
+	}
+
+	f.Sync()
+	return fileLog
+}
+
+func GetLogFile () *os.File {
+	return f
 }

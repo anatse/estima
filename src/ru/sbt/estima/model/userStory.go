@@ -3,7 +3,7 @@ package model
 import (
 	ara "github.com/diegogub/aranGO"
 	"time"
-	"log"
+	"ru/sbt/estima/conf"
 )
 
 // Structure represents User Story (smallest part of business requirement)
@@ -65,7 +65,7 @@ func (us UserStory) CopyChanged (entity Entity) Entity {
 	if story.Who != "" {us.Who = story.Who}
 	if story.Why != "" {us.Why = story.Why}
 	if story.Serial != -1 {us.Serial = story.Serial}
-	log.Printf("US.status = %v", us.Status)
+	conf.GetLog().Printf("US.status = %v", us.Status)
 
 	return us
 }

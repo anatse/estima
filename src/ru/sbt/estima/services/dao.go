@@ -16,7 +16,6 @@ import (
 	"errors"
 	"os"
 	"reflect"
-	"log"
 	"time"
 )
 
@@ -325,7 +324,7 @@ func (dao BaseDao) removeConnectedTx (outColName string, edgeColName string, out
 func (dao BaseDao) Save (userEntity model.Entity) (model.Entity, error) {
 	val := reflect.ValueOf(userEntity)
 	if val.Kind() != reflect.Ptr {
-		log.Panicf("Entity should be passed by pointer")
+		conf.GetLog().Panicf("Entity should be passed by pointer")
 	}
 
 	coll := dao.Database().Col(userEntity.GetCollection())

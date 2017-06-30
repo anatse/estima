@@ -4,7 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 	"ru/sbt/estima/model"
-	"log"
+	"ru/sbt/estima/conf"
 )
 
 // Function for REST services
@@ -63,7 +63,7 @@ func (us ComponentService) addComponentToFeature (w http.ResponseWriter, r *http
 	model.ReadJsonBody(r, &cmp)
 	cmp.Id = cmp.GetCollection() + "/" + cmp.GetKey()
 
-	log.Printf("feature.Id: %v, component: %v", feature.Id, cmp.Id)
+	conf.GetLog().Printf("feature.Id: %v, component: %v", feature.Id, cmp.Id)
 
 	WithComponentDao(func(dao componentDao) {
 		err := dao.ConnectComponent(cmp, feature)
@@ -84,7 +84,7 @@ func (us ComponentService) listComponentConsumer (w http.ResponseWriter, r *http
 }
 
 func (us ComponentService) removeComponentFromFeature (w http.ResponseWriter, r *http.Request) {
-	log.Printf("removeComponentFromFeature")
+	conf.GetLog().Printf("removeComponentFromFeature")
 
 	var cmp model.Component
 	cmp.Id = cmp.GetCollection() + "/" + mux.Vars(r)["cmpId"]

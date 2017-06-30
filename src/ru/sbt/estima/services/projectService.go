@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"github.com/gorilla/mux"
 	"time"
-	"log"
+	"ru/sbt/estima/conf"
 )
 
 // Function for REST services
@@ -27,7 +27,7 @@ func (ps ProjectService) findOne (w http.ResponseWriter, r *http.Request) {
 
 	model.CheckErr (ps.getDao().FindById(&p))
 	if p.Id == "" {
-		log.Panicf("Project not found")
+		conf.GetLog().Panicf("Project not found")
 	}
 
 	model.WriteResponse(true, nil, p, w)

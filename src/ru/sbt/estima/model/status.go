@@ -1,8 +1,8 @@
 package model
 
 import (
-	"log"
 	"strconv"
+	"ru/sbt/estima/conf"
 )
 
 type Status int
@@ -72,7 +72,7 @@ func FromStatus (s Status) IStatusFSM {
 	}
 
 	if int(s) > len(statuses) {
-		log.Panicf("Status %d unknown", s)
+		conf.GetLog().Panicf("Status %d unknown", s)
 	}
 
 	return statuses[s]
@@ -114,7 +114,7 @@ func (fsm StatusFSM) MoveTo (status Status, roles []string) IStatusFSM {
 		}
 	}
 
-	log.Panicf("Not allowed to change status from %d to %d for current user", fsm.currentStatus, status)
+	conf.GetLog().Panicf("Not allowed to change status from %d to %d for current user", fsm.currentStatus, status)
 	return nil
 }
 

@@ -10,10 +10,9 @@ import (
 	"unsafe"
 	"encoding/json"
 	"github.com/gorilla/handlers"
-	"os"
-	"log"
 	"fmt"
 	"compress/gzip"
+	"ru/sbt/estima/conf"
 )
 
 func JwtHandler(h http.Handler) http.Handler {
@@ -57,13 +56,13 @@ func WebSocketHandler (h http.Handler) http.Handler {
 		for {
 			mt, message, err := channel.ReadMessage()
 			if err != nil {
-				log.Println("read:", err)
+				conf.GetLog().Println("read:", err)
 				break
 			}
-			log.Printf("recv: %s", message)
+			conf.GetLog().Printf("recv: %s", message)
 			err = channel.WriteMessage(mt, message)
 			if err != nil {
-				log.Println("write:", err)
+				conf.GetLog().Println("write:", err)
 				break
 			}
 		}
@@ -206,14 +205,18 @@ func PrepareRoute () *mux.Router {
 }
 
 func AppRun () {
+	conf.GetLog().Printf("Starting application...")
+
 	// Init LDAP
 	model.InitLdapPool(2)
 
 	r := PrepareRoute()
+	addr := fmt.Sprintf(":%d", conf.LoadConfig().Port)
+
 	//err := http.ListenAndServeTLS(":9443", "server.crt", "server.key", handlers.CompressHandler(handlers.LoggingHandler(os.Stdout, r)))
-	err := http.ListenAndServe(":9080", handlers.CompressHandlerLevel(handlers.LoggingHandler(os.Stdout, r), gzip.BestCompression))
+	err := http.ListenAndServe(addr, handlers.CompressHandlerLevel(handlers.LoggingHandler(conf.GetLogFile(), r), gzip.BestCompression))
 	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
+		conf.GetLog().Fatal("ListenAndServe: ", err)
 	}
 
 	model.FinishLdapPool()
