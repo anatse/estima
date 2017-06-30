@@ -47,10 +47,15 @@ func main() {
 			log.Fatal(err)
 		}
 
-		err = srv.Run()
+		err = srv.Install()
 		if err != nil {
 			logger.Error(err)
 		}
+
+		//err = srv.Run()
+		//if err != nil {
+		//	logger.Error(err)
+		//}
 
 		log.Printf("Installed service with name: %v\n", serviceName)
 	}
