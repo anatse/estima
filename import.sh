@@ -10,6 +10,8 @@ go get -u -v "github.com/glycerine/zygomys/repl"
 go get -u -v "gopkg.in/ldap.v2"
 go get -u -v "github.com/go-errors/errors"
 go get -u -v "github.com/bradfitz/gomemcache/memcache"
+go get -u -v "github.com/gorilla/websocket"
+go get -u -v "github.com/kardianos/service"
 
 #
 # AranGO should be clones from github because release too old therefore command go get "github.com/diegogub/aranGO" deprecated

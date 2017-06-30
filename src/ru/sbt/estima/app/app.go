@@ -5,6 +5,7 @@ import (
 	"ru/sbt/estima/model"
 	"ru/sbt/estima/services"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"reflect"
 	"unsafe"
 	"encoding/json"
@@ -41,6 +42,31 @@ func JwtHandler(h http.Handler) http.Handler {
 		}
 
 		h.ServeHTTP(w, r)
+	})
+}
+
+func WebSocketHandler (h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var upgrader = websocket.Upgrader{}
+		channel, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			model.CheckErr(err)
+		}
+
+		defer channel.Close()
+		for {
+			mt, message, err := channel.ReadMessage()
+			if err != nil {
+				log.Println("read:", err)
+				break
+			}
+			log.Printf("recv: %s", message)
+			err = channel.WriteMessage(mt, message)
+			if err != nil {
+				log.Println("write:", err)
+				break
+			}
+		}
 	})
 }
 
@@ -153,6 +179,8 @@ func PrepareRoute () *mux.Router {
 	r.Handle("/api/v.0.0.1/login", services.Login).Methods("POST").Name("Login router (POST). Body: uname & upass")
 	r.Handle("/api/v.0.0.1/init", http.HandlerFunc(instService)).Methods("POST", "GET").Name("Create database collections")
 	r.Handle("/api/v.0.0.1/nextStatuses", JwtHandler(http.HandlerFunc(nextStatuses))).Methods("POST", "GET").Name("Get next statuses for current status and user")
+
+	r.Handle("/echo", WebSocketHandler(nil))
 
 	us.ConfigRoutes(r, JwtHandler)
 	ps.ConfigRoutes(r, JwtHandler)
