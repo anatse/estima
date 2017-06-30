@@ -51,5 +51,7 @@ func main() {
 		if err != nil {
 			logger.Error(err)
 		}
+
+		log.Printf("Installed service with name: %v\n", serviceName)
 	}
 }
