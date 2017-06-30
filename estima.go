@@ -5,7 +5,6 @@ import (
 	"github.com/kardianos/service"
 	"os"
 	"log"
-	"fmt"
 )
 
 type Program struct {}
@@ -25,7 +24,7 @@ func (p *Program) Stop (s service.Service) error {
 }
 
 func main() {
-	if len(os.Args) == 0 {
+	if len(os.Args) == 1 {
 		app.AppRun()
 	} else {
 		serviceName := os.Args[1]
